@@ -1,0 +1,7 @@
+[project]
+name = MonitorSwitcher
+version = "2024.01.15"
+
+dependencies = [
+    "monitorcontrol = 3.0.3"
+]
