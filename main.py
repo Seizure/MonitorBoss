@@ -1,7 +1,8 @@
+#!/usr/bin/env python3
+
 import sys
 
-from arg_parser import run
+from cli import run
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run(sys.argv[1:])
-
