@@ -1,6 +1,15 @@
 [project]
 name = "MonitorBoss"
-version = "2024.01.15"
+version = "2024.01.16"
+
+description = "Boss your monitors around"
+authors = [
+    {name = "Seizure"},
+    {name = "Rangi"}
+]
+
+readme = "README.md"
+license = {file = "LICENSE.txt"}
 
 dependencies = [
     "monitorcontrol = 3.0.3"
