@@ -1,6 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 a = Analysis(
     ['main.py'],
     pathex=[],
@@ -13,6 +12,7 @@ a = Analysis(
     excludes=[],
     noarchive=False,
 )
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
@@ -21,7 +21,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='MonitorController.exe',
+    name='MonitorBoss.exe',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
