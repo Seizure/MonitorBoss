@@ -1,128 +1,117 @@
 import argparse
+import sys
 
-from softmon import *
-
-
-MONITOR_NAMES = {"LEFT": 2, "MIDDLE": 1, "RIGHT": 0}
+from impl import *
 
 
-def __name_to_index(s: str):
-    return MONITOR_NAMES[s.upper()]
+# TODO: make the monitor setup configurable.
+# Seizure's three monitors are hard-coded.
+monitor_names = {"LEFT": "2", "MIDDLE": "1", "RIGHT": "0"}
 
 
-def __check_attr(a: str) -> Attribute:
-    a = a.upper()
-    if hasattr(Attribute, a):
-        a = Attribute[a]
-    else:
-        warning = f"{a} is not a valid attribute. Valid attributes are:\n"
-        for e in Attribute:
-            warning += f"{e.name},"
-        warning = warning[0:-1]
-        raise global_parser.error(warning)
-
-    return a
+def __check_attr(attr: str) -> Attribute:
+    try:
+        return Attribute[attr]
+    except KeyError:
+        global_parser.error(f"{attr} is not a valid attribute."
+                            f"\nValid attributes are: {', '.join(Attribute.__members__)}")
 
 
-def __check_mon(m: str) -> int:
-    m = m.upper()
-    if m in MONITOR_NAMES:
-        m = MONITOR_NAMES[m]
-    elif m.isdigit() and int(m) <= len(get_monitors()):
-        m = int(m)
-    else:
-        warning = f"{m} is not a valid monitor. Valid monitors are:\n"
-        for m in MONITOR_NAMES:
-            warning += f"{m},"
-        warning = warning[0:-1]
-        global_parser.error(warning)
-
-    return m
+def __check_mon(mon: str) -> int:
+    if mon in monitor_names:
+        mon = monitor_names[mon]
+    try:
+        return int(mon)
+    except ValueError:
+        global_parser.error(f"{mon} is not a valid monitor."
+                            f"\nValid monitors are: {', '.join(monitor_names)}, or an index")
 
 
-def __check_value(attr: Attribute, val) -> InputSource | PowerMode | int:
-    val = val.upper()
+def __check_val(attr: Attribute, val: str) -> InputSource | PowerMode | int:
     match attr:
         case Attribute.SRC:
-            if hasattr(InputSource, val):
-                val = InputSource[val]
-            else:
-                warning = f"{val} is an invalid SRC (Input Source). Valid sources are:\n"
-                for s in InputSource:
-                    s = s.__str__().replace('InputSource.', '')
-                    warning += f"{s},"
-                warning = (warning[0:-1] +
-                           "\n\nNOTE: These are just the potential inputs an arbitrary monitor can accept. None of "
-                           "these inputs are guaranteed to be supported by a particular monitor, and most probably "
-                           "aren't. Cross-check with your monitor's specs.")
-                global_parser.error(warning)
+            try:
+                return InputSource[val]
+            except KeyError:
+                global_parser.error(f"{val} is an invalid input source."
+                                    f"\nValid input sources are: {', '.join(InputSource.__members__)}"
+                                    "\nNOTE: A particular monitor will probably support only some of these values,"
+                                    " if any. Check your monitor's specs for the inputs it accepts.")
 
         case Attribute.CNT:
-            if not val.isdigit() or int(val) > 100:
-                global_parser.error(f"{val} is an invalid CNT (Contrast). Must be an int.")
+            try:
+                return int(val)
+            except ValueError:
+                global_parser.error(f"{val} is an invalid contrast value."
+                                    f"\nValid contrast values are typically 0-100.")
 
         case Attribute.LUM:
-            if not val.isdigit():
-                global_parser.error(f"{val} is an invalid LUM (luminance). Must be an int.")
+            try:
+                return int(val)
+            except ValueError:
+                global_parser.error(f"{val} is an invalid luminance value."
+                                    f"\nValid luminance values are typically 0-100.")
 
         case Attribute.PWR:
-            if hasattr(PowerMode, val):
-                val = PowerMode[val]
-            else:
-                global_parser.error(f"{val} is an invalid power mode")
-
-    return val
+            try:
+                return PowerMode[val]
+            except KeyError:
+                global_parser.error(f"{val} is an invalid power mode."
+                                    f"\nValid power modes are: {', '.join(PowerMode.__members__)}")
 
 
 def __get_attr(args):
     attr = __check_attr(args.attr)
-    mon = __check_mon(args.monitor)
+    mon = __check_mon(args.mon)
 
-    args.out = get_attribute(mon, attr)
+    val = get_attribute(mon, attr)
+    print(val)
 
 
 def __set_attr(args):
     attr = __check_attr(args.attr)
-    mon = __check_mon(args.monitor)
+    mon = __check_mon(args.mon)
 
-    val = __check_value(attr, args.val)
+    val = __check_val(attr, args.val)
 
-    args.out = set_attribute(mon, attr, val)
+    set_attribute(mon, attr, val)
 
 
-def __toggle_attr(args):
+def __tog_attr(args):
     attr = __check_attr(args.attr)
-    mon = __check_mon(args.monitor)
+    mon = __check_mon(args.mon)
 
-    val1 = __check_value(attr, args.val1)
-    val2 = __check_value(attr, args.val2)
+    val1 = __check_val(attr, args.val1)
+    val2 = __check_val(attr, args.val2)
 
-    args.out = toggle_attribute(mon, attr, val1, val2)
+    toggle_attribute(mon, attr, val1, val2)
 
 
-global_parser = argparse.ArgumentParser(description="Manage monitor states")
-subparsers = global_parser.add_subparsers(title="softmon", help="Basic commands", dest='subcommand', required=True)
+global_parser = argparse.ArgumentParser(description="Boss your monitors around.")
+subparsers = global_parser.add_subparsers(title="subcommands", help="basic commands", dest="subcommand", required=True)
 
-get_parser = subparsers.add_parser('get', help='returns the value of the desired attribute')
+get_parser = subparsers.add_parser("get", help="return the value of a given attribute")
 get_parser.set_defaults(func=__get_attr)
-get_parser.add_argument('attr', type=str, help='The attribute to return')
+get_parser.add_argument("attr", type=str.upper, help="the attribute to return")
 
-set_parser = subparsers.add_parser('set', help='sets a value to the desired attribute')
+set_parser = subparsers.add_parser("set", help="sets a given attribute to a given value")
 set_parser.set_defaults(func=__set_attr)
-set_parser.add_argument('attr', type=str, help='The attribute to set')
-set_parser.add_argument('val', type=str, help='the value to set the attribute to')
+set_parser.add_argument("attr", type=str.upper, help="the attribute to set")
+set_parser.add_argument("val", type=str.upper, help="the value to set the attribute to")
 
-toggle_parser = subparsers.add_parser('tog', help='toggles the value of a desired attribute between two states')
-toggle_parser.set_defaults(func=__toggle_attr)
-toggle_parser.add_argument('attr', type=str, help='The attribute to toggle')
-toggle_parser.add_argument('val1', type=str, help='the first value to toggle between')
-toggle_parser.add_argument('val2', type=str, help='the second value to toggle between')
+tog_parser = subparsers.add_parser("tog", help="toggles a given attribute between two given values")
+tog_parser.set_defaults(func=__tog_attr)
+tog_parser.add_argument("attr", type=str.upper, help="the attribute to toggle")
+tog_parser.add_argument("val1", type=str.upper, help="the first value to toggle between")
+tog_parser.add_argument("val2", type=str.upper, help="the second value to toggle between")
 
-global_parser.add_argument('monitor', type=str, help='The name of the monitor to control')
+global_parser.add_argument("mon", type=str.upper, help="the monitor to control")
 
 
 def run(args):
     args = global_parser.parse_args(args)
-    args.func(args)
-
-    return args.out
+    try:
+        args.func(args)
+    except MonitorBossError as e:
+        print(f"{global_parser.prog}: error: {e}", file=sys.stderr)
+        sys.exit(1)
