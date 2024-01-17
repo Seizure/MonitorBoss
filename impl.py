@@ -67,9 +67,9 @@ def set_attribute(mon: int, attr: Attribute, val: InputSource | PowerMode | int)
             raise MonitorBossError(f"cannot set a value for {attr.value.desc}.")
 
         try:
-            value.setter(m, val)
+            attr.value.setter(m, val)
         except:
-            raise MonitorBossError(f"could not set {attr.value.desc} for monitor #{mon}.")
+            raise MonitorBossError(f"could not set {attr.value.desc} for monitor #{mon} to {val}.")
 
 
 def toggle_attribute(mon: int, attr: Attribute, val1: InputSource | PowerMode | int,
@@ -87,11 +87,11 @@ def toggle_attribute(mon: int, attr: Attribute, val1: InputSource | PowerMode | 
             else:
                 raise MonitorBossError(f"{attr.value.desc} {e.value} for monitor #{mon} is not a standard value.")
         except:
-            raise MonitorBossError(f"could not get {attr.value.desc} for monitor #{mon}.")
+            raise MonitorBossError(f"could not get current {attr.value.desc} for monitor #{mon}.")
 
         new_val = val2 if cur_val == val1 else val1
 
         try:
             attr.value.setter(m, new_val)
         except:
-            raise MonitorBossError(f"could not set {attr.value.desc} for monitor #{mon} to {new_val}.")
+            raise MonitorBossError(f"could not toggle {attr.value.desc} for monitor #{mon} to {new_val}.")
