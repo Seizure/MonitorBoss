@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from enum import Enum
 
 from monitorcontrol import get_monitors, InputSource, Monitor, PowerMode as PowerModeLower, VCPError
@@ -9,12 +10,19 @@ from monitorcontrol.monitorcontrol import InputSourceValueError
 input_sources = {27: InputSource.DP2}
 
 
+@dataclass
+class AttributeData:
+    desc: str
+    getter: ...
+    setter: ...
+
+
 class Attribute(Enum):
-    SRC = "SRC"
-    CNT = "CNT"
-    LUM = "LUM"
-    PWR = "PWR"
-    VCP = "VCP"
+    SRC = AttributeData("input source", Monitor.get_input_source, Monitor.set_input_source)
+    CNT = AttributeData("contrast", Monitor.get_contrast, Monitor.set_contrast)
+    LUM = AttributeData("luminance", Monitor.get_luminance, Monitor.set_luminance)
+    PWR = AttributeData("power mode", Monitor.get_power_mode, Monitor.set_power_mode)
+    VCP = AttributeData("VCP capabilities", Monitor.get_vcp_capabilities, None)
 
 
 class PowerMode(Enum):
@@ -41,138 +49,57 @@ def __get_monitor(index: int) -> Monitor:
         raise MonitorBossError(f"monitor #{index} does not exist.")
 
 
-def get_attribute(mon: int, attr: Attribute) -> str | int:
+def get_attribute(mon: int, attr: Attribute) -> str | int | dict:
     with __get_monitor(mon) as m:
-        match attr:
-            case Attribute.SRC:
-                try:
-                    return m.get_input_source().name
-                except InputSourceValueError as e:
-                    # Some monitors use non-standard codes that are outside of spec.
-                    # Just return their code (int), instead of name (str).
-                    return e.value
-                except:
-                    raise MonitorBossError(f"could not get input source for monitor #{mon}.")
+        if attr.value.getter is None:
+            raise MonitorBossError(f"cannot get a value for {attr.value.desc}.")
 
-            case Attribute.CNT:
-                try:
-                    return m.get_contrast()
-                except:
-                    raise MonitorBossError(f"could not get contrast for monitor #{mon}.")
+        try:
+            val = attr.value.getter(m)
+        except InputSourceValueError as e:
+            # Some monitors use non-standard codes that are outside of spec.
+            val = e.value
+        except:
+            raise MonitorBossError(f"could not get {attr.value.desc} for monitor #{mon}.")
 
-            case Attribute.LUM:
-                try:
-                    return m.get_luminance()
-                except:
-                    raise MonitorBossError(f"could not get luminance for monitor #{mon}.")
+        if isinstance(val, Enum):
+            # InputSource and PowerMode are Enums
+            val = val.name
 
-            case Attribute.PWR:
-                try:
-                    return m.get_power_mode().name
-                except:
-                    raise MonitorBossError(f"Could not get power mode for monitor #{mon}.")
-
-            case Attribute.VCP:
-                try:
-                    return m.get_vcp_capabilities().name
-                except:
-                    raise MonitorBossError(f"could not get VCP capabilities for monitor #{mon}.")
-
-            case _:
-                raise MonitorBossError(f"{attr} is not a valid attribute to get.")
+        return val
 
 
 def set_attribute(mon: int, attr: Attribute, val: InputSource | PowerMode | int):
     with __get_monitor(mon) as m:
-        match attr:
-            case Attribute.SRC:
-                try:
-                    m.set_input_source(val)
-                except:
-                    raise MonitorBossError(f"could not set input source for monitor #{mon}.")
+        if attr.value.setter is None:
+            raise MonitorBossError(f"cannot set a value for {attr.value.desc}.")
 
-            case Attribute.CNT:
-                try:
-                    m.set_contrast(val)
-                except:
-                    raise MonitorBossError(f"could not set contrast for monitor #{mon}.")
-
-            case Attribute.LUM:
-                try:
-                    m.set_luminance(val)
-                except:
-                    raise MonitorBossError(f"could not set luminance for monitor #{mon}.")
-
-            case Attribute.PWR:
-                try:
-                    m.set_power_mode(val)
-                except:
-                    raise MonitorBossError(f"could not set power mode for monitor #{mon}.")
-
-            case _:
-                raise MonitorBossError(f"{attr} is not a valid attribute to set.")
+        try:
+            value.setter(m, val)
+        except:
+            raise MonitorBossError(f"could not set {attr.value.desc} for monitor #{mon}.")
 
 
 def toggle_attribute(mon: int, attr: Attribute, val1: InputSource | PowerMode | int,
                      val2: InputSource | PowerMode | int):
-    def toggle(cur, val1, val2):
-        return val2 if cur == val1 else val1
-
     with __get_monitor(mon) as m:
-        match attr:
-            case Attribute.SRC:
-                try:
-                    src = m.get_input_source()
-                except InputSourceValueError as e:
-                    # Some monitors use non-standard codes that are outside of spec.
-                    if e.value in input_sources:
-                        src = input_sources[e.value]
-                    else:
-                        raise MonitorBossError(f"input source {e.value} for monitor #{mon} is not a standard value.")
-                except:
-                    raise MonitorBossError(f"could not get input source for monitor #{mon}.")
+        if attr.value.getter is None or attr.value.setter is None:
+            raise MonitorBossError(f"cannot toggle a value for {attr.value.desc}.")
 
-                new_val = toggle(src, val1, val2)
-                try:
-                    m.set_input_source(new_val)
-                except:
-                    raise MonitorBossError(f"could not set input source for monitor #{mon} to {new_val}.")
+        try:
+            cur_val = attr.value.getter(m)
+        except InputSourceValueError as e:
+            # Some monitors use non-standard codes that are outside of spec.
+            if e.value in input_sources:
+                cur_val = input_sources[e.value]
+            else:
+                raise MonitorBossError(f"{attr.value.desc} {e.value} for monitor #{mon} is not a standard value.")
+        except:
+            raise MonitorBossError(f"could not get {attr.value.desc} for monitor #{mon}.")
 
-            case Attribute.CNT:
-                try:
-                    cnt = m.get_contrast()
-                except:
-                    raise MonitorBossError(f"could not get contrast for monitor #{mon}.")
+        new_val = val2 if cur_val == val1 else val1
 
-                new_val = toggle(cnt, val1, val2)
-                try:
-                    m.set_contrast(new_val)
-                except:
-                    raise MonitorBossError(f"could not set contrast for monitor #{mon} to {new_val}.")
-
-            case Attribute.LUM:
-                try:
-                    lum = m.get_luminance()
-                except:
-                    raise MonitorBossError(f"could not get luminance for monitor #{mon}.")
-
-                new_val = toggle(lum, val1, val2)
-                try:
-                    m.set_luminance(new_val)
-                except:
-                    raise MonitorBossError(f"could not set luminance for monitor #{mon} to {new_val}.")
-
-            case Attribute.PWR:
-                try:
-                    pwr = m.get_power_mode()
-                except:
-                    raise MonitorBossError(f"could not get power mode for monitor #{mon}.")
-
-                new_val = toggle(pwr, val1, val2)
-                try:
-                    m.set_power_mode(new_val)
-                except:
-                    raise MonitorBossError(f"could not set power mode for monitor #{mon} to {new_val}.")
-
-            case _:
-                raise MonitorBossError(f"{attr} is not a valid attribute to toggle.")
+        try:
+            attr.value.setter(m, new_val)
+        except:
+            raise MonitorBossError(f"could not set {attr.value.desc} for monitor #{mon} to {new_val}.")
