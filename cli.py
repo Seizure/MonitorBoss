@@ -53,11 +53,12 @@ def __check_val(attr: Attribute, val: str) -> InputSource | PowerMode | int:
                                     f"\nValid luminance values are typically 0-100.")
 
         case Attribute.PWR:
+            # PowerMode values are lowercase; other enums are uppercase.
             try:
-                return PowerMode[val]
+                return PowerMode[val.lower()]
             except KeyError:
                 global_parser.error(f"{val} is an invalid power mode."
-                                    f"\nValid power modes are: {', '.join(PowerMode.__members__)}")
+                                    f"\nValid power modes are: {', '.join(map(str.upper, PowerMode.__members__))}")
 
 
 def __get_attr(args):

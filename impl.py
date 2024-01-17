@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from monitorcontrol import get_monitors, InputSource, Monitor, PowerMode as PowerModeLower, VCPError
+from monitorcontrol import get_monitors, InputSource, Monitor, PowerMode, VCPError
 from monitorcontrol.monitorcontrol import InputSourceValueError
 
 
@@ -23,14 +23,6 @@ class Attribute(Enum):
     LUM = AttributeData("luminance", Monitor.get_luminance, Monitor.set_luminance)
     PWR = AttributeData("power mode", Monitor.get_power_mode, Monitor.set_power_mode)
     VCP = AttributeData("VCP capabilities", Monitor.get_vcp_capabilities, None)
-
-
-class PowerMode(Enum):
-    ON = PowerModeLower.on
-    STANDBY = PowerModeLower.standby
-    SUSPEND = PowerModeLower.suspend
-    OFF_SOFT = PowerModeLower.off_soft
-    OFF_HARD = PowerModeLower.off_hard
 
 
 class MonitorBossError(Exception):
@@ -63,8 +55,8 @@ def get_attribute(mon: int, attr: Attribute) -> str | int | dict:
             raise MonitorBossError(f"could not get {attr.value.desc} for monitor #{mon}.")
 
         if isinstance(val, Enum):
-            # InputSource and PowerMode are Enums
-            val = val.name
+            # InputSource and PowerMode are Enums; PowerMode values are lowercase.
+            val = val.name.upper()
 
         return val
 
