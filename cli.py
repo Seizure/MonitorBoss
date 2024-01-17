@@ -67,25 +67,30 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
 def __list_mons(args):
     for index, monitor in enumerate(list_monitors()):
         with monitor:
+            try:
+                caps = monitor.get_vcp_capabilities()
+            except:
+                global_parser.error("could not list information for monitor #{index}.")
             print(f"monitor #{index}", end="")
             for name, value in monitor_names.items():
                 if value == index:
-                    print(", {name}", end="")
+                    print(f", {name}", end="")
                     break
             print(":", end="")
-            if monitor.type:
-                print(f" {monitor.type}", end="")
-            if monitor.type and monitor.model:
+            if caps["type"]:
+                print(f" {caps['type']}", end="")
+            if caps["type"] and caps["model"]:
                 print(",", end="")
-            if monitor.model:
-                print(f" model {monitor.model}", end="")
+            if caps["model"]:
+                print(f" model {caps['model']}", end="")
             print()
-            if monitor.inputs:
-                print(f"  - input sources: {', '.join(s.name if isinstance(s, Enum) else s for s in monitor.inputs)}")
-            if monitor.color_presets:
+            if caps["inputs"]:
+                print(f"""  - input sources: {
+                          ", ".join(s.name if isinstance(s, Enum) else str(s) for s in caps["inputs"])}""")
+            if caps["color_presets"]:
                 print(f"""  - color presets: {
-                          ', '.join(c.name.removeprefix('COLOR_TEMP_') if isinstance(c, Enum) else c
-                                    for c in monitor.color_presets)}""")
+                          ", ".join(c.name.removeprefix("COLOR_TEMP_") if isinstance(c, Enum) else str(c)
+                                    for c in caps["color_presets"])}""")
 
 
 def __get_attr(args):
