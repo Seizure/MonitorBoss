@@ -41,7 +41,7 @@ def __get_monitor(index: int) -> Monitor:
         raise MonitorBossError(f"monitor #{index} does not exist.")
 
 
-def get_attribute(mon: int, attr: Attribute) -> str | int | dict:
+def get_attribute(mon: int, attr: Attribute) -> str | int:
     with __get_monitor(mon) as m:
         match attr:
             case Attribute.SRC:
