@@ -1,5 +1,5 @@
-import argparse
-import sys
+from argparse import ArgumentParser
+from sys import stderr, exit
 
 from impl import *
 
@@ -87,7 +87,7 @@ def __tog_attr(args):
     toggle_attribute(mon, attr, val1, val2)
 
 
-global_parser = argparse.ArgumentParser(description="Boss your monitors around.")
+global_parser = ArgumentParser(description="Boss your monitors around.")
 subparsers = global_parser.add_subparsers(title="subcommands", help="basic commands", dest="subcommand", required=True)
 
 get_parser = subparsers.add_parser("get", help="return the value of a given attribute")
@@ -113,5 +113,5 @@ def run(args):
     try:
         args.func(args)
     except MonitorBossError as e:
-        print(f"{global_parser.prog}: error: {e}", file=sys.stderr)
-        sys.exit(1)
+        print(f"{global_parser.prog}: error: {e}", file=stderr)
+        exit(1)
