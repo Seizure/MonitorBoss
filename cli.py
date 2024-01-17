@@ -4,11 +4,6 @@ from sys import stderr, exit
 from impl import *
 
 
-# TODO: make the monitor setup configurable.
-# Seizure's three monitors are hard-coded.
-monitor_names = {"LEFT": 2, "MIDDLE": 1, "RIGHT": 0}
-
-
 def __check_attr(attr: str) -> Attribute:
     try:
         return Attribute[attr]
@@ -18,8 +13,7 @@ def __check_attr(attr: str) -> Attribute:
 
 
 def __check_mon(mon: str) -> int:
-    if mon in monitor_names:
-        mon = monitor_names[mon]
+    mon = monitor_names.get(mon, mon)
     try:
         return int(mon)
     except ValueError:
@@ -74,7 +68,7 @@ def __list_mons(args):
     for index, monitor in enumerate(list_monitors()):
         with monitor:
             print(f"monitor #{index}", end="")
-            for name, value in monitor_names:
+            for name, value in monitor_names.items():
                 if value == index:
                     print(", {name}", end="")
                     break
