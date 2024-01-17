@@ -42,15 +42,15 @@ def __get_monitor(index: int) -> Monitor:
 
 
 def get_attribute(mon: int, attr: Attribute) -> str | int | dict:
-    with __get_monitor(mon) as m:
+    with __get_monitor(mon) as monitor:
         if attr.value.getter is None:
             raise MonitorBossError(f"cannot get a value for {attr.value.desc}.")
 
         try:
-            val = attr.value.getter(m)
-        except InputSourceValueError as e:
+            val = attr.value.getter(monitor)
+        except InputSourceValueError as err:
             # Some monitors use non-standard codes that are outside of spec.
-            val = e.value
+            val = err.value
         except:
             raise MonitorBossError(f"could not get {attr.value.desc} for monitor #{mon}.")
 
@@ -62,36 +62,36 @@ def get_attribute(mon: int, attr: Attribute) -> str | int | dict:
 
 
 def set_attribute(mon: int, attr: Attribute, val: InputSource | PowerMode | int):
-    with __get_monitor(mon) as m:
+    with __get_monitor(mon) as monitor:
         if attr.value.setter is None:
             raise MonitorBossError(f"cannot set a value for {attr.value.desc}.")
 
         try:
-            attr.value.setter(m, val)
+            attr.value.setter(monitor, val)
         except:
             raise MonitorBossError(f"could not set {attr.value.desc} for monitor #{mon} to {val}.")
 
 
 def toggle_attribute(mon: int, attr: Attribute, val1: InputSource | PowerMode | int,
                      val2: InputSource | PowerMode | int):
-    with __get_monitor(mon) as m:
+    with __get_monitor(mon) as monitor:
         if attr.value.getter is None or attr.value.setter is None:
             raise MonitorBossError(f"cannot toggle a value for {attr.value.desc}.")
 
         try:
-            cur_val = attr.value.getter(m)
-        except InputSourceValueError as e:
+            cur_val = attr.value.getter(monitor)
+        except InputSourceValueError as err:
             # Some monitors use non-standard codes that are outside of spec.
-            if e.value in input_sources:
-                cur_val = input_sources[e.value]
+            if err.value in input_sources:
+                cur_val = input_sources[err.value]
             else:
-                raise MonitorBossError(f"{attr.value.desc} {e.value} for monitor #{mon} is not a standard value.")
+                raise MonitorBossError(f"{attr.value.desc} {err.value} for monitor #{mon} is not a standard value.")
         except:
             raise MonitorBossError(f"could not get current {attr.value.desc} for monitor #{mon}.")
 
         new_val = val2 if cur_val == val1 else val1
 
         try:
-            attr.value.setter(m, new_val)
+            attr.value.setter(monitor, new_val)
         except:
             raise MonitorBossError(f"could not toggle {attr.value.desc} for monitor #{mon} to {new_val}.")

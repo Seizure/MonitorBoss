@@ -113,6 +113,6 @@ def run(args):
     args = global_parser.parse_args(args)
     try:
         args.func(args)
-    except MonitorBossError as e:
-        print(f"{global_parser.prog}: error: {e}", file=stderr)
+    except MonitorBossError as err:
+        print(f"{global_parser.prog}: error: {err}", file=stderr)
         exit(1)
