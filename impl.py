@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from typing import List
 
 from monitorcontrol import get_monitors, ColorPreset, InputSource, Monitor, PowerMode, VCPError
 from monitorcontrol.monitorcontrol import InputSourceValueError
@@ -31,11 +32,15 @@ class MonitorBossError(Exception):
         super().__init__(message)
 
 
-def __get_monitor(index: int) -> Monitor:
+def list_monitors() -> List[Monitor]:
     try:
-        monitors = get_monitors()
+        return get_monitors()
     except:
         raise MonitorBossError(f"could not list monitors; are you using a laptop?")
+
+
+def __get_monitor(index: int) -> Monitor:
+    monitors = list_monitors()
     try:
         return monitors[index]
     except IndexError:

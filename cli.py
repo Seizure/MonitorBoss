@@ -6,7 +6,7 @@ from impl import *
 
 # TODO: make the monitor setup configurable.
 # Seizure's three monitors are hard-coded.
-monitor_names = {"LEFT": "2", "MIDDLE": "1", "RIGHT": "0"}
+monitor_names = {"LEFT": 2, "MIDDLE": 1, "RIGHT": 0}
 
 
 def __check_attr(attr: str) -> Attribute:
@@ -70,6 +70,30 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
                                         ', '.join(m.removeprefix('COLOR_TEMP_') for m in ColorPreset.__members__)}""")
 
 
+def __list_mons(args):
+    for index, monitor in enumerate(list_monitors()):
+        with monitor:
+            print(f"monitor #{index}", end="")
+            for name, value in monitor_names:
+                if value == index:
+                    print(", {name}", end="")
+                    break
+            print(":", end="")
+            if monitor.type:
+                print(f" {monitor.type}", end="")
+            if monitor.type and monitor.model:
+                print(",", end="")
+            if monitor.model:
+                print(f" model {monitor.model}", end="")
+            print()
+            if monitor.inputs:
+                print(f"  - input sources: {', '.join(s.name if isinstance(s, Enum) else s for s in monitor.inputs)}")
+            if monitor.color_presets:
+                print(f"""  - color presets: {
+                          ', '.join(c.name.removeprefix('COLOR_TEMP_') if isinstance(c, Enum) else c
+                                    for c in monitor.color_presets)}""")
+
+
 def __get_attr(args):
     attr = __check_attr(args.attr)
     mon = __check_mon(args.mon)
@@ -100,22 +124,26 @@ def __tog_attr(args):
 global_parser = ArgumentParser(description="Boss your monitors around.")
 subparsers = global_parser.add_subparsers(title="subcommands", help="basic commands", dest="subcommand", required=True)
 
+list_parser = subparsers.add_parser("list", help="list all the monitors and their possible attributes")
+list_parser.set_defaults(func=__list_mons)
+
 get_parser = subparsers.add_parser("get", help="return the value of a given attribute")
 get_parser.set_defaults(func=__get_attr)
 get_parser.add_argument("attr", type=str.upper, help="the attribute to return")
+get_parser.add_argument("mon", type=str.upper, help="the monitor to control")
 
 set_parser = subparsers.add_parser("set", help="sets a given attribute to a given value")
 set_parser.set_defaults(func=__set_attr)
 set_parser.add_argument("attr", type=str.upper, help="the attribute to set")
 set_parser.add_argument("val", type=str.upper, help="the value to set the attribute to")
+set_parser.add_argument("mon", type=str.upper, help="the monitor to control")
 
 tog_parser = subparsers.add_parser("tog", help="toggles a given attribute between two given values")
 tog_parser.set_defaults(func=__tog_attr)
 tog_parser.add_argument("attr", type=str.upper, help="the attribute to toggle")
 tog_parser.add_argument("val1", type=str.upper, help="the first value to toggle between")
 tog_parser.add_argument("val2", type=str.upper, help="the second value to toggle between")
-
-global_parser.add_argument("mon", type=str.upper, help="the monitor to control")
+tog_parser.add_argument("mon", type=str.upper, help="the monitor to control")
 
 
 def run(args):
