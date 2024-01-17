@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from monitorcontrol import get_monitors, InputSource, Monitor, PowerMode, VCPError
+from monitorcontrol import get_monitors, ColorPreset, InputSource, Monitor, PowerMode, VCPError
 from monitorcontrol.monitorcontrol import InputSourceValueError
 
 
@@ -22,6 +22,7 @@ class Attribute(Enum):
     CNT = AttributeData("contrast", Monitor.get_contrast, Monitor.set_contrast)
     LUM = AttributeData("luminance", Monitor.get_luminance, Monitor.set_luminance)
     PWR = AttributeData("power mode", Monitor.get_power_mode, Monitor.set_power_mode)
+    CLR = AttributeData("color preset", Monitor.get_color_preset, Monitor.set_color_preset)
     VCP = AttributeData("VCP capabilities", Monitor.get_vcp_capabilities, None)
 
 
@@ -34,7 +35,7 @@ def __get_monitor(index: int) -> Monitor:
     try:
         monitors = get_monitors()
     except:
-        raise MonitorBossError(f"could not get monitors; are you using a laptop?")
+        raise MonitorBossError(f"could not list monitors; are you using a laptop?")
     try:
         return monitors[index]
     except IndexError:
@@ -55,13 +56,14 @@ def get_attribute(mon: int, attr: Attribute) -> str | int | dict:
             raise MonitorBossError(f"could not get {attr.value.desc} for monitor #{mon}.")
 
         if isinstance(val, Enum):
-            # InputSource and PowerMode are Enums; PowerMode values are lowercase.
-            val = val.name.upper()
+            # ColorPreset, InputSource, and PowerMode are Enums.
+            # ColorPreset values all start with "COLOR_TEMP_". PowerMode values are lowercase.
+            val = val.name.upper().removeprefix("COLOR_TEMP_")
 
         return val
 
 
-def set_attribute(mon: int, attr: Attribute, val: InputSource | PowerMode | int):
+def set_attribute(mon: int, attr: Attribute, val: ColorPreset | InputSource | PowerMode | int):
     with __get_monitor(mon) as monitor:
         if attr.value.setter is None:
             raise MonitorBossError(f"cannot set a value for {attr.value.desc}.")
@@ -72,8 +74,8 @@ def set_attribute(mon: int, attr: Attribute, val: InputSource | PowerMode | int)
             raise MonitorBossError(f"could not set {attr.value.desc} for monitor #{mon} to {val}.")
 
 
-def toggle_attribute(mon: int, attr: Attribute, val1: InputSource | PowerMode | int,
-                     val2: InputSource | PowerMode | int):
+def toggle_attribute(mon: int, attr: Attribute, val1: ColorPreset | InputSource | PowerMode | int,
+                     val2: ColorPreset | InputSource | PowerMode | int):
     with __get_monitor(mon) as monitor:
         if attr.value.getter is None or attr.value.setter is None:
             raise MonitorBossError(f"cannot toggle a value for {attr.value.desc}.")

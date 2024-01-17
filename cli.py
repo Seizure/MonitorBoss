@@ -27,7 +27,7 @@ def __check_mon(mon: str) -> int:
                             f"\nValid monitors are: {', '.join(monitor_names)}, or an index")
 
 
-def __check_val(attr: Attribute, val: str) -> InputSource | PowerMode | int:
+def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerMode | int:
     match attr:
         case Attribute.SRC:
             try:
@@ -59,6 +59,15 @@ def __check_val(attr: Attribute, val: str) -> InputSource | PowerMode | int:
             except KeyError:
                 global_parser.error(f"{val} is an invalid power mode."
                                     f"\nValid power modes are: {', '.join(map(str.upper, PowerMode.__members__))}")
+
+        case Attribute.CLR:
+            # ColorPreset values all start with "COLOR_TEMP_".
+            try:
+                return ColorPreset[f"COLOR_TEMP_{val}"]
+            except KeyError:
+                global_parser.error(f"{val} is an invalid color preset."
+                                    f"""\nValid color presets are: {
+                                        ', '.join(m.removeprefix('COLOR_TEMP_') for m in ColorPreset.__members__)}""")
 
 
 def __get_attr(args):
