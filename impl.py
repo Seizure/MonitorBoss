@@ -73,37 +73,45 @@ def get_attribute(mon: int, attr: Attribute) -> str | int | dict:
         return val
 
 
-def set_attribute(mon: int, attr: Attribute, val: ColorPreset | InputSource | PowerMode | int):
-    with __get_monitor(mon) as monitor:
-        if attr.value.setter is None:
-            raise MonitorBossError(f"cannot set a value for {attr.value.desc}.")
+def set_attribute(mons: int | List[int], attr: Attribute, val: ColorPreset | InputSource | PowerMode | int):
+    if isinstance(mons, int):
+        mons = [mons]
 
-        try:
-            attr.value.setter(monitor, val)
-        except:
-            raise MonitorBossError(f"could not set {attr.value.desc} for monitor #{mon} to {val}.")
+    for mon in mons:
+        with __get_monitor(mon) as monitor:
+            if attr.value.setter is None:
+                raise MonitorBossError(f"cannot set a value for {attr.value.desc}.")
+
+            try:
+                attr.value.setter(monitor, val)
+            except:
+                raise MonitorBossError(f"could not set {attr.value.desc} for monitor #{mon} to {val}.")
 
 
-def toggle_attribute(mon: int, attr: Attribute, val1: ColorPreset | InputSource | PowerMode | int,
+def toggle_attribute(mons: int | List[int], attr: Attribute, val1: ColorPreset | InputSource | PowerMode | int,
                      val2: ColorPreset | InputSource | PowerMode | int):
-    with __get_monitor(mon) as monitor:
-        if attr.value.getter is None or attr.value.setter is None:
-            raise MonitorBossError(f"cannot toggle a value for {attr.value.desc}.")
+    if isinstance(mons, int):
+        mons = [mons]
 
-        try:
-            cur_val = attr.value.getter(monitor)
-        except InputSourceValueError as err:
-            # Some monitors use non-standard codes that are outside of spec.
-            if err.value in input_sources:
-                cur_val = input_sources[err.value]
-            else:
-                raise MonitorBossError(f"{attr.value.desc} {err.value} for monitor #{mon} is not a standard value.")
-        except:
-            raise MonitorBossError(f"could not get current {attr.value.desc} for monitor #{mon}.")
+    for mon in mons:
+        with __get_monitor(mon) as monitor:
+            if attr.value.getter is None or attr.value.setter is None:
+                raise MonitorBossError(f"cannot toggle a value for {attr.value.desc}.")
 
-        new_val = val2 if cur_val == val1 else val1
+            try:
+                cur_val = attr.value.getter(monitor)
+            except InputSourceValueError as err:
+                # Some monitors use non-standard codes that are outside of spec.
+                if err.value in input_sources:
+                    cur_val = input_sources[err.value]
+                else:
+                    raise MonitorBossError(f"{attr.value.desc} {err.value} for monitor #{mon} is not supported.")
+            except:
+                raise MonitorBossError(f"could not get current {attr.value.desc} for monitor #{mon}.")
 
-        try:
-            attr.value.setter(monitor, new_val)
-        except:
-            raise MonitorBossError(f"could not toggle {attr.value.desc} for monitor #{mon} to {new_val}.")
+            new_val = val2 if cur_val == val1 else val1
+
+            try:
+                attr.value.setter(monitor, new_val)
+            except:
+                raise MonitorBossError(f"could not toggle {attr.value.desc} for monitor #{mon} to {new_val}.")

@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-from sys import stderr, exit
 
 from impl import *
 
@@ -103,21 +102,21 @@ def __get_attr(args):
 
 def __set_attr(args):
     attr = __check_attr(args.attr)
-    mon = __check_mon(args.mon)
+    mons = [__check_mon(m) for m in args.mon]
 
     val = __check_val(attr, args.val)
 
-    set_attribute(mon, attr, val)
+    set_attribute(mons, attr, val)
 
 
 def __tog_attr(args):
     attr = __check_attr(args.attr)
-    mon = __check_mon(args.mon)
+    mons = [__check_mon(m) for m in args.mon]
 
     val1 = __check_val(attr, args.val1)
     val2 = __check_val(attr, args.val2)
 
-    toggle_attribute(mon, attr, val1, val2)
+    toggle_attribute(mons, attr, val1, val2)
 
 
 global_parser = ArgumentParser(description="Boss your monitors around.")
@@ -135,14 +134,14 @@ set_parser = subparsers.add_parser("set", help="sets a given attribute to a give
 set_parser.set_defaults(func=__set_attr)
 set_parser.add_argument("attr", type=str.upper, help="the attribute to set")
 set_parser.add_argument("val", type=str.upper, help="the value to set the attribute to")
-set_parser.add_argument("mon", type=str.upper, help="the monitor to control")
+set_parser.add_argument("mon", type=str.upper, nargs="+", help="the monitor(s) to control")
 
 tog_parser = subparsers.add_parser("tog", help="toggles a given attribute between two given values")
 tog_parser.set_defaults(func=__tog_attr)
 tog_parser.add_argument("attr", type=str.upper, help="the attribute to toggle")
 tog_parser.add_argument("val1", type=str.upper, help="the first value to toggle between")
 tog_parser.add_argument("val2", type=str.upper, help="the second value to toggle between")
-tog_parser.add_argument("mon", type=str.upper, help="the monitor to control")
+tog_parser.add_argument("mon", type=str.upper, nargs="+", help="the monitor(s) to control")
 
 
 def run(args):
@@ -150,5 +149,4 @@ def run(args):
     try:
         args.func(args)
     except MonitorBossError as err:
-        print(f"{global_parser.prog}: error: {err}", file=stderr)
-        exit(1)
+        global_parser.error(err)
