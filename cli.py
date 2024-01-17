@@ -74,7 +74,7 @@ def __list_mons(args):
             print(f"monitor #{index}", end="")
             for name, value in monitor_names.items():
                 if value == index:
-                    print(f", {name}", end="")
+                    print(f" ({name})", end="")
                     break
             print(":", end="")
             if caps["type"]:
