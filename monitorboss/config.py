@@ -1,55 +1,45 @@
-import configparser
-import os
+from configparser import ConfigParser
+from dataclasses import dataclass, field
 
-from impl import MonitorBossError
 
-CONF_FILE_LOC = "./conf/MonitorBoss.conf"
+DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.conf"
 
-DEFAULT_CONF_CONTENT = \
-"""###########
-# stores a list of aliases
-# corresponding to monitor IDs
-###########
+
+DEFAULT_CONF_CONTENT = """
 [MONITOR_NAMES]
-RIGHT = 0
-MIDDLE = 1
-LEFT = 2
+DEFAULT = 0
 
-###########
-# stores a list of aliases
-# corresponding to non-spec source codes
-###########
 [INPUT_NAMES]
-USBC = 27 # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers"""
-
-# these get populated by the config parser
-monitor_names = {}
-input_source_names = {}
-
-config = configparser.ConfigParser(inline_comment_prefixes="#")
-config.optionxform = str  # stop changing the case of our keys, you bastards
-
-config.read_file(open(CONF_FILE_LOC))
-
-# populate monitor names
-for k in config['MONITOR_NAMES'].keys():
-    monitor_names[k] = int(config['MONITOR_NAMES'][k])
-
-# populate input source names
-for k in config['INPUT_NAMES'].keys():
-    input_source_names[k] = int(config['INPUT_NAMES'][k])
+USBC = 27 # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
+""".lstrip()
 
 
-def reset_conf():
-    if os.path.exists(CONF_FILE_LOC):
-        try:
-            os.remove(CONF_FILE_LOC)
-        except:
-            raise MonitorBossError(f"{CONF_FILE_LOC} is not a file. Aborting. Please investigate manually and delete"
-                                   f"the item so that MonitorBoss can rebuild the conf")
+@dataclass
+class Config:
+    monitor_names: dict[str, int] = field(default_factory=dict)
+    input_source_names: dict[str, int] = field(default_factory=dict)
 
-        conf = open(CONF_FILE_LOC, "x")
 
-        conf.write(DEFAULT_CONF_CONTENT)
+def read_config(path: str | None = None) -> Config:
+    path = path if path is not None else DEFAULT_CONF_FILE_LOC
 
-        conf.close()
+    cfg_parser = ConfigParser(inline_comment_prefixes="#")
+    cfg_parser.optionxform = str # case-sensitive keys
+
+    with open(path, "r", encoding="utf8") as file:
+        cfg_parser.read_file(file, path)
+
+    cfg = Config()
+
+    for key, value in cfg_parser["MONITOR_NAMES"].items():
+        cfg.monitor_names[key] = int(value)
+    for key, value in cfg_parser["INPUT_NAMES"].items():
+        cfg.input_source_names[key] = int(value)
+
+    return cfg
+
+def reset_config(path: str | None = None):
+    path = path if path is not None else DEFAULT_CONF_FILE_LOC
+
+    with open(path, "w", encoding="utf8") as file:
+        file.write(DEFAULT_CONF_CONTENT)

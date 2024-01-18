@@ -14,21 +14,21 @@ def __check_attr(attr: str) -> Attribute:
         )
 
 
-def __check_mon(mon: str) -> int:
-    mon = monitor_names.get(mon, mon)
+def __check_mon(mon: str, cfg: Config) -> int:
+    mon = cfg.monitor_names.get(mon, mon)
     try:
         return int(mon)
     except ValueError:
         raise MonitorBossError(
-            f"{mon} is not a valid monitor.\nValid monitors are: {', '.join(monitor_names)}, or an ID number."
+            f"{mon} is not a valid monitor.\nValid monitors are: {', '.join(cfg.monitor_names)}, or an ID number."
         )
 
 
-def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerMode | int:
+def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSource | PowerMode | int:
     match attr:
         case Attribute.SRC:
-            if val in input_source_names:
-                val = input_source_names[val]
+            if val in cfg.input_source_names:
+                val = cfg.input_source_names[val]
             try:
                 return InputSource[val]
             except KeyError:
@@ -37,7 +37,7 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
                 except ValueError:
                     raise MonitorBossError(
                         f"""{val} is not a valid input source.\nValid input sources are: {
-                            ', '.join(list(InputSource.__members__) + list(input_source_names))
+                            ', '.join(list(InputSource.__members__) + list(cfg.input_source_names))
                         }, or a code number."""
                         "\nNOTE: A particular monitor will probably support only some of these values,"
                         " if any. Check your monitor's specs for the inputs it accepts."
@@ -82,11 +82,11 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
                 )
 
 
-def __list_mons(args):
+def __list_mons(args, cfg):
     def input_source_name(src):
         if isinstance(src, Enum):
             return src.name
-        for name, value in input_source_names.items():
+        for name, value in cfg.input_source_names.items():
             if value == src:
                 return f"{src} ({name})"
         return str(src)
@@ -101,7 +101,7 @@ def __list_mons(args):
             except:
                 raise MonitorBossError("could not list information for monitor #{index}.")
             print(f"monitor #{index}", end="")
-            for name, value in monitor_names.items():
+            for name, value in cfg.monitor_names.items():
                 if value == index:
                     print(f" ({name})", end="")
                     break
@@ -119,7 +119,7 @@ def __list_mons(args):
                 print(f"  - color presets: {', '.join(map(color_preset_name, caps['color_presets']))}")
 
 
-def __get_attr(args):
+def __get_attr(args, cfg):
     attr = __check_attr(args.attr)
     mon = __check_mon(args.mon)
 
@@ -132,7 +132,7 @@ def __get_attr(args):
     pprinter.pprint(val)
 
 
-def __set_attr(args):
+def __set_attr(args, cfg):
     attr = __check_attr(args.attr)
     mons = [__check_mon(m) for m in args.mon]
 
@@ -141,7 +141,7 @@ def __set_attr(args):
     set_attribute(mons, attr, val)
 
 
-def __tog_attr(args):
+def __tog_attr(args, cfg):
     attr = __check_attr(args.attr)
     mons = [__check_mon(m) for m in args.mon]
 
@@ -183,7 +183,9 @@ def run(args=None):
     parser = __make_parser()
     args = parser.parse_args(args)
 
+    cfg = read_config()
+
     try:
-        args.func(args)
+        args.func(args, cfg)
     except MonitorBossError as err:
         parser.error(err)

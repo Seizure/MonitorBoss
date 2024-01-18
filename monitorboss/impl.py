@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Union
+from typing import Union
 
 from monitorcontrol import get_monitors, ColorPreset, InputSource, Monitor, PowerMode, VCPError
 from monitorcontrol.monitorcontrol import InputSourceValueError
@@ -36,7 +36,7 @@ class MonitorBossError(Exception):
         super().__init__(message)
 
 
-def list_monitors() -> List[Monitor]:
+def list_monitors() -> list[Monitor]:
     try:
         return get_monitors()
     except:
@@ -62,7 +62,7 @@ def get_attribute(mon: int, attr: Attribute) -> ColorPreset | InputSource | Powe
             raise MonitorBossError(f"could not get {attr.value.desc} for monitor #{mon}.")
 
 
-def set_attribute(mons: int | List[int], attr: Attribute, val: ColorPreset | InputSource | PowerMode | int):
+def set_attribute(mons: int | list[int], attr: Attribute, val: ColorPreset | InputSource | PowerMode | int):
     if isinstance(mons, int):
         mons = [mons]
 
@@ -78,7 +78,7 @@ def set_attribute(mons: int | List[int], attr: Attribute, val: ColorPreset | Inp
 
 
 def toggle_attribute(
-    mons: int | List[int],
+    mons: int | list[int],
     attr: Attribute,
     val1: ColorPreset | InputSource | PowerMode | int,
     val2: ColorPreset | InputSource | PowerMode | int,
