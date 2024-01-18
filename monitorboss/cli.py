@@ -9,7 +9,7 @@ def __check_attr(attr: str) -> Attribute:
         return Attribute[attr]
     except KeyError:
         raise MonitorBossError(
-            f"{attr} is not a valid attribute.\nValid attributes are: {', '.join(Attribute.__members__)}"
+            f"{attr} is not a valid attribute.\nValid attributes are: {', '.join(Attribute.__members__)}."
         )
 
 
@@ -19,7 +19,7 @@ def __check_mon(mon: str) -> int:
         return int(mon)
     except ValueError:
         raise MonitorBossError(
-            f"{mon} is not a valid monitor.\nValid monitors are: {', '.join(monitor_names)}, or an ID number"
+            f"{mon} is not a valid monitor.\nValid monitors are: {', '.join(monitor_names)}, or an ID number."
         )
 
 
@@ -35,8 +35,9 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
                     return int(val)
                 except ValueError:
                     raise MonitorBossError(
-                        f"{val} is an invalid input source."
-                        f"\nValid input sources are: {', '.join(InputSource.__members__)}"
+                        f"""{val} is not a valid input source.\nValid input sources are: {
+                            ', '.join(list(InputSource.__members__) + list(input_source_names))
+                        }, or a code number."""
                         "\nNOTE: A particular monitor will probably support only some of these values,"
                         " if any. Check your monitor's specs for the inputs it accepts."
                     )
@@ -46,7 +47,7 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
                 return int(val)
             except ValueError:
                 raise MonitorBossError(
-                    f"{val} is an invalid contrast value.\nValid contrast values are typically 0-100."
+                    f"{val} is not a valid contrast value.\nValid contrast values are typically 0-100."
                 )
 
         case Attribute.LUM:
@@ -54,7 +55,7 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
                 return int(val)
             except ValueError:
                 raise MonitorBossError(
-                    f"{val} is an invalid luminance value.\nValid luminance values are typically 0-100."
+                    f"{val} is not a valid luminance value.\nValid luminance values are typically 0-100."
                 )
 
         case Attribute.PWR:
@@ -63,8 +64,9 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
                 return PowerMode[val.lower()]
             except KeyError:
                 raise MonitorBossError(
-                    f"{val} is an invalid power mode."
-                    f"\nValid power modes are: {', '.join(map(str.upper, PowerMode.__members__))}"
+                    f"""{val} is not a valid power mode.\nValid power modes are: {
+                        ", ".join(map(str.upper, PowerMode.__members__))
+                    }."""
                 )
 
         case Attribute.CLR:
@@ -73,9 +75,9 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
                 return ColorPreset[f"COLOR_TEMP_{val}"]
             except KeyError:
                 raise MonitorBossError(
-                    f"""{val} is an invalid color preset.\nValid color presets are: {
+                    f"""{val} is not a valid color preset.\nValid color presets are: {
                         ", ".join(m.removeprefix("COLOR_TEMP_") for m in ColorPreset.__members__)
-                    }"""
+                    }."""
                 )
 
 
@@ -146,6 +148,7 @@ def __tog_attr(args):
 def __make_parser():
     parser = ArgumentParser(description="Boss your monitors around.")
     subparsers = parser.add_subparsers(title="subcommands", help="basic commands", dest="subcommand", required=True)
+
     list_parser = subparsers.add_parser("list", help="list all the monitors and their possible attributes")
     list_parser.set_defaults(func=__list_mons)
 
@@ -170,7 +173,7 @@ def __make_parser():
     return parser
 
 
-def run(args):
+def run(args=None):
     parser = __make_parser()
     args = parser.parse_args(args)
 
