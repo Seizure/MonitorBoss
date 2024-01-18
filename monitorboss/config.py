@@ -27,7 +27,7 @@ monitor_names = {}
 input_source_names = {}
 
 config = configparser.ConfigParser(inline_comment_prefixes="#")
-config.optionxform = str # stop changing the case of our keys, you bastards
+config.optionxform = str  # stop changing the case of our keys, you bastards
 
 config.read_file(open(CONF_FILE_LOC))
 
@@ -39,12 +39,14 @@ for k in config['MONITOR_NAMES'].keys():
 for k in config['INPUT_NAMES'].keys():
     input_source_names[k] = int(config['INPUT_NAMES'][k])
 
+
 def reset_conf():
-    if os.path.exists((CONF_FILE_LOC)):
+    if os.path.exists(CONF_FILE_LOC):
         try:
             os.remove(CONF_FILE_LOC)
         except:
-            raise MonitorBossError(f"{CONF_FILE_LOC} is not a file. Aborting. Please investigate manually and delete the item so that MonitorBoss can rebuild the conf")
+            raise MonitorBossError(f"{CONF_FILE_LOC} is not a file. Aborting. Please investigate manually and delete"
+                                   f"the item so that MonitorBoss can rebuild the conf")
 
         conf = open(CONF_FILE_LOC, "x")
 

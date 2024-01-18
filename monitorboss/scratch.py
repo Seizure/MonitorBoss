@@ -2,10 +2,14 @@
 
 from cli import run
 
-line = "tog src DP1 USBC right"
+from config import reset_conf
+
+# line = "tog src DP1 USBC right"
 # line = "get vcp 2"
 # line = "set vcp shit 0"
 # line = "list"
+#
+# args = line.split()
+# run(args)
 
-args = line.split()
-run(args)
+# reset_conf()
