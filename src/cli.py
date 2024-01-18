@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 
+from config import *
 from impl import *
 
 
@@ -17,19 +18,24 @@ def __check_mon(mon: str) -> int:
         return int(mon)
     except ValueError:
         global_parser.error(f"{mon} is not a valid monitor."
-                            f"\nValid monitors are: {', '.join(monitor_names)}, or an index")
+                            f"\nValid monitors are: {', '.join(monitor_names)}, or an ID number")
 
 
 def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerMode | int:
     match attr:
         case Attribute.SRC:
+            if val in input_source_names:
+                val = input_source_names[val]
             try:
                 return InputSource[val]
             except KeyError:
-                global_parser.error(f"{val} is an invalid input source."
-                                    f"\nValid input sources are: {', '.join(InputSource.__members__)}"
-                                    "\nNOTE: A particular monitor will probably support only some of these values,"
-                                    " if any. Check your monitor's specs for the inputs it accepts.")
+                try:
+                    return int(val)
+                except ValueError:
+                    global_parser.error(f"{val} is an invalid input source."
+                                        f"\nValid input sources are: {', '.join(InputSource.__members__)}"
+                                        "\nNOTE: A particular monitor will probably support only some of these values,"
+                                        " if any. Check your monitor's specs for the inputs it accepts.")
 
         case Attribute.CNT:
             try:
@@ -64,6 +70,17 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
 
 
 def __list_mons(args):
+    def input_source_name(src):
+        if isinstance(src, Enum):
+            return src.name
+        for name, value in input_source_names.items():
+            if value == src:
+                return f"{src} ({name})"
+        return str(src)
+
+    def color_preset_name(clr):
+        return clr.name.removeprefix("COLOR_TEMP_") if isinstance(clr, Enum) else str(clr)
+
     for index, monitor in enumerate(list_monitors()):
         with monitor:
             try:
@@ -84,12 +101,9 @@ def __list_mons(args):
                 print(f" model {caps['model']}", end="")
             print()
             if caps["inputs"]:
-                print(f"""  - input sources: {
-                          ", ".join(s.name if isinstance(s, Enum) else str(s) for s in caps["inputs"])}""")
+                print(f"  - input sources: {', '.join(map(input_source_name, caps['inputs']))}")
             if caps["color_presets"]:
-                print(f"""  - color presets: {
-                          ", ".join(c.name.removeprefix("COLOR_TEMP_") if isinstance(c, Enum) else str(c)
-                                    for c in caps["color_presets"])}""")
+                print(f"  - color presets: {', '.join(map(color_preset_name, caps['color_presets']))}")
 
 
 def __get_attr(args):

@@ -6,14 +6,12 @@ from monitorcontrol import get_monitors, ColorPreset, InputSource, Monitor, Powe
 from monitorcontrol.monitorcontrol import InputSourceValueError
 
 
-# TODO: make the monitor setup configurable.
-# Seizure's three monitors are hard-coded.
-monitor_names = {"LEFT": 2, "MIDDLE": 1, "RIGHT": 0}
-
-
-# TODO: make input source codes configurable.
-# Seizure's Dell monitor's USB-C source has code 27. No idea how consistent this is.
-input_sources = {27: InputSource.DP2}
+def get_input_source(monitor: Monitor) -> InputSource | int:
+    try:
+        return monitor.get_input_source()
+    except InputSourceValueError as err:
+        # Some monitors use non-standard codes that are outside of spec.
+        return err.value
 
 
 @dataclass
@@ -24,7 +22,7 @@ class AttributeData:
 
 
 class Attribute(Enum):
-    SRC = AttributeData("input source", Monitor.get_input_source, Monitor.set_input_source)
+    SRC = AttributeData("input source", get_input_source, Monitor.set_input_source)
     CNT = AttributeData("contrast", Monitor.get_contrast, Monitor.set_contrast)
     LUM = AttributeData("luminance", Monitor.get_luminance, Monitor.set_luminance)
     PWR = AttributeData("power mode", Monitor.get_power_mode, Monitor.set_power_mode)
@@ -59,9 +57,6 @@ def get_attribute(mon: int, attr: Attribute) -> str | int | dict:
 
         try:
             val = attr.value.getter(monitor)
-        except InputSourceValueError as err:
-            # Some monitors use non-standard codes that are outside of spec.
-            val = err.value
         except:
             raise MonitorBossError(f"could not get {attr.value.desc} for monitor #{mon}.")
 
@@ -100,12 +95,6 @@ def toggle_attribute(mons: int | List[int], attr: Attribute, val1: ColorPreset |
 
             try:
                 cur_val = attr.value.getter(monitor)
-            except InputSourceValueError as err:
-                # Some monitors use non-standard codes that are outside of spec.
-                if err.value in input_sources:
-                    cur_val = input_sources[err.value]
-                else:
-                    raise MonitorBossError(f"{attr.value.desc} {err.value} for monitor #{mon} is not supported.")
             except:
                 raise MonitorBossError(f"could not get current {attr.value.desc} for monitor #{mon}.")
 

@@ -2,7 +2,7 @@
 
 from cli import run
 
-# line = "tog vcp DP2 DP1 right"
+# line = "tog vcp DP2 USBC right"
 # line = "get vcp 2"
 # line = "set vcp shit 0"
 line = "list"
