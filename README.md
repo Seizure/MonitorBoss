@@ -25,7 +25,7 @@ MonitorBoss makes use of the DDC/CI standard and MCCS protocol to communicate wi
 * [PyInstaller](https://pypi.org/project/pyinstaller/) - for building application binaries
 
 ## Usage
-For help with running MonitorBoss in the command lane, see [USAGE.md](USAGE.md)
+For help with running MonitorBoss in the command line, see [USAGE.md](USAGE.md)
 
 ## Authors
 * [@Rangi42](https://github.com/Rangi42)
