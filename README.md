@@ -10,7 +10,7 @@ MonitorBoss makes use of the DDC/CI standard and MCCS protocol to communicate wi
 * Contrast
 * Luminance/Brightness
 * Power state
-* Color mode
+* Color preset
 * Virtual Control Panel summary
 
 ## Requirements
@@ -93,6 +93,20 @@ positional arguments:
 options:
   -h, --help  show this help message and exit
 ```
+
+### Available attributes
+* src - (currently active) input source
+  * Must be a valid source ID, or alias as defined by the application built-ins or config file additions
+* cnt - contrast
+  * Must be an integer, though valid values will be constrained between 0 - 100 on most monitors
+* lum - luminance/brightness
+  * Must be an integer, though valid values will be constrained between 0 - 100 on most monitors
+* pwr - power state
+  * Must be a valid power state, as defined by built-in aliases
+* clr - (currently active) color preset
+  * Must be a valid color temperature preset, as defined by built-in aliases
+* vcp - summary of the Virtual Control Panel's abilities.
+  * This attribute can only be read.
 
 ## Authors
 * [@Rangi42](https://github.com/Rangi42)
