@@ -84,8 +84,12 @@ def set_attribute(mons: int | List[int], attr: Attribute, val: ColorPreset | Inp
                 raise MonitorBossError(f"could not set {attr.value.desc} for monitor #{mon} to {val}.")
 
 
-def toggle_attribute(mons: int | List[int], attr: Attribute, val1: ColorPreset | InputSource | PowerMode | int,
-                     val2: ColorPreset | InputSource | PowerMode | int):
+def toggle_attribute(
+    mons: int | List[int],
+    attr: Attribute,
+    val1: ColorPreset | InputSource | PowerMode | int,
+    val2: ColorPreset | InputSource | PowerMode | int,
+):
     if isinstance(mons, int):
         mons = [mons]
 

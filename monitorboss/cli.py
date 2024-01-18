@@ -9,8 +9,8 @@ def __check_attr(attr: str) -> Attribute:
         return Attribute[attr]
     except KeyError:
         raise MonitorBossError(
-            f"{attr} is not a valid attribute."
-            f"\nValid attributes are: {', '.join(Attribute.__members__)}")
+            f"{attr} is not a valid attribute.\nValid attributes are: {', '.join(Attribute.__members__)}"
+        )
 
 
 def __check_mon(mon: str) -> int:
@@ -19,8 +19,8 @@ def __check_mon(mon: str) -> int:
         return int(mon)
     except ValueError:
         raise MonitorBossError(
-            f"{mon} is not a valid monitor."
-            f"\nValid monitors are: {', '.join(monitor_names)}, or an ID number")
+            f"{mon} is not a valid monitor.\nValid monitors are: {', '.join(monitor_names)}, or an ID number"
+        )
 
 
 def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerMode | int:
@@ -38,23 +38,24 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
                         f"{val} is an invalid input source."
                         f"\nValid input sources are: {', '.join(InputSource.__members__)}"
                         "\nNOTE: A particular monitor will probably support only some of these values,"
-                        " if any. Check your monitor's specs for the inputs it accepts.")
+                        " if any. Check your monitor's specs for the inputs it accepts."
+                    )
 
         case Attribute.CNT:
             try:
                 return int(val)
             except ValueError:
                 raise MonitorBossError(
-                    f"{val} is an invalid contrast value."
-                    f"\nValid contrast values are typically 0-100.")
+                    f"{val} is an invalid contrast value.\nValid contrast values are typically 0-100."
+                )
 
         case Attribute.LUM:
             try:
                 return int(val)
             except ValueError:
                 raise MonitorBossError(
-                    f"{val} is an invalid luminance value."
-                    f"\nValid luminance values are typically 0-100.")
+                    f"{val} is an invalid luminance value.\nValid luminance values are typically 0-100."
+                )
 
         case Attribute.PWR:
             # PowerMode values are lowercase; other enums are uppercase.
@@ -63,7 +64,8 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
             except KeyError:
                 raise MonitorBossError(
                     f"{val} is an invalid power mode."
-                    f"\nValid power modes are: {', '.join(map(str.upper, PowerMode.__members__))}")
+                    f"\nValid power modes are: {', '.join(map(str.upper, PowerMode.__members__))}"
+                )
 
         case Attribute.CLR:
             # ColorPreset values all start with "COLOR_TEMP_".
@@ -71,9 +73,10 @@ def __check_val(attr: Attribute, val: str) -> ColorPreset | InputSource | PowerM
                 return ColorPreset[f"COLOR_TEMP_{val}"]
             except KeyError:
                 raise MonitorBossError(
-                    f"{val} is an invalid color preset."
-                    f"""\nValid color presets are: {
-                        ", ".join(m.removeprefix("COLOR_TEMP_") for m in ColorPreset.__members__)}""")
+                    f"""{val} is an invalid color preset.\nValid color presets are: {
+                        ", ".join(m.removeprefix("COLOR_TEMP_") for m in ColorPreset.__members__)
+                    }"""
+                )
 
 
 def __list_mons(args):
