@@ -1,6 +1,7 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import List
+from typing import List, Union
 
 from monitorcontrol import get_monitors, ColorPreset, InputSource, Monitor, PowerMode, VCPError
 from monitorcontrol.monitorcontrol import InputSourceValueError
@@ -17,8 +18,8 @@ def get_input_source(monitor: Monitor) -> InputSource | int:
 @dataclass
 class AttributeData:
     desc: str
-    getter: ...
-    setter: ...
+    getter: Union[Callable[[Monitor], ...], None]
+    setter: Union[Callable[[Monitor, ...], None], None]
 
 
 class Attribute(Enum):
