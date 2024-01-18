@@ -140,10 +140,9 @@ def __tog_attr(args):
     toggle_attribute(mons, attr, val1, val2)
 
 
-def make_parser():
+def __make_parser():
     parser = ArgumentParser(description="Boss your monitors around.")
     subparsers = parser.add_subparsers(title="subcommands", help="basic commands", dest="subcommand", required=True)
-
     list_parser = subparsers.add_parser("list", help="list all the monitors and their possible attributes")
     list_parser.set_defaults(func=__list_mons)
 
@@ -169,7 +168,7 @@ def make_parser():
 
 
 def run(args):
-    parser = make_parser()
+    parser = __make_parser()
     args = parser.parse_args(args)
 
     try:
