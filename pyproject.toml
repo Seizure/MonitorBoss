@@ -1,6 +1,6 @@
 [project]
 name = "MonitorBoss"
-version = "2024.01.16"
+version = "2024.01.17"
 
 description = "Boss your monitors around"
 authors = [
