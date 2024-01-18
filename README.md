@@ -95,8 +95,8 @@ options:
 ```
 
 ## Authors
-* @Rangi42
-* @Seizure
+* [@Rangi42](https://github.com/Rangi42)
+* [@Seizure](https://github.com/Seizure)
 
 ## License
 This project is licenced under LGPL v3.0. See [LICENSE.txt](LICENSE.txt) for more information.
