@@ -51,22 +51,15 @@ def __get_monitor(index: int) -> Monitor:
         raise MonitorBossError(f"monitor #{index} does not exist.")
 
 
-def get_attribute(mon: int, attr: Attribute) -> str | int | dict:
+def get_attribute(mon: int, attr: Attribute) -> ColorPreset | InputSource | PowerMode | int | dict:
     with __get_monitor(mon) as monitor:
         if attr.value.getter is None:
             raise MonitorBossError(f"cannot get a value for {attr.value.desc}.")
 
         try:
-            val = attr.value.getter(monitor)
+            return attr.value.getter(monitor)
         except:
             raise MonitorBossError(f"could not get {attr.value.desc} for monitor #{mon}.")
-
-        if isinstance(val, Enum):
-            # ColorPreset, InputSource, and PowerMode are Enums.
-            # ColorPreset values all start with "COLOR_TEMP_". PowerMode values are lowercase.
-            val = val.name.upper().removeprefix("COLOR_TEMP_")
-
-        return val
 
 
 def set_attribute(mons: int | List[int], attr: Attribute, val: ColorPreset | InputSource | PowerMode | int):

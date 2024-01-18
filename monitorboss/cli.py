@@ -125,6 +125,9 @@ def __get_attr(args):
 
     val = get_attribute(mon, attr)
 
+    if isinstance(val, Enum):
+        val = val.name.upper().removeprefix("COLOR_TEMP_")
+
     pprinter = PrettyPrinter(indent=4)
     pprinter.pprint(val)
 
