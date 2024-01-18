@@ -2,10 +2,10 @@
 
 from cli import run
 
-# line = "tog vcp DP2 USBC right"
+line = "tog src DP1 USBC right"
 # line = "get vcp 2"
 # line = "set vcp shit 0"
-line = "list"
+# line = "list"
 
 args = line.split()
 run(args)

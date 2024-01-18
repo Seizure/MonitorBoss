@@ -1,5 +1,12 @@
+import configparser
+
+config = configparser.ConfigParser()
+
+print(os.getcwd())
+
 # TODO: make the monitor setup configurable.
 # Seizure's three monitors are hard-coded.
+
 monitor_names = {"LEFT": 2, "MIDDLE": 1, "RIGHT": 0}
 
 # TODO: make input source codes configurable.
