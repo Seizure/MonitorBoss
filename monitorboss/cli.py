@@ -183,9 +183,8 @@ def run(args=None):
     parser = __make_parser()
     args = parser.parse_args(args)
 
-    cfg = read_config()
-
     try:
+        cfg = read_config()
         args.func(args, cfg)
     except MonitorBossError as err:
         parser.error(err)

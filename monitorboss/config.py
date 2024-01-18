@@ -1,6 +1,7 @@
 from configparser import ConfigParser
 from dataclasses import dataclass, field
 
+from impl import MonitorBossError
 
 DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.conf"
 
@@ -26,20 +27,29 @@ def read_config(path: str | None = None) -> Config:
     cfg_parser = ConfigParser(inline_comment_prefixes="#")
     cfg_parser.optionxform = str # case-sensitive keys
 
-    with open(path, "r", encoding="utf8") as file:
-        cfg_parser.read_file(file, path)
+    try:
+        with open(path, "r", encoding="utf8") as file:
+            cfg_parser.read_file(file, path)
+    except:
+        raise MonitorBossError(f'could not read config file "{path}"')
 
     cfg = Config()
 
-    for key, value in cfg_parser["MONITOR_NAMES"].items():
-        cfg.monitor_names[key] = int(value)
-    for key, value in cfg_parser["INPUT_NAMES"].items():
-        cfg.input_source_names[key] = int(value)
+    try:
+        for key, value in cfg_parser["MONITOR_NAMES"].items():
+            cfg.monitor_names[key] = int(value)
+        for key, value in cfg_parser["INPUT_NAMES"].items():
+            cfg.input_source_names[key] = int(value)
+    except:
+        raise MonitorBossError(f'could not parse config file "{path}"')
 
     return cfg
 
 def reset_config(path: str | None = None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
 
-    with open(path, "w", encoding="utf8") as file:
-        file.write(DEFAULT_CONF_CONTENT)
+    try:
+        with open(path, "w", encoding="utf8") as file:
+            file.write(DEFAULT_CONF_CONTENT)
+    except:
+        raise MonitorBossError(f'could not reset config file "{path}"')
