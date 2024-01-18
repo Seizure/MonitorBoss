@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from pprint import PrettyPrinter
 
 from config import *
 from impl import *
@@ -123,7 +124,9 @@ def __get_attr(args):
     mon = __check_mon(args.mon)
 
     val = get_attribute(mon, attr)
-    print(val)
+
+    pprinter = PrettyPrinter(indent=4)
+    pprinter.pprint(val)
 
 
 def __set_attr(args):
