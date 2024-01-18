@@ -15,14 +15,14 @@ MonitorBoss makes use of the DDC/CI standard and MCCS protocol to communicate wi
 
 ## Requirements
 
-### Environment
-- Either Windows or Linux. Other systems are ***not*** supported at the moment, including macOS. 🙁
-- Python version ??? is required to run source
+### OS
+Either Windows or Linux. Other systems are ***not*** supported at the moment, including macOS. 🙁
 
-### Dependencies
+### Source Dependencies
 
 * [monitorcontrol](https://pypi.org/project/monitorcontrol/) - provides support for the MCCS protocol
 * [PyInstaller](https://pypi.org/project/pyinstaller/) - for building application binaries
+* Python version ???
 
 ## Usage
 For help with running MonitorBoss in the command line, see [USAGE.md](USAGE.md)
