@@ -12,5 +12,6 @@ readme = "README.md"
 license = {file = "LICENSE.txt"}
 
 dependencies = [
-    "monitorcontrol = 3.0.3"
+    "monitorcontrol = 3.0.3",
+    "pyinstaller"
 ]
