@@ -39,16 +39,16 @@ class MonitorBossError(Exception):
 def list_monitors() -> list[Monitor]:
     try:
         return get_monitors()
-    except:
-        raise MonitorBossError(f"could not list monitors; are you using a laptop?")
+    except Exception as err:
+        raise MonitorBossError(f"could not list monitors; are you using a laptop?") from err
 
 
 def __get_monitor(index: int) -> Monitor:
     monitors = list_monitors()
     try:
         return monitors[index]
-    except IndexError:
-        raise MonitorBossError(f"monitor #{index} does not exist.")
+    except IndexError as err:
+        raise MonitorBossError(f"monitor #{index} does not exist.") from err
 
 
 def get_attribute(mon: int, attr: Attribute) -> ColorPreset | InputSource | PowerMode | int | dict:
@@ -58,8 +58,8 @@ def get_attribute(mon: int, attr: Attribute) -> ColorPreset | InputSource | Powe
 
         try:
             return attr.value.getter(monitor)
-        except:
-            raise MonitorBossError(f"could not get {attr.value.desc} for monitor #{mon}.")
+        except Exception as err:
+            raise MonitorBossError(f"could not get {attr.value.desc} for monitor #{mon}.") from err
 
 
 def set_attribute(mons: int | list[int], attr: Attribute, val: ColorPreset | InputSource | PowerMode | int):
@@ -73,8 +73,8 @@ def set_attribute(mons: int | list[int], attr: Attribute, val: ColorPreset | Inp
 
             try:
                 attr.value.setter(monitor, val)
-            except:
-                raise MonitorBossError(f"could not set {attr.value.desc} for monitor #{mon} to {val}.")
+            except Exception as err:
+                raise MonitorBossError(f"could not set {attr.value.desc} for monitor #{mon} to {val}.") from err
 
 
 def toggle_attribute(
@@ -93,12 +93,12 @@ def toggle_attribute(
 
             try:
                 cur_val = attr.value.getter(monitor)
-            except:
-                raise MonitorBossError(f"could not get current {attr.value.desc} for monitor #{mon}.")
+            except Exception as err:
+                raise MonitorBossError(f"could not get current {attr.value.desc} for monitor #{mon}.") from err
 
             new_val = val2 if cur_val == val1 else val1
 
             try:
                 attr.value.setter(monitor, new_val)
-            except:
-                raise MonitorBossError(f"could not toggle {attr.value.desc} for monitor #{mon} to {new_val}.")
+            except Exception as err:
+                raise MonitorBossError(f"could not toggle {attr.value.desc} for monitor #{mon} to {new_val}.") from err
