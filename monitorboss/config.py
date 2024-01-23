@@ -45,6 +45,7 @@ def read_config(path: str | None = None) -> Config:
 
     return cfg
 
+
 def reset_config(path: str | None = None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
 

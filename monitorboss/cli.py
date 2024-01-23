@@ -156,7 +156,7 @@ def __make_parser():
     subparsers = parser.add_subparsers(title="subcommands", help="basic commands", dest="subcommand", required=True)
 
     text = "list all the monitors and their possible attributes"
-    list_parser = subparsers.add_parser("list", help=text)
+    list_parser = subparsers.add_parser("list", help=text, description=text)
     list_parser.set_defaults(func=__list_mons)
 
     text = "return the value of a given attribute"
