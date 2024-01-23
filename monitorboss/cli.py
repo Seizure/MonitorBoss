@@ -82,11 +82,11 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSo
                 ) from err
 
 
-def __list_mons(args, cfg):
+def __list_mons(args, cfg: Config):
     def input_source_name(src):
         if isinstance(src, Enum):
             return src.name
-        for name, value in cfg.input_source_names.items():
+        for args.name, args.value in cfg.input_source_names.items():
             if value == src:
                 return f"{src} ({name})"
         return str(src)
@@ -119,9 +119,9 @@ def __list_mons(args, cfg):
                 print(f"  - color presets: {', '.join(map(color_preset_name, caps['color_presets']))}")
 
 
-def __get_attr(args, cfg):
+def __get_attr(args, cfg: Config):
     attr = __check_attr(args.attr)
-    mon = __check_mon(args.mon)
+    mon = __check_mon(args.mon, cfg)
 
     val = get_attribute(mon, attr)
 
@@ -132,21 +132,21 @@ def __get_attr(args, cfg):
     pprinter.pprint(val)
 
 
-def __set_attr(args, cfg):
+def __set_attr(args, cfg: Config):
     attr = __check_attr(args.attr)
-    mons = [__check_mon(m) for m in args.mon]
+    mons = [__check_mon(m, cfg) for m in args.mon]
 
-    val = __check_val(attr, args.val)
+    val = __check_val(attr, args.val, cfg)
 
     set_attribute(mons, attr, val)
 
 
-def __tog_attr(args, cfg):
+def __tog_attr(args, cfg: Config):
     attr = __check_attr(args.attr)
-    mons = [__check_mon(m) for m in args.mon]
+    mons = [__check_mon(m, cfg) for m in args.mon]
 
-    val1 = __check_val(attr, args.val1)
-    val2 = __check_val(attr, args.val2)
+    val1 = __check_val(attr, args.val1, cfg)
+    val2 = __check_val(attr, args.val2, cfg)
 
     toggle_attribute(mons, attr, val1, val2)
 
