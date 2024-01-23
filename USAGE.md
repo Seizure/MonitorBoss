@@ -17,10 +17,14 @@ subcommands:
 
 ## list
 ```commandline
-usage: monitorboss list [-h]
+usage: scratch.py list [-h]
+
+list all the monitors and their possible attributes
 
 options:
   -h, --help  show this help message and exit
+
+Process finished with exit code 0
 ```
 
 ## get
