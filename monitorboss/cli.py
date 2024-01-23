@@ -86,7 +86,7 @@ def __list_mons(args, cfg: Config):
     def input_source_name(src):
         if isinstance(src, Enum):
             return src.name
-        for args.name, args.value in cfg.input_source_names.items():
+        for name, value in cfg.input_source_names.items():
             if value == src:
                 return f"{src} ({name})"
         return str(src)
