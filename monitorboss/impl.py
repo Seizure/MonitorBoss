@@ -76,7 +76,7 @@ def get_attribute(mon: int, attr: Attribute) -> ColorPreset | InputSource | Powe
             raise MonitorBossError(f"could not get {attr.value.shortdesc} for monitor #{mon}.") from err
 
 
-def set_attribute(mons: int | list[int], attr: Attribute, val: ColorPreset | InputSource | PowerMode | int):
+def set_attribute(mons: int | list[int], attr: Attribute, val: ColorPreset | InputSource | PowerMode | int) -> ColorPreset | InputSource | PowerMode | int | dict:
     if isinstance(mons, int):
         mons = [mons]
 
@@ -90,13 +90,16 @@ def set_attribute(mons: int | list[int], attr: Attribute, val: ColorPreset | Inp
             except Exception as err:
                 raise MonitorBossError(f"could not set {attr.value.shortdesc} for monitor #{mon} to {val}.") from err
 
+            # TODO: make this return val from a getter, it didnt work when we first tried this
+            return val
+
 
 def toggle_attribute(
     mons: int | list[int],
     attr: Attribute,
     val1: ColorPreset | InputSource | PowerMode | int,
     val2: ColorPreset | InputSource | PowerMode | int,
-):
+) -> ColorPreset | InputSource | PowerMode | int | dict:
     if isinstance(mons, int):
         mons = [mons]
 
@@ -116,3 +119,5 @@ def toggle_attribute(
                 attr.value.setter(monitor, new_val)
             except Exception as err:
                 raise MonitorBossError(f"could not toggle {attr.value.shortdesc} for monitor #{mon} to {new_val}.") from err
+
+            return new_val

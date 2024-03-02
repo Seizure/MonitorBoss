@@ -118,7 +118,7 @@ def __list_mons(args, cfg: Config):
                 print(f"  - color presets: {', '.join(map(color_preset_name, caps['color_presets']))}")
 
 
-def __get_attr(args, cfg: Config):
+def __get_attr(args, cfg: Config) -> str:
     attr = __check_attr(args.attr)
     mon = __check_mon(args.mon, cfg)
 
@@ -130,6 +130,8 @@ def __get_attr(args, cfg: Config):
     pprinter = PrettyPrinter(indent=4)
     pprinter.pprint(val)
 
+    return str(val)
+
 
 def __set_attr(args, cfg: Config):
     attr = __check_attr(args.attr)
@@ -137,17 +139,21 @@ def __set_attr(args, cfg: Config):
 
     val = __check_val(attr, args.val, cfg)
 
-    set_attribute(mons, attr, val)
+    new_val = set_attribute(mons, attr, val)
+
+    return str(new_val)
 
 
-def __tog_attr(args, cfg: Config):
+def __tog_attr(args, cfg: Config) -> str:
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
 
     val1 = __check_val(attr, args.val1, cfg)
     val2 = __check_val(attr, args.val2, cfg)
 
-    toggle_attribute(mons, attr, val1, val2)
+    new_val = toggle_attribute(mons, attr, val1, val2)
+
+    return str(new_val)
 
 
 parser = ArgumentParser(description="Boss your monitors around.")
@@ -190,6 +196,6 @@ def run(args=None):
 
     try:
         cfg = read_config()
-        args.func(args, cfg)
+        return args.func(args, cfg)
     except MonitorBossError as err:
         parser.error(err)
