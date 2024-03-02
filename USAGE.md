@@ -1,6 +1,7 @@
 # Usage
-```commandline
-usage: monitorboss [-h] {list,get,set,tog} ...
+
+```
+usage: scratch.py [-h] {list,get,set,tog} ...
 
 Boss your monitors around.
 
@@ -16,20 +17,18 @@ subcommands:
 ```
 
 ## list
-```commandline
+```
 usage: scratch.py list [-h]
 
 list all the monitors and their possible attributes
 
 options:
   -h, --help  show this help message and exit
-
-Process finished with exit code 0
 ```
 
 ## get
-```commandline
-usage: monitorboss get [-h] attr mon
+```
+usage: scratch.py get [-h] attr mon
 
 return the value of a given attribute
 
@@ -42,8 +41,8 @@ options:
 ```
 
 ## set
-```commandline
-usage: monitorboss set [-h] attr val mon [mon ...]
+```
+usage: scratch.py set [-h] attr val mon [mon ...]
 
 sets a given attribute to a given value
 
@@ -57,8 +56,8 @@ options:
 ```
 
 ## tog
-```commandline
-usage: monitorboss tog [-h] attr val1 val2 mon [mon ...]
+```
+usage: scratch.py tog [-h] attr val1 val2 mon [mon ...]
 
 toggles a given attribute between two given values
 
@@ -79,9 +78,9 @@ options:
   * Must be an integer, though valid values will be constrained between 0 - 100 on most monitors
 * lum - luminance/brightness
   * Must be an integer, though valid values will be constrained between 0 - 100 on most monitors
-* pwr - power state
+* pwr - power mode/state
   * Must be a valid power state, as defined by built-in aliases
 * clr - (currently active) color preset
   * Must be a valid color temperature preset, as defined by built-in aliases
-* vcp - summary of the Virtual Control Panel's abilities.
-  * This attribute can only be read.
+* vcp - summary of the Virtual Control Panel's abilities
+  * This attribute can only be read
