@@ -1,4 +1,5 @@
 /build/
 /dist/
 /MonitorBoss.exe.spec
+/MonitorBoss/monitorboss/scratch.py
 __pycache__/
