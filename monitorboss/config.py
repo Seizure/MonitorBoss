@@ -48,6 +48,11 @@ def read_config(path: str | None = None) -> Config:
     except:
         raise MonitorBossError(f'could not parse config file "{path}"')
 
+    # as far as I can tell, negative numbers in Python's sleep command creates undefined behavior depending on OS
+    # and other things, so we probably want to catch this in some manner
+    if cfg.wait_time < 0:
+        raise MonitorBossError(f'WAIT time is set to a negative value in config file "{path}"')
+
     return cfg
 
 
