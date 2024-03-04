@@ -12,6 +12,9 @@ DEFAULT = 0
 
 [INPUT_NAMES]
 USBC = 27 # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
+
+[SETTINGS]
+WAIT = 2.0 # time to wait between commands, to avoid DDC/CI latency conflicts 
 """.lstrip()
 
 
@@ -19,6 +22,7 @@ USBC = 27 # 27 seems to be the "standard non-standard" ID for USB-C among manufa
 class Config:
     monitor_names: dict[str, int] = field(default_factory=dict)
     input_source_names: dict[str, int] = field(default_factory=dict)
+    wait_time: float = field(default_factory=float)
 
 
 def read_config(path: str | None = None) -> Config:
@@ -40,6 +44,7 @@ def read_config(path: str | None = None) -> Config:
             cfg.monitor_names[key] = int(value)
         for key, value in cfg_parser["INPUT_NAMES"].items():
             cfg.input_source_names[key] = int(value)
+        cfg.wait_time = float(cfg_parser["SETTINGS"]["WAIT"])
     except:
         raise MonitorBossError(f'could not parse config file "{path}"')
 

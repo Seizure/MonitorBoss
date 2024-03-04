@@ -121,3 +121,7 @@ def toggle_attribute(
                 raise MonitorBossError(f"could not toggle {attr.value.shortdesc} for monitor #{mon} to {new_val}.") from err
 
             return new_val
+
+def signal_monitor(mon: int):
+    with __get_monitor(mon) as monitor:
+        pass
