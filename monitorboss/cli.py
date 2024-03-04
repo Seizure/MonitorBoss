@@ -192,6 +192,8 @@ def get_help_texts():
 
 
 def run(args=None):
+    if isinstance(args, str):
+        args = args.split()
     args = parser.parse_args(args)
 
     try:
