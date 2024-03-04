@@ -48,6 +48,9 @@ def read_config(path: str | None = None) -> Config:
     except:
         raise MonitorBossError(f'could not parse config file "{path}"')
 
+    if cfg.wait_time < 0:
+        raise MonitorBossError(f'WAIT time is set to a negative value in config file "{path}"')
+
     return cfg
 
 
