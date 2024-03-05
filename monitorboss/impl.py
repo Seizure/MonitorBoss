@@ -2,11 +2,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from typing import Union
+from time import sleep
 
 from monitorcontrol import get_monitors, ColorPreset, InputSource, Monitor, PowerMode, VCPError
 from monitorcontrol.monitorcontrol import InputSourceValueError
 
 import monitorboss as mb
+from monitorboss.config import read_config
 
 
 def get_input_source(monitor: Monitor) -> InputSource | int:
@@ -118,3 +120,16 @@ def toggle_attribute(
                 raise mb.MonitorBossError(f"could not toggle {attr.value.shortdesc} for monitor #{mon} to {new_val}.") from err
 
             return new_val
+
+
+def signal_monitor(mon: int):
+    cfg = read_config()
+    wait = cfg.wait_time
+    with __get_monitor(mon) as monitor:
+        lum = Attribute.LUM.value.getter(monitor)
+        sleep(wait)
+        Attribute.LUM.value.setter(monitor, 100)
+        sleep(wait)
+        Attribute.LUM.value.setter(monitor, 0)
+        sleep(wait)
+        Attribute.LUM.value.setter(monitor, lum)
