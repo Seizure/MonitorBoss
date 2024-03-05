@@ -6,6 +6,8 @@ from typing import Union
 from monitorcontrol import get_monitors, ColorPreset, InputSource, Monitor, PowerMode, VCPError
 from monitorcontrol.monitorcontrol import InputSourceValueError
 
+import monitorboss as mb
+
 
 def get_input_source(monitor: Monitor) -> InputSource | int:
     try:
@@ -45,16 +47,11 @@ class Attribute(Enum):
                         "This attribute can only be read")
 
 
-class MonitorBossError(Exception):
-    def __init__(self, message: str):
-        super().__init__(message)
-
-
 def list_monitors() -> list[Monitor]:
     try:
         return get_monitors()
     except Exception as err:
-        raise MonitorBossError(f"could not list monitors; are you using a laptop?") from err
+        raise mb.MonitorBossError(f"could not list monitors; are you using a laptop?") from err
 
 
 def __get_monitor(index: int) -> Monitor:
@@ -62,18 +59,18 @@ def __get_monitor(index: int) -> Monitor:
     try:
         return monitors[index]
     except IndexError as err:
-        raise MonitorBossError(f"monitor #{index} does not exist.") from err
+        raise mb.MonitorBossError(f"monitor #{index} does not exist.") from err
 
 
 def get_attribute(mon: int, attr: Attribute) -> ColorPreset | InputSource | PowerMode | int | dict:
     with __get_monitor(mon) as monitor:
         if attr.value.getter is None:
-            raise MonitorBossError(f"cannot get a value for {attr.value.shortdesc}.")
+            raise mb.MonitorBossError(f"cannot get a value for {attr.value.shortdesc}.")
 
         try:
             return attr.value.getter(monitor)
         except Exception as err:
-            raise MonitorBossError(f"could not get {attr.value.shortdesc} for monitor #{mon}.") from err
+            raise mb.MonitorBossError(f"could not get {attr.value.shortdesc} for monitor #{mon}.") from err
 
 
 def set_attribute(mons: int | list[int], attr: Attribute, val: ColorPreset | InputSource | PowerMode | int) -> ColorPreset | InputSource | PowerMode | int | dict:
@@ -83,12 +80,12 @@ def set_attribute(mons: int | list[int], attr: Attribute, val: ColorPreset | Inp
     for mon in mons:
         with __get_monitor(mon) as monitor:
             if attr.value.setter is None:
-                raise MonitorBossError(f"cannot set a value for {attr.value.shortdesc}.")
+                raise mb.MonitorBossError(f"cannot set a value for {attr.value.shortdesc}.")
 
             try:
                 attr.value.setter(monitor, val)
             except Exception as err:
-                raise MonitorBossError(f"could not set {attr.value.shortdesc} for monitor #{mon} to {val}.") from err
+                raise mb.MonitorBossError(f"could not set {attr.value.shortdesc} for monitor #{mon} to {val}.") from err
 
             # TODO: make this return val from a getter, it didnt work when we first tried this
             return val
@@ -106,22 +103,18 @@ def toggle_attribute(
     for mon in mons:
         with __get_monitor(mon) as monitor:
             if attr.value.getter is None or attr.value.setter is None:
-                raise MonitorBossError(f"cannot toggle a value for {attr.value.shortdesc}.")
+                raise mb.MonitorBossError(f"cannot toggle a value for {attr.value.shortdesc}.")
 
             try:
                 cur_val = attr.value.getter(monitor)
             except Exception as err:
-                raise MonitorBossError(f"could not get current {attr.value.shortdesc} for monitor #{mon}.") from err
+                raise mb.MonitorBossError(f"could not get current {attr.value.shortdesc} for monitor #{mon}.") from err
 
             new_val = val2 if cur_val == val1 else val1
 
             try:
                 attr.value.setter(monitor, new_val)
             except Exception as err:
-                raise MonitorBossError(f"could not toggle {attr.value.shortdesc} for monitor #{mon} to {new_val}.") from err
+                raise mb.MonitorBossError(f"could not toggle {attr.value.shortdesc} for monitor #{mon} to {new_val}.") from err
 
             return new_val
-
-def signal_monitor(mon: int):
-    with __get_monitor(mon) as monitor:
-        pass

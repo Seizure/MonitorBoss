@@ -1,14 +1,16 @@
 from argparse import ArgumentParser
 from pprint import PrettyPrinter
 
+import monitorboss as mb
 from config import *
 from impl import *
+
 
 def __check_attr(attr: str) -> Attribute:
     try:
         return Attribute[attr]
     except KeyError as err:
-        raise MonitorBossError(
+        raise mb.MonitorBossError(
             f"{attr} is not a valid attribute.\nValid attributes are: {', '.join(Attribute.__members__)}."
         ) from err
 
@@ -18,7 +20,7 @@ def __check_mon(mon: str, cfg: Config) -> int:
     try:
         return int(mon)
     except ValueError as err:
-        raise MonitorBossError(
+        raise mb.MonitorBossError(
             f"{mon} is not a valid monitor.\nValid monitors are: {', '.join(cfg.monitor_names)}, or an ID number."
         ) from err
 
@@ -34,7 +36,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSo
                 try:
                     return int(val)
                 except ValueError as err:
-                    raise MonitorBossError(
+                    raise mb.MonitorBossError(
                         f"""{val} is not a valid input source.\nValid input sources are: {
                             ', '.join(list(InputSource.__members__) + list(cfg.input_source_names))
                         }, or a code number."""
@@ -46,7 +48,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSo
             try:
                 return int(val)
             except ValueError as err:
-                raise MonitorBossError(
+                raise mb.MonitorBossError(
                     f"{val} is not a valid contrast value.\nValid contrast values are typically 0-100."
                 ) from err
 
@@ -54,7 +56,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSo
             try:
                 return int(val)
             except ValueError as err:
-                raise MonitorBossError(
+                raise mb.MonitorBossError(
                     f"{val} is not a valid luminance value.\nValid luminance values are typically 0-100."
                 ) from err
 
@@ -63,7 +65,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSo
             try:
                 return PowerMode[val.lower()]
             except KeyError as err:
-                raise MonitorBossError(
+                raise mb.MonitorBossError(
                     f"""{val} is not a valid power mode.\nValid power modes are: {
                         ", ".join(map(str.upper, PowerMode.__members__))
                     }."""
@@ -74,7 +76,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSo
             try:
                 return ColorPreset[f"COLOR_TEMP_{val}"]
             except KeyError as err:
-                raise MonitorBossError(
+                raise mb.MonitorBossError(
                     f"""{val} is not a valid color preset.\nValid color presets are: {
                         ", ".join(m.removeprefix("COLOR_TEMP_") for m in ColorPreset.__members__)
                     }."""
@@ -98,7 +100,7 @@ def __list_mons(args, cfg: Config):
             try:
                 caps = monitor.get_vcp_capabilities()
             except Exception as err:
-                raise MonitorBossError("could not list information for monitor #{index}.") from err
+                raise mb.MonitorBossError("could not list information for monitor #{index}.") from err
             print(f"monitor #{index}", end="")
             for name, value in cfg.monitor_names.items():
                 if value == index:
@@ -199,5 +201,5 @@ def run(args=None):
     try:
         cfg = read_config()
         return args.func(args, cfg)
-    except MonitorBossError as err:
+    except mb.MonitorBossError as err:
         parser.error(err)

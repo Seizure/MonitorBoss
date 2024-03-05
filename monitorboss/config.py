@@ -1,10 +1,9 @@
 from configparser import ConfigParser
 from dataclasses import dataclass, field
 
-from impl import MonitorBossError
+import monitorboss as mb
 
 DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.conf"
-
 
 DEFAULT_CONF_CONTENT = """
 [MONITOR_NAMES]
@@ -35,7 +34,7 @@ def read_config(path: str | None = None) -> Config:
         with open(path, "r", encoding="utf8") as file:
             cfg_parser.read_file(file, path)
     except:
-        raise MonitorBossError(f'could not read config file "{path}"')
+        raise mb.MonitorBossError(f'could not read config file "{path}"')
 
     cfg = Config()
 
@@ -46,11 +45,11 @@ def read_config(path: str | None = None) -> Config:
             cfg.input_source_names[key] = int(value)
         cfg.wait_time = float(cfg_parser["SETTINGS"]["WAIT"])
     except:
-        raise MonitorBossError(f'could not parse config file "{path}"')
+        raise mb.MonitorBossError(f'could not parse config file "{path}"')
 
     # As far as I can tell, negative numbers in python's sleep has undefined behavior, so we want to catch that
     if cfg.wait_time < 0:
-        raise MonitorBossError(f'WAIT time is set to a negative value in config file "{path}"')
+        raise mb.MonitorBossError(f'WAIT time is set to a negative value in config file "{path}"')
 
     return cfg
 
@@ -62,4 +61,4 @@ def reset_config(path: str | None = None):
         with open(path, "w", encoding="utf8") as file:
             file.write(DEFAULT_CONF_CONTENT)
     except:
-        raise MonitorBossError(f'could not reset config file "{path}"')
+        raise mb.MonitorBossError(f'could not reset config file "{path}"')
