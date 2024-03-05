@@ -8,8 +8,8 @@ Boss your monitors around.
 options:
   -h, --help          show this help message and exit
 
-subcommands:
-  {list,get,set,tog}  basic commands
+monitor commands:
+  {list,get,set,tog}  commands for manipulating and polling your monitors
     list              list all the monitors and their possible attributes
     get               return the value of a given attribute
     set               sets a given attribute to a given value

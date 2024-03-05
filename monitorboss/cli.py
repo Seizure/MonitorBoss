@@ -159,38 +159,39 @@ def __tog_attr(args, cfg: Config) -> str:
 
 
 parser = ArgumentParser(description="Boss your monitors around.")
-subparsers = parser.add_subparsers(title="subcommands", help="basic commands", dest="subcommand", required=True)
+mon_subparsers = parser.add_subparsers(title="monitor commands", help="commands for manipulating and polling your monitors", dest="subcommand", required=True)
 
 text = "list all the monitors and their possible attributes"
-list_parser = subparsers.add_parser("list", help=text, description=text)
+list_parser = mon_subparsers.add_parser("list", help=text, description=text)
 list_parser.set_defaults(func=__list_mons)
 
 text = "return the value of a given attribute"
-get_parser = subparsers.add_parser("get", help=text, description=text)
+get_parser = mon_subparsers.add_parser("get", help=text, description=text)
 get_parser.set_defaults(func=__get_attr)
 get_parser.add_argument("attr", type=str.upper, help="the attribute to return")
 get_parser.add_argument("mon", type=str.upper, help="the monitor to control")
 
 text = "sets a given attribute to a given value"
-set_parser = subparsers.add_parser("set", help=text, description=text)
+set_parser = mon_subparsers.add_parser("set", help=text, description=text)
 set_parser.set_defaults(func=__set_attr)
 set_parser.add_argument("attr", type=str.upper, help="the attribute to set")
 set_parser.add_argument("val", type=str.upper, help="the value to set the attribute to")
 set_parser.add_argument("mon", type=str.upper, nargs="+", help="the monitor(s) to control")
 
 text = "toggles a given attribute between two given values"
-tog_parser = subparsers.add_parser("tog", help=text, description=text)
+tog_parser = mon_subparsers.add_parser("tog", help=text, description=text)
 tog_parser.set_defaults(func=__tog_attr)
 tog_parser.add_argument("attr", type=str.upper, help="the attribute to toggle")
 tog_parser.add_argument("val1", type=str.upper, help="the first value to toggle between")
 tog_parser.add_argument("val2", type=str.upper, help="the second value to toggle between")
 tog_parser.add_argument("mon", type=str.upper, nargs="+", help="the monitor(s) to control")
 
+
 del text # We're done with the subparsers
 
 
 def get_help_texts():
-    return {'': parser.format_help()} | {name: subparser.format_help() for name, subparser in subparsers.choices.items()}
+    return {'': parser.format_help()} | {name: subparser.format_help() for name, subparser in mon_subparsers.choices.items()}
 
 
 def run(args=None):

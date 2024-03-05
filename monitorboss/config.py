@@ -14,7 +14,7 @@ DEFAULT = 0
 USBC = 27 # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
 
 [SETTINGS]
-WAIT = 2.0 # time to wait between commands, to avoid DDC/CI latency conflicts 
+WAIT = 2.0 # time in seconds to wait between commands, to avoid DDC/CI latency conflicts 
 """.lstrip()
 
 @dataclass
