@@ -6,6 +6,7 @@ import monitorboss as mb
 
 DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.conf"
 
+#  TODO: when we fully support comments in config (see issue: https://github.com/Seizure/MonitorBoss/issues/7) this should just be a prebuilt cfg_parser
 DEFAULT_CONF_CONTENT = """
 [MONITOR_NAMES]
 DEFAULT = 0
@@ -87,7 +88,7 @@ def remove_monitor_alias(alias: str, path: str | None = None):
 
 
 def reset_config(path: str | None = None):
-    #TODO: when we fully support comments in config (see issue: https://github.com/Seizure/MonitorBoss/issues/7) this should call __write_config
+    #  TODO: when we fully support comments in config (see issue: https://github.com/Seizure/MonitorBoss/issues/7) this should call __write_config
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
 
     try:
