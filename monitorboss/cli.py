@@ -193,6 +193,8 @@ tog_parser.add_argument("mon", type=str.upper, nargs="+", help="the monitor(s) t
 # conf set {monalias, inputalias, wait} alias id<int> -f
 # conf set wait id<float>
 # conf rm {monalias, inputalias} alias
+# command for starting guided monitor alias wizard
+# command for starting guided input alias wizard (can be retrieved from VCP/"list" command)
 # -f : perform set without confirmation even if alias already exists
 # what should behavior be if removing an alias that doesn't exist?
 
