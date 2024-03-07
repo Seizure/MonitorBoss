@@ -1,8 +1,7 @@
 from configparser import ConfigParser
 from dataclasses import dataclass, field
-from pathlib import Path
 
-import monitorboss as mb
+from monitorboss import MonitorBossError
 
 DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.conf"
 
@@ -36,7 +35,7 @@ def read_config(path: str | None = None) -> Config:
         with open(path, "r", encoding="utf8") as file:
             cfg_parser.read_file(file, path)
     except:
-        raise mb.MonitorBossError(f'could not read config file "{path}"')
+        raise MonitorBossError(f'could not read config file "{path}"')
 
     cfg = Config()
 
@@ -47,11 +46,11 @@ def read_config(path: str | None = None) -> Config:
             cfg.input_source_names[key] = int(value)
         cfg.wait_time = float(cfg_parser["SETTINGS"]["WAIT"])
     except:
-        raise mb.MonitorBossError(f'could not parse config file "{path}"')
+        raise MonitorBossError(f'could not parse config file "{path}"')
 
     # As far as I can tell, negative numbers in python's sleep has undefined behavior, so we want to catch that
     if cfg.wait_time < 0:
-        raise mb.MonitorBossError(f'WAIT time is set to a negative value in config file "{path}"')
+        raise MonitorBossError(f'WAIT time is set to a negative value in config file "{path}"')
 
     return cfg
 
@@ -66,7 +65,7 @@ def __write_config(path: str | None = None):
         with open(path, "w", encoding="utf8") as file:
             cfg_parser.write(file)
     except:
-        raise mb.MonitorBossError(f'could not write to config file "{path}"')
+        raise MonitorBossError(f'could not write to config file "{path}"')
 
 
 def set_monitor_alias(alias: str, monid: int, path: str | None = None):
@@ -110,7 +109,7 @@ def set_wait_time(wait: float, path: str | None = None):
     read_config(path)
 
     if wait < 0:
-        raise mb.MonitorBossError(f'WAIT time can not be set to a negative value: {wait}')
+        raise MonitorBossError(f'WAIT time can not be set to a negative value: {wait}')
 
     cfg_parser.set("SETTINGS", "WAIT", str(wait))
 
@@ -125,4 +124,4 @@ def reset_config(path: str | None = None):
         with open(path, "w", encoding="utf8") as file:
             file.write(DEFAULT_CONF_CONTENT)
     except:
-        raise mb.MonitorBossError(f'could not reset config file "{path}"')
+        raise MonitorBossError(f'could not reset config file "{path}"')
