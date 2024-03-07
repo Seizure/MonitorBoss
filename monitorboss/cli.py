@@ -158,8 +158,9 @@ def __tog_attr(args, cfg: Config) -> str:
     return str(new_val)
 
 
+text = "commands for manipulating and polling your monitors"
 parser = ArgumentParser(description="Boss your monitors around.")
-mon_subparsers = parser.add_subparsers(title="monitor commands", help="commands for manipulating and polling your monitors", dest="subcommand", required=True)
+mon_subparsers = parser.add_subparsers(title="monitor commands", help=text, dest="subcommand", required=True)
 
 text = "list all the monitors and their possible attributes"
 list_parser = mon_subparsers.add_parser("list", help=text, description=text)
@@ -186,8 +187,7 @@ tog_parser.add_argument("val1", type=str.upper, help="the first value to toggle 
 tog_parser.add_argument("val2", type=str.upper, help="the second value to toggle between")
 tog_parser.add_argument("mon", type=str.upper, nargs="+", help="the monitor(s) to control")
 
-
-del text # We're done with the subparsers
+del text  # We're done with the subparsers
 
 
 def get_help_texts():
