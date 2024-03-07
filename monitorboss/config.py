@@ -69,7 +69,7 @@ def __write_config(path: str | None = None):
         raise mb.MonitorBossError(f'could not write to config file "{path}"')
 
 
-def add_monitor_alias(alias: str, monid: int, path: str | None = None):
+def set_monitor_alias(alias: str, monid: int, path: str | None = None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     read_config(path)
 
@@ -83,6 +83,36 @@ def remove_monitor_alias(alias: str, path: str | None = None):
     read_config(path)
 
     cfg_parser.remove_option("MONITOR_NAMES", alias)
+
+    __write_config(path)
+
+
+def set_input_alias(alias: str, inputid: int, path: str | None = None):
+    path = path if path is not None else DEFAULT_CONF_FILE_LOC
+    read_config(path)
+
+    cfg_parser.set("INPUT_NAMES", alias, str(inputid))
+
+    __write_config(path)
+
+
+def remove_input_alias(alias: str, path: str | None = None):
+    path = path if path is not None else DEFAULT_CONF_FILE_LOC
+    read_config(path)
+
+    cfg_parser.remove_option("INPUT_NAMES", alias)
+
+    __write_config(path)
+
+
+def set_wait_time(wait: float, path: str | None = None):
+    path = path if path is not None else DEFAULT_CONF_FILE_LOC
+    read_config(path)
+
+    if wait < 0:
+        raise mb.MonitorBossError(f'WAIT time can not be set to a negative value: {wait}')
+
+    cfg_parser.set("SETTINGS", "WAIT", str(wait))
 
     __write_config(path)
 
