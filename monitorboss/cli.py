@@ -158,6 +158,9 @@ def __tog_attr(args, cfg: Config) -> str:
     return str(new_val)
 
 
+#  TODO: There's a lot of argparse functionality we aren't using right now, which might accomplish error checking we do or need to do
+#  eg: https://docs.python.org/3/library/argparse.html#choices for limiting possible choices could be useful for valid attributes
+#  or eg: https://docs.python.org/3/library/argparse.html#argparse-type for automatic type checking
 text = "commands for manipulating and polling your monitors"
 parser = ArgumentParser(description="Boss your monitors around.")
 mon_subparsers = parser.add_subparsers(title="monitor commands", help=text, dest="subcommand", required=True)
@@ -186,6 +189,12 @@ tog_parser.add_argument("attr", type=str.upper, help="the attribute to toggle")
 tog_parser.add_argument("val1", type=str.upper, help="the first value to toggle between")
 tog_parser.add_argument("val2", type=str.upper, help="the second value to toggle between")
 tog_parser.add_argument("mon", type=str.upper, nargs="+", help="the monitor(s) to control")
+
+# conf set {monalias, inputalias, wait} alias id<int> -f
+# conf set wait id<float>
+# conf rm {monalias, inputalias} alias
+# -f : perform set without confirmation even if alias already exists
+# what should behavior be if removing an alias that doesn't exist?
 
 del text  # We're done with the subparsers
 
