@@ -3,7 +3,7 @@ from enum import Enum
 from pprint import PrettyPrinter
 
 from monitorboss import MonitorBossError
-from config import Config, read_config
+from config import Config, get_config
 from impl import Attribute, ColorPreset, InputSource, PowerMode
 from impl import list_monitors, get_attribute, set_attribute, toggle_attribute
 
@@ -214,7 +214,7 @@ def run(args=None):
 
     # TODO: should probably only load the config when needed; currently, a broken config ironically errors out before you can fix it with planned config commands
     try:
-        cfg = read_config()
+        cfg = get_config()
         return args.func(args, cfg)
     except MonitorBossError as err:
         parser.error(err)

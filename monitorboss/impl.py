@@ -8,7 +8,7 @@ from monitorcontrol import get_monitors, ColorPreset, InputSource, Monitor, Powe
 from monitorcontrol.monitorcontrol import InputSourceValueError
 
 from monitorboss import MonitorBossError
-from monitorboss.config import read_config
+from monitorboss.config import get_config
 
 
 def get_input_source(monitor: Monitor) -> InputSource | int:
@@ -123,7 +123,7 @@ def toggle_attribute(
 
 
 def signal_monitor(mon: int):
-    cfg = read_config()
+    cfg = get_config()
     wait = cfg.wait_time
     with __get_monitor(mon) as monitor:
         lum = Attribute.LUM.value.getter(monitor)
