@@ -3,3 +3,4 @@
 /MonitorBoss.exe.spec
 /monitorboss/scratch.py
 __pycache__/
+.venv/
