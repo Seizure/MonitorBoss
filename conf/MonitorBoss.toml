@@ -1,0 +1,11 @@
+[MONITOR_NAMES]
+# Seizure's configuration
+RIGHT = 0
+MIDDLE = 1
+LEFT = 2
+
+[INPUT_NAMES]
+USBC = 27 # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
+
+[SETTINGS]
+WAIT = 2.0

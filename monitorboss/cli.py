@@ -212,6 +212,7 @@ def run(args=None):
         args = args.split()
     args = parser.parse_args(args)
 
+    # TODO: should probably only load the config when needed; currently, a broken config ironically errors out before you can fix it with planned config commands
     try:
         cfg = read_config()
         return args.func(args, cfg)
