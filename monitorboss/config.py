@@ -1,34 +1,18 @@
 
-# from configparser import ConfigParser
 from dataclasses import dataclass, field
 
-from tomlkit import parse, dumps, dump, comment, document, table, TOMLDocument
+from tomlkit import parse, dump, comment, document, table, TOMLDocument
 
 from monitorboss import MonitorBossError
 
 DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.toml"
 
-#  TODO: when we fully support comments in config (see issue: https://github.com/Seizure/MonitorBoss/issues/7) this should just be a prebuilt cfg_parser
-# DEFAULT_CONF_CONTENT = """
-# [MONITOR_NAMES]
-# DEFAULT = 0
-#
-# [INPUT_NAMES]
-# USBC = 27 # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
-#
-# [SETTINGS]
-# WAIT = 2.0 # time in seconds to wait between commands, to avoid DDC/CI latency conflicts
-# """.lstrip()
 
 @dataclass
 class Config:
     monitor_names: dict[str, int] = field(default_factory=dict)
     input_source_names: dict[str, int] = field(default_factory=dict)
     wait_time: float = field(default_factory=float)
-
-
-# cfg_parser = ConfigParser(inline_comment_prefixes="#")
-# cfg_parser.optionxform = str  # case-sensitive keys TODO: get rid of this, after making MB internals case-insensitive
 
 
 def default_toml() -> TOMLDocument:
