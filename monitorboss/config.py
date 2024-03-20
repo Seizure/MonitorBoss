@@ -18,9 +18,9 @@ class Config:
 def default_toml() -> TOMLDocument:
     mon_names = table()
     mon_names.add(comment("Seizure's configuration"))
-    mon_names.add("RIGHT", 0)
-    mon_names.add("MIDDLE", 1)
-    mon_names.add("LEFT", 2)
+    mon_names.add("RIGHT", 2)
+    mon_names.add("MIDDLE", 0)
+    mon_names.add("LEFT", 1)
 
     input_names = table()
     input_names.add("USBC", 27)

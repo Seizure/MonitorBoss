@@ -17,8 +17,7 @@ def compile_usage_md_text() -> str:
 ## Available attributes
 {'\n'.join(f"""* {attr.name.lower()} - {attr.value.description}
   * {attr.value.notes}""" for attr in Attribute)}
-'''.replace('./scratch.py', 'monitorboss.py')
-
+'''.replace('./scratch.py', 'monitorboss.py') # TODO: convert replace to regex so it doesnt matter where its called from
 
     return markdown
 
