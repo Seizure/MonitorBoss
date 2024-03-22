@@ -1,4 +1,3 @@
-
 from dataclasses import dataclass, field
 
 from tomlkit import parse, dump, comment, document, table, TOMLDocument

@@ -160,9 +160,6 @@ def __tog_attr(args, cfg: Config) -> str:
     return str(new_val)
 
 
-#  TODO: There's a lot of argparse functionality we aren't using right now, which might accomplish error checking we do or need to do
-#  eg: https://docs.python.org/3/library/argparse.html#choices for limiting possible choices could be useful for valid attributes
-#  or eg: https://docs.python.org/3/library/argparse.html#argparse-type for automatic type checking
 text = "commands for manipulating and polling your monitors"
 parser = ArgumentParser(description="Boss your monitors around.")
 mon_subparsers = parser.add_subparsers(title="monitor commands", help=text, dest="subcommand", required=True)
@@ -212,7 +209,6 @@ def run(args=None):
         args = args.split()
     args = parser.parse_args(args)
 
-    # TODO: should probably only load the config when needed; currently, a broken config ironically errors out before you can fix it with planned config commands
     try:
         cfg = get_config()
         return args.func(args, cfg)
