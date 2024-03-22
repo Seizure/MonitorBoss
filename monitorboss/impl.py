@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Union
+from typing import Union, Any
 from time import sleep
 
 from monitorcontrol import get_monitors, ColorPreset, InputSource, Monitor, PowerMode
@@ -22,8 +22,8 @@ def get_input_source(monitor: Monitor) -> InputSource | int:
 @dataclass
 class AttributeData:
     shortdesc: str
-    getter: Union[Callable[[Monitor], ...], None]
-    setter: Union[Callable[[Monitor, ...], None], None]
+    getter: Union[Callable[[Monitor], ...], Any]
+    setter: Union[Callable[[Monitor, ...], Any], Any]
     description: str
     notes: str
 

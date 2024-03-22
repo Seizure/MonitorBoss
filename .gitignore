@@ -1,6 +1,6 @@
 /build/
 /dist/
 /MonitorBoss.exe.spec
-/monitorboss/scratch.py
+scratch.py
 __pycache__/
 .venv/

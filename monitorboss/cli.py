@@ -3,9 +3,9 @@ from enum import Enum
 from pprint import PrettyPrinter
 
 from monitorboss import MonitorBossError
-from config import Config, get_config
-from impl import Attribute, ColorPreset, InputSource, PowerMode
-from impl import list_monitors, get_attribute, set_attribute, toggle_attribute
+from monitorboss.config import Config, get_config
+from monitorboss.impl import Attribute, ColorPreset, InputSource, PowerMode
+from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute
 
 
 def __check_attr(attr: str) -> Attribute:
