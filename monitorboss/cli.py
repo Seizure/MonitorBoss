@@ -189,8 +189,8 @@ tog_parser.add_argument("val1", type=str.upper, help="the first value to toggle 
 tog_parser.add_argument("val2", type=str.upper, help="the second value to toggle between")
 tog_parser.add_argument("mon", type=str.upper, nargs="+", help="the monitor(s) to control")
 
-# conf set {monalias, inputalias} alias id<int> -f
-# conf set wait id<float>
+# conf set {monalias, inputalias} alias id<int> [-f]
+# conf set wait time<float>
 # conf rm {monalias, inputalias} alias
 # command for starting guided monitor alias wizard
 # command for starting guided input alias wizard (can be retrieved from VCP/"list" command)
