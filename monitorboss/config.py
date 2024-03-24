@@ -19,7 +19,7 @@ def default_toml() -> TOMLDocument:
     mon_names.add(comment("Seizure's configuration"))
     mon_names.add("left", 2)
     mon_names.add("middle", 0)
-    mon_names.add("left", 1)
+    mon_names.add("right", 1)
 
     input_names = table()
     input_names.add("usbc", 27)
@@ -128,7 +128,7 @@ def set_wait_time(wait: float, path: str | None = None):
 
     doc = __get_toml(path)
 
-    doc["SETTINGS"]["waitT"] = wait
+    doc["SETTINGS"]["wait"] = wait
 
     __write_toml(doc, path)
 
