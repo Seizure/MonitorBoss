@@ -4,3 +4,4 @@
 scratch.py
 __pycache__/
 .venv/
+/.idea/*
