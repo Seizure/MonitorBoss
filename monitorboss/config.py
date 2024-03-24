@@ -17,16 +17,16 @@ class Config:
 def default_toml() -> TOMLDocument:
     mon_names = table()
     mon_names.add(comment("Seizure's configuration"))
-    mon_names.add("RIGHT", 2)
-    mon_names.add("MIDDLE", 0)
-    mon_names.add("LEFT", 1)
+    mon_names.add("left", 2)
+    mon_names.add("middle", 0)
+    mon_names.add("left", 1)
 
     input_names = table()
-    input_names.add("USBC", 27)
-    input_names["USBC"].comment("27 seems to be the \"standard non-standard\" ID for USB-C among manufacturers")
+    input_names.add("usbc", 27)
+    input_names["usbc"].comment("27 seems to be the \"standard non-standard\" ID for USB-C among manufacturers")
 
     settings = table()
-    settings.add("WAIT", 2.0)
+    settings.add("wait", 2.0)
 
     doc = document()
     doc.add("MONITOR_NAMES", mon_names)
@@ -59,13 +59,13 @@ def get_config(path: str | None = None) -> Config:
             cfg.monitor_names[key] = value
         for key, value in doc["INPUT_NAMES"].items():
             cfg.input_source_names[key] = value
-        cfg.wait_time = doc["SETTINGS"]["WAIT"]
+        cfg.wait_time = doc["SETTINGS"]["wait"]
     except:
         raise MonitorBossError(f'could not parse config file: "{path}"')
 
     # As far as I can tell, negative numbers in python's sleep has undefined behavior, so we want to catch that
     if cfg.wait_time < 0:
-        raise MonitorBossError(f'WAIT time is set to a negative value in config file: "{path}"')
+        raise MonitorBossError(f'"wait" time is set to a negative value in config file: "{path}"')
 
     return cfg
 
@@ -128,7 +128,7 @@ def set_wait_time(wait: float, path: str | None = None):
 
     doc = __get_toml(path)
 
-    doc["SETTINGS"]["WAIT"] = wait
+    doc["SETTINGS"]["waitT"] = wait
 
     __write_toml(doc, path)
 

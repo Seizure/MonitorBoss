@@ -29,22 +29,22 @@ class AttributeData:
 
 
 class Attribute(Enum):
-    SRC = AttributeData("input source", get_input_source, Monitor.set_input_source,
+    src = AttributeData("input source", get_input_source, Monitor.set_input_source,
                         "(currently active) input source",
                         "Must be a valid source ID, or alias as defined by the application built-ins or config file additions")
-    CNT = AttributeData("contrast", Monitor.get_contrast, Monitor.set_contrast,
+    cnt = AttributeData("contrast", Monitor.get_contrast, Monitor.set_contrast,
                         "contrast",
                         "Must be an integer, though valid values will be constrained between 0 - 100 on most monitors")
-    LUM = AttributeData("luminance", Monitor.get_luminance, Monitor.set_luminance,
+    lum = AttributeData("luminance", Monitor.get_luminance, Monitor.set_luminance,
                         "luminance/brightness",
                         "Must be an integer, though valid values will be constrained between 0 - 100 on most monitors")
-    PWR = AttributeData("power mode", Monitor.get_power_mode, Monitor.set_power_mode,
+    pwr = AttributeData("power mode", Monitor.get_power_mode, Monitor.set_power_mode,
                         "power mode/state",
                         "Must be a valid power state, as defined by built-in aliases")
-    CLR = AttributeData("color preset", Monitor.get_color_preset, Monitor.set_color_preset,
+    clr = AttributeData("color preset", Monitor.get_color_preset, Monitor.set_color_preset,
                         "(currently active) color preset",
                         "Must be a valid color temperature preset, as defined by built-in aliases")
-    VCP = AttributeData("VCP capabilities", Monitor.get_vcp_capabilities, None,
+    vcp = AttributeData("VCP capabilities", Monitor.get_vcp_capabilities, None,
                         "summary of the Virtual Control Panel's abilities",
                         "This attribute can only be read")
 
@@ -126,10 +126,10 @@ def signal_monitor(mon: int):
     cfg = get_config()
     wait = cfg.wait_time
     with __get_monitor(mon) as monitor:
-        lum = Attribute.LUM.value.getter(monitor)
+        lum = Attribute.lum.value.getter(monitor)
         sleep(wait)
-        Attribute.LUM.value.setter(monitor, 100)
+        Attribute.lum.value.setter(monitor, 100)
         sleep(wait)
-        Attribute.LUM.value.setter(monitor, 0)
+        Attribute.lum.value.setter(monitor, 0)
         sleep(wait)
-        Attribute.LUM.value.setter(monitor, lum)
+        Attribute.lum.value.setter(monitor, lum)

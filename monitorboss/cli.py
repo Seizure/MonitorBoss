@@ -29,11 +29,11 @@ def __check_mon(mon: str, cfg: Config) -> int:
 
 def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSource | PowerMode | int:
     match attr:
-        case Attribute.SRC:
+        case Attribute.src:
             if val in cfg.input_source_names:
                 val = cfg.input_source_names[val]
             try:
-                return InputSource[val]
+                return InputSource[val.upper()]  # the input sources are upper case, so we need to convert
             except KeyError:
                 try:
                     return int(val)
@@ -46,7 +46,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSo
                         " if any. Check your monitor's specs for the inputs it accepts."
                     ) from err
 
-        case Attribute.CNT:
+        case Attribute.cnt:
             try:
                 return int(val)
             except ValueError as err:
@@ -54,7 +54,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSo
                     f"{val} is not a valid contrast value.\nValid contrast values are typically 0-100."
                 ) from err
 
-        case Attribute.LUM:
+        case Attribute.lum:
             try:
                 return int(val)
             except ValueError as err:
@@ -62,18 +62,18 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSo
                     f"{val} is not a valid luminance value.\nValid luminance values are typically 0-100."
                 ) from err
 
-        case Attribute.PWR:
+        case Attribute.pwr:
             # PowerMode values are lowercase; other enums are uppercase.
             try:
                 return PowerMode[val.lower()]
             except KeyError as err:
                 raise MonitorBossError(
                     f"""{val} is not a valid power mode.\nValid power modes are: {
-                        ", ".join(map(str.upper, PowerMode.__members__))
+                        ", ".join(map(str, PowerMode.__members__))
                     }."""
                 ) from err
 
-        case Attribute.CLR:
+        case Attribute.clr:
             # ColorPreset values all start with "COLOR_TEMP_".
             try:
                 return ColorPreset[f"COLOR_TEMP_{val}"]
@@ -171,23 +171,23 @@ list_parser.set_defaults(func=__list_mons)
 text = "return the value of a given attribute"
 get_parser = mon_subparsers.add_parser("get", help=text, description=text)
 get_parser.set_defaults(func=__get_attr)
-get_parser.add_argument("attr", type=str.upper, help="the attribute to return")
-get_parser.add_argument("mon", type=str.upper, help="the monitor to control")
+get_parser.add_argument("attr", type=str, help="the attribute to return")
+get_parser.add_argument("mon", type=str, help="the monitor to control")
 
 text = "sets a given attribute to a given value"
 set_parser = mon_subparsers.add_parser("set", help=text, description=text)
 set_parser.set_defaults(func=__set_attr)
-set_parser.add_argument("attr", type=str.upper, help="the attribute to set")
-set_parser.add_argument("val", type=str.upper, help="the value to set the attribute to")
-set_parser.add_argument("mon", type=str.upper, nargs="+", help="the monitor(s) to control")
+set_parser.add_argument("attr", type=str, help="the attribute to set")
+set_parser.add_argument("val", type=str, help="the value to set the attribute to")
+set_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
 
 text = "toggles a given attribute between two given values"
 tog_parser = mon_subparsers.add_parser("tog", help=text, description=text)
 tog_parser.set_defaults(func=__tog_attr)
-tog_parser.add_argument("attr", type=str.upper, help="the attribute to toggle")
-tog_parser.add_argument("val1", type=str.upper, help="the first value to toggle between")
-tog_parser.add_argument("val2", type=str.upper, help="the second value to toggle between")
-tog_parser.add_argument("mon", type=str.upper, nargs="+", help="the monitor(s) to control")
+tog_parser.add_argument("attr", type=str, help="the attribute to toggle")
+tog_parser.add_argument("val1", type=str, help="the first value to toggle between")
+tog_parser.add_argument("val2", type=str, help="the second value to toggle between")
+tog_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
 
 # conf set {monalias, inputalias} alias id<int> [-f]
 # conf set wait time<float>
