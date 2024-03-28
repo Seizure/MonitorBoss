@@ -13,7 +13,7 @@ packages = [{include = "monitorboss"}]
 [tool.poetry.dependencies]
 python = "^3.10,<3.13"
 tomlkit = "^0.12.4"
-monitorcontrol = {path = "libs/monitorcontrol"}
+monitorcontrol = {path = "../monitorcontrol"}
 
 [tool.poetry.group.build.dependencies]
 pyinstaller = "^6.5.0"

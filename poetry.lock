@@ -30,14 +30,16 @@ name = "monitorcontrol"
 version = "3.1.0"
 description = "Monitor controls using MCCS over DDC-CI."
 optional = false
-python-versions = ">=3.8,<4.0"
-files = [
-    {file = "monitorcontrol-3.1.0-py3-none-any.whl", hash = "sha256:934d6475ebf3c55e2b37602307f75a3aeb731f4bd8e09666960aff40f925d608"},
-    {file = "monitorcontrol-3.1.0.tar.gz", hash = "sha256:18438cd335255ec6704ebfde868a29d7c4133c5812da2eb69d2620f0ec2cfea6"},
-]
+python-versions = "^3.8"
+files = []
+develop = false
 
 [package.dependencies]
 pyudev = {version = ">=0.23,<0.25", markers = "sys_platform != \"win32\""}
+
+[package.source]
+type = "directory"
+url = "../monitorcontrol"
 
 [[package]]
 name = "packaging"
@@ -162,4 +164,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.13"
-content-hash = "b23f8842ba4bf3f2a305c36f610b46097fa24815c488b1d45cb68555a987b3b7"
+content-hash = "e54b817221805f57a2ffdf23a49572e0719608a26db8bebdeab9fcda2a8a05cd"
