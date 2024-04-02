@@ -102,7 +102,7 @@ def __list_mons(args, cfg: Config):
             try:
                 caps = monitor.get_vcp_capabilities()
             except Exception as err:
-                raise MonitorBossError("could not list information for monitor #{index}.") from err
+                raise MonitorBossError(f"could not list information for monitor #{index}.") from err
             print(f"monitor #{index}", end="")
             for name, value in cfg.monitor_names.items():
                 if value == index:
