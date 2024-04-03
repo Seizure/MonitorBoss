@@ -6,237 +6,139 @@ from typing import List, Optional, Tuple, Type
 import ctypes
 import sys
 
-# hide the Windows code from Linux CI coverage
-if sys.platform == "win32":
-    from ctypes.wintypes import (
-        DWORD,
-        RECT,
-        BOOL,
-        HMONITOR,
-        HDC,
-        LPARAM,
-        HANDLE,
-        BYTE,
-        WCHAR,
-    )
+assert sys.platform == "win32", "This file must be imported only for Windows"
 
-    # structure type for a physical monitor
-    class PhysicalMonitor(ctypes.Structure):
-        _fields_ = [("handle", HANDLE), ("description", WCHAR * 128)]
+from ctypes.wintypes import (
+    DWORD,
+    RECT,
+    BOOL,
+    HMONITOR,
+    HDC,
+    LPARAM,
+    HANDLE,
+    BYTE,
+    WCHAR,
+)
 
-    class WindowsVCP(VCP):
-        """
-        Windows API access to a monitor's virtual control panel.
 
-        References:
-            https://stackoverflow.com/questions/16588133/
-        """
+class PhysicalMonitor(ctypes.Structure):
+    _fields_ = [("handle", HANDLE), ("description", WCHAR * 128)]
 
-        def __init__(self, hmonitor: HMONITOR):
-            """
-            Args:
-                hmonitor: logical monitor handle
-            """
-            super().__init__()
-            self.hmonitor = hmonitor
 
-        def __enter__(self):
-            super().__enter__()
-            num_physical = DWORD()
-            self.logger.debug("GetNumberOfPhysicalMonitorsFromHMONITOR")
-            try:
-                if not ctypes.windll.dxva2.GetNumberOfPhysicalMonitorsFromHMONITOR(
-                    self.hmonitor, ctypes.byref(num_physical)
-                ):
-                    raise VCPError(
-                        "Call to GetNumberOfPhysicalMonitorsFromHMONITOR failed: "
-                        + ctypes.FormatError()
-                    )
-            except OSError as e:
-                raise VCPError(
-                    "Call to GetNumberOfPhysicalMonitorsFromHMONITOR failed"
-                ) from e
+# references:
+# https://stackoverflow.com/questions/16588133/
+class WindowsVCP(VCP):
+    def __init__(self, hmonitor: HMONITOR):
+        super().__init__()
+        self.hmonitor = hmonitor
 
-            if num_physical.value == 0:
-                raise VCPError("no physical monitor found")
-            elif num_physical.value > 1:
-                # TODO: Figure out a clever way around the Windows API since
-                # it does not allow opening and closing of individual physical
-                # monitors without their hmonitors.
-                raise VCPError("more than one physical monitor per hmonitor")
+    def __enter__(self):
+        super().__enter__()
+        num_physical = DWORD()
+        self.logger.debug("GetNumberOfPhysicalMonitorsFromHMONITOR")
+        try:
+            if not ctypes.windll.dxva2.GetNumberOfPhysicalMonitorsFromHMONITOR(self.hmonitor,
+                                                                               ctypes.byref(num_physical)):
+                raise VCPError(f"Call to GetNumberOfPhysicalMonitorsFromHMONITOR failed: {ctypes.FormatError()}")
+        except OSError as err:
+            raise VCPError("Call to GetNumberOfPhysicalMonitorsFromHMONITOR failed") from err
+        if num_physical.value == 0:
+            raise VCPError("no physical monitor found")
+        elif num_physical.value > 1:
+            # TODO: Figure out a clever way around the Windows API since
+            # it does not allow opening and closing of individual physical
+            # monitors without their hmonitors.
+            raise VCPError("more than one physical monitor per hmonitor")
+        physical_monitors = (PhysicalMonitor * num_physical.value)()
+        self.logger.debug("GetPhysicalMonitorsFromHMONITOR")
+        try:
+            if not ctypes.windll.dxva2.GetPhysicalMonitorsFromHMONITOR(self.hmonitor, num_physical.value,
+                                                                       physical_monitors):
+                raise VCPError(f"Call to GetPhysicalMonitorsFromHMONITOR failed: {ctypes.FormatError()}")
+        except OSError as err:
+            raise VCPError("failed to open physical monitor handle") from err
+        self.handle = physical_monitors[0].handle
+        self.description = physical_monitors[0].description
+        return self
 
-            physical_monitors = (PhysicalMonitor * num_physical.value)()
-            self.logger.debug("GetPhysicalMonitorsFromHMONITOR")
-            try:
-                if not ctypes.windll.dxva2.GetPhysicalMonitorsFromHMONITOR(
-                    self.hmonitor, num_physical.value, physical_monitors
-                ):
-                    raise VCPError(
-                        "Call to GetPhysicalMonitorsFromHMONITOR failed: "
-                        + ctypes.FormatError()
-                    )
-            except OSError as e:
-                raise VCPError("failed to open physical monitor handle") from e
-            self.handle = physical_monitors[0].handle
-            self.description = physical_monitors[0].description
-            return self
-
-        def __exit__(
+    def __exit__(
             self,
             exception_type: Optional[Type[BaseException]],
             exception_value: Optional[BaseException],
             exception_traceback: Optional[TracebackType],
-        ) -> Optional[bool]:
-            self.logger.debug("DestroyPhysicalMonitor")
-            try:
-                if not ctypes.windll.dxva2.DestroyPhysicalMonitor(self.handle):
-                    raise VCPError(
-                        "Call to DestroyPhysicalMonitor failed: " + ctypes.FormatError()
-                    )
-            except OSError as e:
-                raise VCPError("failed to close handle") from e
+    ) -> Optional[bool]:
+        self.logger.debug("DestroyPhysicalMonitor")
+        try:
+            if not ctypes.windll.dxva2.DestroyPhysicalMonitor(self.handle):
+                raise VCPError(f"Call to DestroyPhysicalMonitor failed: {ctypes.FormatError()}")
+        except OSError as err:
+            raise VCPError("failed to close handle") from err
+        return super().__exit__(exception_type, exception_value, exception_traceback)
 
-            return super().__exit__(exception_type, exception_value, exception_traceback)
+    def set_vcp_feature(self, code: VPCCommand, value: int):
+        assert self._in_ctx, "This function must be run within the context manager"
+        if not code.writeable():
+            raise TypeError(f"cannot write read-only code: {code.name}")
+        elif code.readable() and code.discreet is False:
+            maximum = self._get_code_maximum(code)
+            if value > maximum:
+                raise ValueError(f"value of {value} exceeds code maximum of {maximum} for {code.name}")
+        self.logger.debug(f"SetVCPFeature(_, {code.name=}, {value=})")
+        try:
+            if not ctypes.windll.dxva2.SetVCPFeature(HANDLE(self.handle), BYTE(code.value), DWORD(value)):
+                raise VCPError(f"failed to set VCP feature: {ctypes.FormatError()}")
+        except OSError as err:
+            raise VCPError("failed to close handle") from err
 
-        def set_vcp_feature(self, code: VPCCommand, value: int):
-            """
-            Sets the value of a feature on the virtual control panel.
-
-            Args:
-                code: Feature code.
-                value: Feature value.
-
-            Raises:
-                VCPError: Failed to set VCP feature.
-            """
-
-            assert self._in_ctx, "This function must be run within the context manager"
-            if not code.writeable():
-                raise TypeError(f"cannot write read-only code: {code.name}")
-            elif code.readable() and code.discreet == False:
-                maximum = self._get_code_maximum(code)
-                if value > maximum:
-                    raise ValueError(f"value of {value} exceeds code maximum of {maximum} for {code.name}")
-
-            self.logger.debug(f"SetVCPFeature(_, {code.name=}, {value=})")
-            try:
-                if not ctypes.windll.dxva2.SetVCPFeature(
-                    HANDLE(self.handle), BYTE(code.value), DWORD(value)
-                ):
-                    raise VCPError("failed to set VCP feature: " + ctypes.FormatError())
-            except OSError as e:
-                raise VCPError("failed to close handle") from e
-
-        def get_vcp_feature(self, code: VPCCommand) -> Tuple[int, int]:
-            """
-            Gets the value of a feature from the virtual control panel.
-
-            Args:
-                code: Feature code.
-
-            Returns:
-                Current feature value, maximum feature value.
-
-            Raises:
-                VCPError: Failed to get VCP feature.
-            """
-
-            assert self._in_ctx, "This function must be run within the context manager"
-            if not code.readable():
-                raise TypeError(f"cannot read write-only code: {code.name}")
-
-            feature_current = DWORD()
-            feature_max = DWORD()
-            self.logger.debug(
-                f"GetVCPFeatureAndVCPFeatureReply(_, {code.name=}, None, _, _)"
-            )
-            try:
-                if not ctypes.windll.dxva2.GetVCPFeatureAndVCPFeatureReply(
+    def get_vcp_feature(self, code: VPCCommand) -> Tuple[int, int]:
+        assert self._in_ctx, "This function must be run within the context manager"
+        if not code.readable():
+            raise TypeError(f"cannot read write-only code: {code.name}")
+        feature_current = DWORD()
+        feature_max = DWORD()
+        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply(_, {code.name=}, None, _, _)")
+        try:
+            if not ctypes.windll.dxva2.GetVCPFeatureAndVCPFeatureReply(
                     HANDLE(self.handle),
                     BYTE(code.value),
                     None,
                     ctypes.byref(feature_current),
                     ctypes.byref(feature_max),
-                ):
-                    raise VCPError("failed to get VCP feature: " + ctypes.FormatError())
-            except OSError as e:
-                raise VCPError("failed to get VCP feature") from e
-            self.logger.debug(
-                "GetVCPFeatureAndVCPFeatureReply -> "
-                f"({feature_current.value}, {feature_max.value})"
-            )
-            return feature_current.value, feature_max.value
+            ):
+                raise VCPError(f"failed to get VCP feature: {ctypes.FormatError()}")
+        except OSError as err:
+            raise VCPError("failed to get VCP feature") from err
+        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply -> ({feature_current.value}, {feature_max.value})")
+        return feature_current.value, feature_max.value
 
-        def _get_vcp_capabilities_str(self) -> str:
-            """
-            Gets capabilities string from the virtual control panel
+    def _get_vcp_capabilities_str(self) -> str:
+        cap_length = DWORD()
+        self.logger.debug("GetCapabilitiesStringLength")
+        try:
+            if not ctypes.windll.dxva2.GetCapabilitiesStringLength(HANDLE(self.handle), ctypes.byref(cap_length)):
+                raise VCPError(f"failed to get VCP capabilities: {ctypes.FormatError()}")
+            caps_str = (ctypes.c_char * cap_length.value)()
+            self.logger.debug("CapabilitiesRequestAndCapabilitiesReply")
+            if not ctypes.windll.dxva2.CapabilitiesRequestAndCapabilitiesReply(HANDLE(self.handle), caps_str,
+                                                                               cap_length):
+                raise VCPError(f"failed to get VCP capabilities: {ctypes.FormatError()}")
+        except OSError as err:
+            raise VCPError("failed to get VCP capabilities") from err
+        return caps_str.value.decode("ascii")
 
-            Returns:
-                One long capabilities string in the format:
-                "(prot(monitor)type(LCD)model(ACER VG271U)cmds(01 02 03 07 0C)"
+    @staticmethod
+    def get_vcps() -> List[WindowsVCP]:
+        hmonitors = []
+        try:
+            def _callback(hmonitor, hdc, lprect, lparam):
+                hmonitors.append(HMONITOR(hmonitor))
+                del hmonitor, hdc, lprect, lparam
+                return True  # continue enumeration
 
-                No error checking for the string being valid. String can have
-                bit errors or dropped characters.
-
-            Raises:
-                VCPError: Failed to get VCP feature.
-            """
-
-            assert self._in_ctx, "This function must be run within the context manager"
-
-            cap_length = DWORD()
-            self.logger.debug("GetCapabilitiesStringLength")
-            try:
-                if not ctypes.windll.dxva2.GetCapabilitiesStringLength(
-                    HANDLE(self.handle), ctypes.byref(cap_length)
-                ):
-                    raise VCPError(
-                        "failed to get VCP capabilities: " + ctypes.FormatError()
-                    )
-                caps_str = (ctypes.c_char * cap_length.value)()
-                self.logger.debug("CapabilitiesRequestAndCapabilitiesReply")
-                if not ctypes.windll.dxva2.CapabilitiesRequestAndCapabilitiesReply(
-                    HANDLE(self.handle), caps_str, cap_length
-                ):
-                    raise VCPError(
-                        "failed to get VCP capabilities: " + ctypes.FormatError()
-                    )
-            except OSError as e:
-                raise VCPError("failed to get VCP capabilities") from e
-
-            return caps_str.value.decode("ascii")
-
-        @staticmethod
-        def get_vcps() -> List[WindowsVCP]:
-            """
-            Opens handles to all physical VCPs.
-
-            Returns:
-                List of all VCPs detected.
-
-            Raises:
-                VCPError: Failed to enumerate VCPs.
-            """
-            vcps = []
-            hmonitors = []
-
-            try:
-
-                def _callback(hmonitor, hdc, lprect, lparam):
-                    hmonitors.append(HMONITOR(hmonitor))
-                    del hmonitor, hdc, lprect, lparam
-                    return True  # continue enumeration
-
-                MONITORENUMPROC = ctypes.WINFUNCTYPE(  # noqa: N806
-                    BOOL, HMONITOR, HDC, ctypes.POINTER(RECT), LPARAM
-                )
-                callback = MONITORENUMPROC(_callback)
-                if not ctypes.windll.user32.EnumDisplayMonitors(0, 0, callback, 0):
-                    raise VCPError("Call to EnumDisplayMonitors failed")
-            except OSError as e:
-                raise VCPError("failed to enumerate VCPs") from e
-
-            for logical in hmonitors:
-                vcps.append(WindowsVCP(logical))
-
-            return vcps
+            MONITORENUMPROC = ctypes.WINFUNCTYPE(BOOL, HMONITOR, HDC, ctypes.POINTER(RECT), LPARAM)
+            callback = MONITORENUMPROC(_callback)
+            if not ctypes.windll.user32.EnumDisplayMonitors(0, 0, callback, 0):
+                raise VCPError("Call to EnumDisplayMonitors failed")
+        except OSError as err:
+            raise VCPError("failed to enumerate VCPs") from err
+        return [WindowsVCP(logical) for logical in hmonitors]

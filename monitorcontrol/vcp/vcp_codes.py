@@ -94,5 +94,4 @@ def add_vcp_com(newcom: VPCCommand):
             raise ValueError(f"VCP code with name {newcom.name} already exists")
         if newcom.value == com.value:
             raise ValueError(f"VCP code with value {newcom.value} already exists")
-
     __VCP_COMMANDS.append(newcom)

@@ -23,7 +23,7 @@ def get_input_source(monitor: VCP) -> Union[InputSource, int]:
 
 @dataclass
 class AttributeData:
-    shortdesc: str
+    short_desc: str
     getter: Union[Callable[[VCP], ...], Any]
     setter: Union[Callable[[VCP, ...], Any], Any]
     description: str
@@ -49,8 +49,10 @@ class Attribute(Enum):
     vcp = AttributeData("VCP capabilities", mc.get_capabilities, None,
                         "summary of the Virtual Control Panel's abilities",
                         "This attribute can only be read")
+
     def __str__(self):
         return self.name
+
 
 def list_monitors() -> list[VCP]:
     try:
@@ -70,38 +72,34 @@ def __get_monitor(index: int) -> VCP:
 def get_attribute(mon: int, attr: Attribute) -> Union[ColorPreset, InputSource, PowerMode, int, dict]:
     with __get_monitor(mon) as monitor:
         if attr.value.getter is None:
-            raise MonitorBossError(f"cannot get a value for {attr.value.shortdesc}.")
-
+            raise MonitorBossError(f"cannot get a value for {attr.value.short_desc}.")
         try:
             return attr.value.getter(monitor)
         except Exception as err:
-            raise MonitorBossError(f"could not get {attr.value.shortdesc} for monitor #{mon}.") from err
+            raise MonitorBossError(f"could not get {attr.value.short_desc} for monitor #{mon}.") from err
 
 
 def set_attribute(mons: Union[int, list[int]], attr: Attribute, val: Union[
-    ColorPreset, InputSource, PowerMode, int]) -> Union[ColorPreset, InputSource, PowerMode, int, dict]:
+        ColorPreset, InputSource, PowerMode, int]) -> Union[ColorPreset, InputSource, PowerMode, int, dict]:
     if isinstance(mons, int):
         mons = [mons]
-
     for mon in mons:
         with __get_monitor(mon) as monitor:
             if attr.value.setter is None:
-                raise MonitorBossError(f"cannot set a value for {attr.value.shortdesc}.")
-
+                raise MonitorBossError(f"cannot set a value for {attr.value.short_desc}.")
             try:
                 attr.value.setter(monitor, val)
             except Exception as err:
-                raise MonitorBossError(f"could not set {attr.value.shortdesc} for monitor #{mon} to {val}.") from err
-
-            # TODO: make this return val from a getter, it didnt work when we first tried this
+                raise MonitorBossError(f"could not set {attr.value.short_desc} for monitor #{mon} to {val}.") from err
+            # TODO: make this return val from a getter, it didn't work when we first tried this
             return val
 
 
 def toggle_attribute(
-    mons: Union[int, list[int]],
-    attr: Attribute,
-    val1: Union[ColorPreset, InputSource, PowerMode, int],
-    val2: Union[ColorPreset, InputSource, PowerMode, int],
+        mons: Union[int, list[int]],
+        attr: Attribute,
+        val1: Union[ColorPreset, InputSource, PowerMode, int],
+        val2: Union[ColorPreset, InputSource, PowerMode, int],
 ) -> Union[ColorPreset, InputSource, PowerMode, int, dict]:
     if isinstance(mons, int):
         mons = [mons]
@@ -109,20 +107,17 @@ def toggle_attribute(
     for mon in mons:
         with __get_monitor(mon) as monitor:
             if attr.value.getter is None or attr.value.setter is None:
-                raise MonitorBossError(f"cannot toggle a value for {attr.value.shortdesc}.")
-
+                raise MonitorBossError(f"cannot toggle a value for {attr.value.short_desc}.")
             try:
                 cur_val = attr.value.getter(monitor)
             except Exception as err:
-                raise MonitorBossError(f"could not get current {attr.value.shortdesc} for monitor #{mon}.") from err
-
+                raise MonitorBossError(f"could not get current {attr.value.short_desc} for monitor #{mon}.") from err
             new_val = val2 if cur_val == val1 else val1
-
             try:
                 attr.value.setter(monitor, new_val)
             except Exception as err:
-                raise MonitorBossError(f"could not toggle {attr.value.shortdesc} for monitor #{mon} to {new_val}.") from err
-
+                raise MonitorBossError(
+                    f"could not toggle {attr.value.short_desc} for monitor #{mon} to {new_val}.") from err
             return new_val
 
 

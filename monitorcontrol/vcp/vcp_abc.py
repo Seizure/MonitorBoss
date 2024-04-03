@@ -8,20 +8,14 @@ from .vcp_codes import VPCCommand, get_vcp_com
 
 
 class VCPError(Exception):
-    """Base class for all VCP related errors."""
-
     pass
 
 
 class VCPIOError(VCPError):
-    """Raised on VCP IO errors."""
-
     pass
 
 
 class VCPPermissionError(VCPError):
-    """Raised on VCP permission errors."""
-
     pass
 
 
@@ -40,45 +34,24 @@ class VCP(abc.ABC):
 
     @abc.abstractmethod
     def __exit__(
-        self,
-        exception_type: Optional[Type[BaseException]],
-        exception_value: Optional[BaseException],
-        exception_traceback: Optional[TracebackType],
+            self,
+            exception_type: Optional[Type[BaseException]],
+            exception_value: Optional[BaseException],
+            exception_traceback: Optional[TracebackType],
     ) -> Optional[bool]:
         self._in_ctx = False
         return False
 
     @abc.abstractmethod
     def set_vcp_feature(self, code: VPCCommand, value: int):
-        """
-        Sets the value of a feature on the virtual control panel.
-
-        Args:
-            code: Feature code.
-            value: Feature value.
-
-        Raises:
-            VCPError: Failed to set VCP feature.
-        """
         pass
 
     @abc.abstractmethod
     def get_vcp_feature(self, code: VPCCommand) -> Tuple[int, int]:
-        """
-        Gets the value of a feature from the virtual control panel.
-
-        Args:
-            code: Feature code.
-
-        Returns:
-            Current feature value, maximum feature value.
-
-        Raises:
-            VCPError: Failed to get VCP feature.
-        """
         pass
 
     def get_vcp_capabilities(self) -> dict:
+        assert self._in_ctx, "This function must be run within the context manager"
         caps_str = self._get_vcp_capabilities_str()
         return _parse_capabilities(caps_str)
 
@@ -87,23 +60,9 @@ class VCP(abc.ABC):
         pass
 
     def _get_code_maximum(self, code: VPCCommand) -> int:
-        """
-        Gets the maximum values for a given code, and caches in the
-        class dictionary if not already found.
-
-        Args:
-            code: Feature code definition class.
-
-        Returns:
-            Maximum value for the given code.
-
-        Raises:
-            TypeError: Code is write only.
-        """
         assert self._in_ctx, "This function must be run within the context manager"
         if not code.readable:
             raise TypeError(f"code is not readable: {code.name}")
-
         if code.value in self.code_maximum:
             return self.code_maximum[code.value]
         else:
@@ -116,6 +75,7 @@ class VCP(abc.ABC):
     def get_vcps() -> List[VCP]:
         pass
 
+
 def _extract_a_cap(caps_str: str, key: str) -> str:
     """
     Splits the capabilities string into individual sets.
@@ -124,55 +84,34 @@ def _extract_a_cap(caps_str: str, key: str) -> str:
         Dict of all values for the capability
     """
     start_of_filter = caps_str.upper().find(key.upper())
-
     if start_of_filter == -1:
-        # not all keys are returned by monitor.
+        # Not all keys are returned by monitor.
         # Also, sometimes the string has errors.
         return ""
-
     start_of_filter += len(key)
     filtered_caps_str = caps_str[start_of_filter:]
     end_of_filter = 0
     for i in range(len(filtered_caps_str)):
         if filtered_caps_str[i] == "(":
             end_of_filter += 1
-        if filtered_caps_str[i] == ")":
+        elif filtered_caps_str[i] == ")":
             end_of_filter -= 1
         if end_of_filter == 0:
-            # don't change end_of_filter to remove the closing ")"
-            break
+            # 1:i to remove the first character "(" and the closing ")"
+            return filtered_caps_str[1:i]
+    return filtered_caps_str
 
-    # 1:i to remove the first character "("
-    return filtered_caps_str[1:i]
 
 def _convert_to_dict(caps_str: str) -> dict:
     """
-    Parses the VCP capabilities string to a dictionary.
-    Non-continuous capabilities will include an array of
-    all supported values.
-
-    Returns:
-        Dict with all capabilities in hex
-
     Example:
-        Expected string "04 14(05 06) 16" is converted to::
-
-            {
-                0x04: {},
-                0x14: {0x05: {}, 0x06: {}},
-                0x16: {},
-            }
+    >>> _convert_to_dict("04 14(05 06) 16")
+    {4: {}, 20: {5: {}, 6: {}}, 22: {}}
     """
-
-    if len(caps_str) == 0:
-        # Sometimes the keys aren't found and the extracting of
-        # capabilities returns an empty string.
-        return {}
-
-    result_dict = {}
+    caps_dict = {}
     group = []
     prev_val = None
-    for chunk in caps_str.replace("(", " ( ").replace(")", " ) ").split(" "):
+    for chunk in caps_str.replace("(", " ( ").replace(")", " ) ").split():
         if chunk == "":
             continue
         elif chunk == "(":
@@ -182,15 +121,15 @@ def _convert_to_dict(caps_str: str) -> dict:
         else:
             val = int(chunk, 16)
             if len(group) == 0:
-                result_dict[val] = {}
+                caps_dict[val] = {}
             else:
-                d = result_dict
+                d = caps_dict
                 for g in group:
                     d = d[g]
                 d[val] = {}
             prev_val = val
+    return caps_dict
 
-    return result_dict
 
 def _parse_capabilities(caps_str: str) -> dict:
     """
@@ -227,10 +166,10 @@ def _parse_capabilities(caps_str: str) -> dict:
     }
 
     for key in caps_dict:
-        if key in ["cmds", "vcp"]:
-            caps_dict[key] = _convert_to_dict(_extract_a_cap(caps_str, key))
-        else:
-            caps_dict[key] = _extract_a_cap(caps_str, key)
+        cap = _extract_a_cap(caps_str, key)
+        if key in {"cmds", "vcp"}:
+            cap = _convert_to_dict(cap)
+        caps_dict[key] = cap
 
     # Parse the input sources into a text list for readability
     input_source_cap = get_vcp_com("input_select").value
@@ -238,10 +177,8 @@ def _parse_capabilities(caps_str: str) -> dict:
         caps_dict["inputs"] = []
         input_val_list = list(caps_dict["vcp"][input_source_cap].keys())
         input_val_list.sort()
-
         for val in input_val_list:
             input_source = val
-
             caps_dict["inputs"].append(input_source)
 
     # Parse the color presets into a text list for readability
@@ -250,10 +187,8 @@ def _parse_capabilities(caps_str: str) -> dict:
         caps_dict["color_presets"] = []
         color_val_list = list(caps_dict["vcp"][color_preset_cap])
         color_val_list.sort()
-
         for val in color_val_list:
             color_source = val
-
             caps_dict["color_presets"].append(color_source)
 
     return caps_dict

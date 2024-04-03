@@ -7,17 +7,17 @@ from .vcp.vcp_codes import get_vcp_com
 
 @enum.unique
 class ColorPreset(enum.Enum):
-    COLOR_TEMP_4000K = 0x03
-    COLOR_TEMP_5000K = 0x04
-    COLOR_TEMP_6500K = 0x05
-    COLOR_TEMP_7500K = 0x06
-    COLOR_TEMP_8200K = 0x07
-    COLOR_TEMP_9300K = 0x08
-    COLOR_TEMP_10000K = 0x09
-    COLOR_TEMP_11500K = 0x0A
-    COLOR_TEMP_USER1 = 0x0B
-    COLOR_TEMP_USER2 = 0x0C
-    COLOR_TEMP_USER3 = 0x0D
+    color_temp_4000k = 0x03
+    color_temp_5000k = 0x04
+    color_temp_6500k = 0x05
+    color_temp_7500k = 0x06
+    color_temp_8200k = 0x07
+    color_temp_9300k = 0x08
+    color_temp_10000k = 0x09
+    color_temp_11500k = 0x0a
+    color_temp_user1 = 0x0b
+    color_temp_user2 = 0x0c
+    color_temp_user3 = 0x0d
 
 
 @enum.unique
@@ -31,25 +31,25 @@ class PowerMode(enum.Enum):
 
 @enum.unique
 class InputSource(enum.Enum):
-    OFF = 0x00
-    ANALOG1 = 0x01
-    ANALOG2 = 0x02
-    DVI1 = 0x03
-    DVI2 = 0x04
-    COMPOSITE1 = 0x05
-    COMPOSITE2 = 0x06
-    SVIDEO1 = 0x07
-    SVIDEO2 = 0x08
-    TUNER1 = 0x09
-    TUNER2 = 0x0A
-    TUNER3 = 0x0B
-    CMPONENT1 = 0x0C
-    CMPONENT2 = 0x0D
-    CMPONENT3 = 0x0E
-    DP1 = 0x0F
-    DP2 = 0x10
-    HDMI1 = 0x11
-    HDMI2 = 0x12
+    off = 0x00
+    analog1 = 0x01
+    analog2 = 0x02
+    dvi1 = 0x03
+    dvi2 = 0x04
+    composite1 = 0x05
+    composite2 = 0x06
+    svideo1 = 0x07
+    svideo2 = 0x08
+    tuner1 = 0x09
+    tuner2 = 0x0a
+    tuner3 = 0x0b
+    cmponent1 = 0x0c
+    cmponent2 = 0x0d
+    cmponent3 = 0x0e
+    dp1 = 0x0f
+    dp2 = 0x10
+    hdmi1 = 0x11
+    hdmi2 = 0x12
 
 
 class InputSourceValueError(ValueError):
@@ -127,7 +127,7 @@ def get_input_source(vcp: VCP) -> InputSource:
 
 def set_input_source(vcp: VCP, value: Union[int, str, InputSource]):
     if isinstance(value, str):
-        mode_value = getattr(InputSource, value.upper()).value
+        mode_value = getattr(InputSource, value).value
     elif isinstance(value, int):
         mode_value = value
     elif isinstance(value, InputSource):

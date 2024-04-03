@@ -40,7 +40,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSo
                 except ValueError as err:
                     raise MonitorBossError(
                         f"""{val} is not a valid input source.\nValid input sources are: {
-                            ', '.join(list(InputSource.__members__) + list(cfg.input_source_names))
+                        ', '.join(list(InputSource.__members__) + list(cfg.input_source_names))
                         }, or a code number."""
                         "\nNOTE: A particular monitor will probably support only some of these values,"
                         " if any. Check your monitor's specs for the inputs it accepts."
@@ -68,18 +68,18 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSo
             except KeyError as err:
                 raise MonitorBossError(
                     f"""{val} is not a valid power mode.\nValid power modes are: {
-                        ", ".join(PowerMode.__members__)
+                    ", ".join(PowerMode.__members__)
                     }."""
                 ) from err
 
         case Attribute.clr:
-            # ColorPreset values all start with "COLOR_TEMP_".
+            # ColorPreset values all start with "color_temp_".
             try:
-                return ColorPreset[f"COLOR_TEMP_{val}"]
+                return ColorPreset[f"color_temp_{val}"]
             except KeyError as err:
                 raise MonitorBossError(
                     f"""{val} is not a valid color preset.\nValid color presets are: {
-                        ", ".join(m.removeprefix("COLOR_TEMP_") for m in ColorPreset.__members__)
+                    ", ".join(m.removeprefix("color_temp_") for m in ColorPreset.__members__)
                     }."""
                 ) from err
 
@@ -88,13 +88,13 @@ def __list_mons(args, cfg: Config):
     def input_source_name(src):
         if isinstance(src, Enum):
             return src.name
-        for name, value in cfg.input_source_names.items():
-            if value == src:
-                return f"{src} ({name})"
+        for src_name, src_value in cfg.input_source_names.items():
+            if src_value == src:
+                return f"{src} ({src_name})"
         return str(src)
 
     def color_preset_name(clr):
-        return clr.name.removeprefix("COLOR_TEMP_") if isinstance(clr, Enum) else str(clr)
+        return clr.name.removeprefix("color_temp_") if isinstance(clr, Enum) else str(clr)
 
     for index, monitor in enumerate(list_monitors()):
         with monitor:
@@ -124,38 +124,28 @@ def __list_mons(args, cfg: Config):
 def __get_attr(args, cfg: Config) -> str:
     attr = __check_attr(args.attr)
     mon = __check_mon(args.mon, cfg)
-
     val = get_attribute(mon, attr)
-
     if isinstance(val, Enum):
-        val = val.name.removeprefix("COLOR_TEMP_")
-
+        val = val.name.removeprefix("color_temp_")
     pprinter = PrettyPrinter(indent=4)
     pprinter.pprint(val)
-
     return str(val)
 
 
 def __set_attr(args, cfg: Config):
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
-
     val = __check_val(attr, args.val, cfg)
-
     new_val = set_attribute(mons, attr, val)
-
     return str(new_val)
 
 
 def __tog_attr(args, cfg: Config) -> str:
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
-
     val1 = __check_val(attr, args.val1, cfg)
     val2 = __check_val(attr, args.val2, cfg)
-
     new_val = toggle_attribute(mons, attr, val1, val2)
-
     return str(new_val)
 
 
@@ -200,16 +190,16 @@ del text  # We're done with the subparsers
 
 
 def get_help_texts():
-    return {'': parser.format_help()} | {name: subparser.format_help() for name, subparser in mon_subparsers.choices.items()}
+    return {'': parser.format_help()} | {name: subparser.format_help() for name, subparser in
+                                         mon_subparsers.choices.items()}
 
 
 def run(args=None):
     if isinstance(args, str):
         args = args.split()
     args = parser.parse_args(args)
-
     try:
         cfg = get_config()
         return args.func(args, cfg)
     except MonitorBossError as err:
-        parser.error(err)
+        parser.error(str(err))
