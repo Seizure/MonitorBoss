@@ -69,7 +69,7 @@ def __get_monitor(index: int) -> VCP:
         raise MonitorBossError(f"monitor #{index} does not exist.") from err
 
 
-def get_attribute(mon: int, attr: Attribute) -> Union[ColorPreset, InputSource, PowerMode, int, dict]:
+def get_attribute(mon: int, attr: Attribute) -> ColorPreset | InputSource | PowerMode | int | dict:
     with __get_monitor(mon) as monitor:
         if attr.value.getter is None:
             raise MonitorBossError(f"cannot get a value for {attr.value.short_desc}.")
@@ -79,8 +79,11 @@ def get_attribute(mon: int, attr: Attribute) -> Union[ColorPreset, InputSource, 
             raise MonitorBossError(f"could not get {attr.value.short_desc} for monitor #{mon}.") from err
 
 
-def set_attribute(mons: Union[int, list[int]], attr: Attribute, val: Union[
-        ColorPreset, InputSource, PowerMode, int]) -> Union[ColorPreset, InputSource, PowerMode, int, dict]:
+def set_attribute(
+        mons: int | list[int],
+        attr: Attribute,
+        val: ColorPreset | InputSource | PowerMode | int) \
+        -> ColorPreset | InputSource | PowerMode | int | dict:
     if isinstance(mons, int):
         mons = [mons]
     for mon in mons:
@@ -96,11 +99,11 @@ def set_attribute(mons: Union[int, list[int]], attr: Attribute, val: Union[
 
 
 def toggle_attribute(
-        mons: Union[int, list[int]],
+        mons: int | list[int],
         attr: Attribute,
-        val1: Union[ColorPreset, InputSource, PowerMode, int],
-        val2: Union[ColorPreset, InputSource, PowerMode, int],
-) -> Union[ColorPreset, InputSource, PowerMode, int, dict]:
+        val1: ColorPreset | InputSource | PowerMode | int,
+        val2: ColorPreset | InputSource | PowerMode | int) \
+        -> ColorPreset | InputSource | PowerMode | int | dict:
     if isinstance(mons, int):
         mons = [mons]
 
