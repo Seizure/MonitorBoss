@@ -12,8 +12,10 @@ packages = [{include = "monitorboss"}]
 
 [tool.poetry.dependencies]
 python = "^3.10,<3.13"
-pyudev = { version = ">=0.23,<0.25", markers = "sys_platform != 'win32'" }
 tomlkit = "^0.12.4"
+
+[tool.poetry.group.mccs.dependencies]
+pyudev = { version = ">=0.23,<0.25", markers = "sys_platform != 'win32'" }
 
 [tool.poetry.group.build.dependencies]
 pyinstaller = "^6.5.0"
