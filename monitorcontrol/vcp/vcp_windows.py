@@ -4,7 +4,6 @@ from .vcp_abc import VCP, VCPError
 from types import TracebackType
 from typing import List, Optional, Tuple, Type
 import ctypes
-import logging
 import sys
 
 from .vcp_codes import get_vcp_com
@@ -196,17 +195,17 @@ if sys.platform == "win32":
                     raise VCPError(
                         "failed to get VCP capabilities: " + ctypes.FormatError()
                     )
-                cap_string = (ctypes.c_char * cap_length.value)()
+                caps_str = (ctypes.c_char * cap_length.value)()
                 self.logger.debug("CapabilitiesRequestAndCapabilitiesReply")
                 if not ctypes.windll.dxva2.CapabilitiesRequestAndCapabilitiesReply(
-                    HANDLE(self.handle), cap_string, cap_length
+                    HANDLE(self.handle), caps_str, cap_length
                 ):
                     raise VCPError(
                         "failed to get VCP capabilities: " + ctypes.FormatError()
                     )
             except OSError as e:
                 raise VCPError("failed to get VCP capabilities") from e
-            return _parse_capabilities(cap_string.value.decode("ascii"))
+            return _parse_capabilities(caps_str.value.decode("ascii"))
 
         @staticmethod
         def get_vcps() -> List[WindowsVCP]:
