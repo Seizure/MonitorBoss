@@ -98,7 +98,7 @@ class LinuxVCP(VCP):
             maximum = self._get_code_maximum(code)
             if value > maximum:
                 raise ValueError(f"value of {value} exceeds code maximum of {maximum} for {code.name}")
-        self.rate_limt()
+        self.rate_limit()
         # transmission data
         data = bytearray()
         data.append(self.SET_VCP_CMD)
@@ -120,7 +120,7 @@ class LinuxVCP(VCP):
         assert self._in_ctx, "This function must be run within the context manager"
         if not code.readable():
             raise TypeError(f"cannot read write-only code: {code.name}")
-        self.rate_limt()
+        self.rate_limit()
         # transmission data
         data = bytearray()
         data.append(self.GET_VCP_CMD)
@@ -175,7 +175,7 @@ class LinuxVCP(VCP):
     def _get_vcp_capabilities_str(self) -> str:
         # Create an empty capabilities string to be filled with the data
         caps_str = ""
-        self.rate_limt()
+        self.rate_limit()
         # Get the first 32B of capabilities string
         offset = 0
         # Keep a count going to keep things sane
@@ -243,7 +243,7 @@ class LinuxVCP(VCP):
             checksum ^= data_byte
         return checksum
 
-    def rate_limt(self):
+    def rate_limit(self):
         if self.last_set is not None:
             rate_delay = self.CMD_RATE - time.time() - self.last_set
             if rate_delay > 0:

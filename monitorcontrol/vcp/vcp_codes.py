@@ -88,10 +88,10 @@ def get_vcp_com(key: Union[str, int]) -> VPCCommand:
     raise LookupError(f"No VCP code matched key: {key}")
 
 
-def add_vcp_com(newcom: VPCCommand):
+def add_vcp_com(new_com: VPCCommand):
     for com in __VCP_COMMANDS:
-        if newcom.name == com.name:
-            raise ValueError(f"VCP code with name {newcom.name} already exists")
-        if newcom.value == com.value:
-            raise ValueError(f"VCP code with value {newcom.value} already exists")
-    __VCP_COMMANDS.append(newcom)
+        if new_com.name == com.name:
+            raise ValueError(f"VCP code with name {new_com.name} already exists")
+        if new_com.value == com.value:
+            raise ValueError(f"VCP code with value {new_com.value} already exists")
+    __VCP_COMMANDS.append(new_com)
