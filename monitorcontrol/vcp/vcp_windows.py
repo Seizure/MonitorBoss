@@ -8,6 +8,7 @@ import sys
 
 assert sys.platform == "win32", "This file must be imported only for Windows"
 
+from ctypes.windll import dxva2
 from ctypes.wintypes import (
     DWORD,
     RECT,
@@ -37,8 +38,7 @@ class WindowsVCP(VCP):
         num_physical = DWORD()
         self.logger.debug("GetNumberOfPhysicalMonitorsFromHMONITOR")
         try:
-            if not ctypes.windll.dxva2.GetNumberOfPhysicalMonitorsFromHMONITOR(self.hmonitor,
-                                                                               ctypes.byref(num_physical)):
+            if not dxva2.GetNumberOfPhysicalMonitorsFromHMONITOR(self.hmonitor, ctypes.byref(num_physical)):
                 raise VCPError(f"Call to GetNumberOfPhysicalMonitorsFromHMONITOR failed: {ctypes.FormatError()}")
         except OSError as err:
             raise VCPError("Call to GetNumberOfPhysicalMonitorsFromHMONITOR failed") from err
@@ -52,8 +52,7 @@ class WindowsVCP(VCP):
         physical_monitors = (PhysicalMonitor * num_physical.value)()
         self.logger.debug("GetPhysicalMonitorsFromHMONITOR")
         try:
-            if not ctypes.windll.dxva2.GetPhysicalMonitorsFromHMONITOR(self.hmonitor, num_physical.value,
-                                                                       physical_monitors):
+            if not dxva2.GetPhysicalMonitorsFromHMONITOR(self.hmonitor, num_physical.value, physical_monitors):
                 raise VCPError(f"Call to GetPhysicalMonitorsFromHMONITOR failed: {ctypes.FormatError()}")
         except OSError as err:
             raise VCPError("failed to open physical monitor handle") from err
@@ -69,7 +68,7 @@ class WindowsVCP(VCP):
     ) -> Optional[bool]:
         self.logger.debug("DestroyPhysicalMonitor")
         try:
-            if not ctypes.windll.dxva2.DestroyPhysicalMonitor(self.handle):
+            if not dxva2.DestroyPhysicalMonitor(self.handle):
                 raise VCPError(f"Call to DestroyPhysicalMonitor failed: {ctypes.FormatError()}")
         except OSError as err:
             raise VCPError("failed to close handle") from err
@@ -77,7 +76,7 @@ class WindowsVCP(VCP):
 
     def _set_vcp_feature(self, code: VCPCommand, value: int):
         try:
-            if not ctypes.windll.dxva2.SetVCPFeature(HANDLE(self.handle), BYTE(code.value), DWORD(value)):
+            if not dxva2.SetVCPFeature(HANDLE(self.handle), BYTE(code.value), DWORD(value)):
                 raise VCPError(f"failed to set VCP feature: {ctypes.FormatError()}")
         except OSError as err:
             raise VCPError("failed to close handle") from err
@@ -86,7 +85,7 @@ class WindowsVCP(VCP):
         feature_current = DWORD()
         feature_max = DWORD()
         try:
-            if not ctypes.windll.dxva2.GetVCPFeatureAndVCPFeatureReply(
+            if not dxva2.GetVCPFeatureAndVCPFeatureReply(
                     HANDLE(self.handle),
                     BYTE(code.value),
                     None,
@@ -103,12 +102,11 @@ class WindowsVCP(VCP):
         cap_length = DWORD()
         self.logger.debug("GetCapabilitiesStringLength")
         try:
-            if not ctypes.windll.dxva2.GetCapabilitiesStringLength(HANDLE(self.handle), ctypes.byref(cap_length)):
+            if not dxva2.GetCapabilitiesStringLength(HANDLE(self.handle), ctypes.byref(cap_length)):
                 raise VCPError(f"failed to get VCP capabilities: {ctypes.FormatError()}")
             caps_str = (ctypes.c_char * cap_length.value)()
             self.logger.debug("CapabilitiesRequestAndCapabilitiesReply")
-            if not ctypes.windll.dxva2.CapabilitiesRequestAndCapabilitiesReply(HANDLE(self.handle), caps_str,
-                                                                               cap_length):
+            if not dxva2.CapabilitiesRequestAndCapabilitiesReply(HANDLE(self.handle), caps_str, cap_length):
                 raise VCPError(f"failed to get VCP capabilities: {ctypes.FormatError()}")
         except OSError as err:
             raise VCPError("failed to get VCP capabilities") from err
