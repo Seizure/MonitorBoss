@@ -75,28 +75,16 @@ class WindowsVCP(VCP):
             raise VCPError("failed to close handle") from err
         return super().__exit__(exception_type, exception_value, exception_traceback)
 
-    def set_vcp_feature(self, code: VPCCommand, value: int):
-        assert self._in_ctx, "This function must be run within the context manager"
-        if not code.writeable():
-            raise TypeError(f"cannot write read-only code: {code.name}")
-        elif code.readable() and code.discreet is False:
-            maximum = self._get_code_maximum(code)
-            if value > maximum:
-                raise ValueError(f"value of {value} exceeds code maximum of {maximum} for {code.name}")
-        self.logger.debug(f"SetVCPFeature(_, {code.name=}, {value=})")
+    def _set_vcp_feature(self, code: VPCCommand, value: int):
         try:
             if not ctypes.windll.dxva2.SetVCPFeature(HANDLE(self.handle), BYTE(code.value), DWORD(value)):
                 raise VCPError(f"failed to set VCP feature: {ctypes.FormatError()}")
         except OSError as err:
             raise VCPError("failed to close handle") from err
 
-    def get_vcp_feature(self, code: VPCCommand) -> Tuple[int, int]:
-        assert self._in_ctx, "This function must be run within the context manager"
-        if not code.readable():
-            raise TypeError(f"cannot read write-only code: {code.name}")
+    def _get_vcp_feature(self, code: VPCCommand) -> Tuple[int, int]:
         feature_current = DWORD()
         feature_max = DWORD()
-        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply(_, {code.name=}, None, _, _)")
         try:
             if not ctypes.windll.dxva2.GetVCPFeatureAndVCPFeatureReply(
                     HANDLE(self.handle),
