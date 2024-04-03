@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List
 import enum
 
 from .vcp import VCP
@@ -73,7 +73,7 @@ def get_color_preset(vcp: VCP) -> int:
     return vcp.get_vcp_feature(code)[0]
 
 
-def set_color_preset(vcp: VCP, value: Union[int, str, ColorPreset]):
+def set_color_preset(vcp: VCP, value: int | str | ColorPreset):
     if isinstance(value, str):
         mode_value = getattr(ColorPreset, value).value
     elif isinstance(value, int):
@@ -102,7 +102,7 @@ def get_power_mode(vcp: VCP) -> PowerMode:
     return PowerMode(vcp.get_vcp_feature(code)[0])
 
 
-def set_power_mode(vcp: VCP, value: Union[int, str, PowerMode]):
+def set_power_mode(vcp: VCP, value: int | str | PowerMode):
     if isinstance(value, str):
         mode_value = getattr(PowerMode, value).value
     elif isinstance(value, int):
@@ -125,7 +125,7 @@ def get_input_source(vcp: VCP) -> InputSource:
         raise InputSourceValueError(f"{value} is not a valid InputSource", value)
 
 
-def set_input_source(vcp: VCP, value: Union[int, str, InputSource]):
+def set_input_source(vcp: VCP, value: int | str | InputSource):
     if isinstance(value, str):
         mode_value = getattr(InputSource, value).value
     elif isinstance(value, int):

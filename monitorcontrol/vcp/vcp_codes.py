@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum, unique
-from typing import Union
 
 
 @unique
@@ -77,7 +76,7 @@ __VCP_COMMANDS = [
 ]
 
 
-def get_vcp_com(key: Union[str, int]) -> VCPCommand:
+def get_vcp_com(key: str | int) -> VCPCommand:
     if not (isinstance(key, str) or isinstance(key, int)):
         raise TypeError(f"key must be string or int. Got {type(key)}.")
     for com in __VCP_COMMANDS:

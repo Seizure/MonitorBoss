@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Union, Any
+from typing import Any
 from time import sleep
 
 import monitorcontrol.monitorcontrol as mc
@@ -13,7 +13,7 @@ from monitorboss import MonitorBossError
 from monitorboss.config import get_config
 
 
-def get_input_source(monitor: VCP) -> Union[InputSource, int]:
+def get_input_source(monitor: VCP) -> InputSource | int:
     try:
         return mc.get_input_source(monitor)
     except InputSourceValueError as err:
@@ -24,8 +24,8 @@ def get_input_source(monitor: VCP) -> Union[InputSource, int]:
 @dataclass
 class AttributeData:
     short_desc: str
-    getter: Union[Callable[[VCP], ...], Any]
-    setter: Union[Callable[[VCP, ...], Any], Any]
+    getter: Callable[[VCP], ...] | None
+    setter: Callable[[VCP, ...], Any] | None
     description: str
     notes: str
 
