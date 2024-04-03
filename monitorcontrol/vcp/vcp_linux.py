@@ -94,7 +94,7 @@ class LinuxVCP(VCP):
         assert self._in_ctx, "This function must be run within the context manager"
         if not code.writeable():
             raise TypeError(f"cannot write read-only code: {code.name}")
-        elif code.readable() and code.discreet == False:
+        elif code.readable() and not code.discreet:
             maximum = self._get_code_maximum(code)
             if value > maximum:
                 raise ValueError(f"value of {value} exceeds code maximum of {maximum} for {code.name}")
