@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .vcp_codes import VPCCommand
+from .vcp_codes import VCPCommand
 from .vcp_abc import VCP, VCPIOError, VCPPermissionError
 from types import TracebackType
 from typing import List, Optional, Tuple, Type
@@ -90,7 +90,7 @@ class LinuxVCP(VCP):
         self.fd = None
         return super().__exit__(exception_type, exception_value, exception_traceback)
 
-    def _set_vcp_feature(self, code: VPCCommand, value: int):
+    def _set_vcp_feature(self, code: VCPCommand, value: int):
         self.rate_limit()
         # transmission data
         data = bytearray()
@@ -109,7 +109,7 @@ class LinuxVCP(VCP):
         # store time of last set VCP
         self.last_set = time.time()
 
-    def _get_vcp_feature(self, code: VPCCommand) -> Tuple[int, int]:
+    def _get_vcp_feature(self, code: VCPCommand) -> Tuple[int, int]:
         self.rate_limit()
         # transmission data
         data = bytearray()

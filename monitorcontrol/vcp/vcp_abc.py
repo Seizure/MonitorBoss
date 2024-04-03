@@ -4,7 +4,7 @@ import logging
 from types import TracebackType
 from typing import Optional, Tuple, Type, List
 
-from .vcp_codes import VPCCommand, get_vcp_com
+from .vcp_codes import VCPCommand, get_vcp_com
 
 
 class VCPError(Exception):
@@ -42,7 +42,7 @@ class VCP(abc.ABC):
         self._in_ctx = False
         return False
 
-    def set_vcp_feature(self, code: VPCCommand, value: int):
+    def set_vcp_feature(self, code: VCPCommand, value: int):
         assert self._in_ctx, "This function must be run within the context manager"
         if not code.writeable():
             raise TypeError(f"cannot write read-only code: {code.name}")
@@ -54,10 +54,10 @@ class VCP(abc.ABC):
         self._set_vcp_feature(code, value)
 
     @abc.abstractmethod
-    def _set_vcp_feature(self, code: VPCCommand, value: int):
+    def _set_vcp_feature(self, code: VCPCommand, value: int):
         pass
 
-    def get_vcp_feature(self, code: VPCCommand) -> Tuple[int, int]:
+    def get_vcp_feature(self, code: VCPCommand) -> Tuple[int, int]:
         assert self._in_ctx, "This function must be run within the context manager"
         if not code.readable():
             raise TypeError(f"cannot read write-only code: {code.name}")
@@ -65,7 +65,7 @@ class VCP(abc.ABC):
         return self._get_vcp_feature(code)
 
     @abc.abstractmethod
-    def _get_vcp_feature(self, code: VPCCommand) -> Tuple[int, int]:
+    def _get_vcp_feature(self, code: VCPCommand) -> Tuple[int, int]:
         pass
 
     def get_vcp_capabilities(self) -> dict:
@@ -77,7 +77,7 @@ class VCP(abc.ABC):
     def _get_vcp_capabilities_str(self) -> str:
         pass
 
-    def _get_code_maximum(self, code: VPCCommand) -> int:
+    def _get_code_maximum(self, code: VCPCommand) -> int:
         assert self._in_ctx, "This function must be run within the context manager"
         if not code.readable:
             raise TypeError(f"code is not readable: {code.name}")

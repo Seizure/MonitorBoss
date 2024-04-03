@@ -1,6 +1,6 @@
 import sys
 
-from .vcp_codes import VPCCommand
+from .vcp_codes import VCPCommand
 from .vcp_abc import VCPError, VCPIOError, VCPPermissionError
 
 if sys.platform == "win32":

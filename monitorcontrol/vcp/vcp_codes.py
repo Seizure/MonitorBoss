@@ -11,7 +11,7 @@ class ComType(Enum):
 
 
 @dataclass(frozen=True)
-class VPCCommand:
+class VCPCommand:
     name: str
     desc: str
     value: int
@@ -26,49 +26,49 @@ class VPCCommand:
 
 
 __VCP_COMMANDS = [
-    VPCCommand(
+    VCPCommand(
         name="image_factory_default",
         desc="restore factory default image",
         value=0x04,
         type=ComType.wo,
         discreet=True),
-    VPCCommand(
+    VCPCommand(
         name="image_luminance",
         desc="image luminance",
         value=0x10,
         type=ComType.rw,
         discreet=False),
-    VPCCommand(
+    VCPCommand(
         name="image_contrast",
         desc="image contrast",
         value=0x12,
         type=ComType.rw,
         discreet=False),
-    VPCCommand(
+    VCPCommand(
         name="image_color_preset",
         desc="image color preset",
         value=0x14,
         type=ComType.rw,
         discreet=False),
-    VPCCommand(
+    VCPCommand(
         name="active_control",
         desc="active control",
         value=0x52,
         type=ComType.ro,
         discreet=True),
-    VPCCommand(
+    VCPCommand(
         name="input_select",
         desc="input select",
         value=0x60,
         type=ComType.rw,
         discreet=True),
-    VPCCommand(
+    VCPCommand(
         name="image_orientation",
         desc="image orientation",
         value=0xAA,
         type=ComType.ro,
         discreet=True),
-    VPCCommand(
+    VCPCommand(
         name="display_power_mode",
         desc="display power mode",
         value=0xD6,
@@ -77,7 +77,7 @@ __VCP_COMMANDS = [
 ]
 
 
-def get_vcp_com(key: Union[str, int]) -> VPCCommand:
+def get_vcp_com(key: Union[str, int]) -> VCPCommand:
     if not (isinstance(key, str) or isinstance(key, int)):
         raise TypeError(f"key must be string or int. Got {type(key)}.")
     for com in __VCP_COMMANDS:
@@ -88,10 +88,10 @@ def get_vcp_com(key: Union[str, int]) -> VPCCommand:
     raise LookupError(f"No VCP code matched key: {key}")
 
 
-def add_vcp_com(new_com: VPCCommand):
+def add_vcp_com(name: str, desc: str, value: int, com_type: ComType, discreet: bool):
     for com in __VCP_COMMANDS:
-        if new_com.name == com.name:
-            raise ValueError(f"VCP code with name {new_com.name} already exists")
-        if new_com.value == com.value:
-            raise ValueError(f"VCP code with value {new_com.value} already exists")
-    __VCP_COMMANDS.append(new_com)
+        if name == com.name:
+            raise ValueError(f"VCP code with name {name} already exists")
+        if value == com.value:
+            raise ValueError(f"VCP code with value {value} already exists")
+    __VCP_COMMANDS.append(VCPCommand(name, desc, value, com_type, discreet))

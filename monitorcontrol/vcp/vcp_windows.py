@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .vcp_codes import VPCCommand
+from .vcp_codes import VCPCommand
 from .vcp_abc import VCP, VCPError
 from types import TracebackType
 from typing import List, Optional, Tuple, Type
@@ -75,14 +75,14 @@ class WindowsVCP(VCP):
             raise VCPError("failed to close handle") from err
         return super().__exit__(exception_type, exception_value, exception_traceback)
 
-    def _set_vcp_feature(self, code: VPCCommand, value: int):
+    def _set_vcp_feature(self, code: VCPCommand, value: int):
         try:
             if not ctypes.windll.dxva2.SetVCPFeature(HANDLE(self.handle), BYTE(code.value), DWORD(value)):
                 raise VCPError(f"failed to set VCP feature: {ctypes.FormatError()}")
         except OSError as err:
             raise VCPError("failed to close handle") from err
 
-    def _get_vcp_feature(self, code: VPCCommand) -> Tuple[int, int]:
+    def _get_vcp_feature(self, code: VCPCommand) -> Tuple[int, int]:
         feature_current = DWORD()
         feature_max = DWORD()
         try:
