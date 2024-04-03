@@ -8,7 +8,7 @@ import sys
 
 assert sys.platform == "win32", "This file must be imported only for Windows"
 
-from ctypes.windll import dxva2
+dxva2 = ctypes.windll.dxva2
 from ctypes.wintypes import (
     DWORD,
     RECT,
