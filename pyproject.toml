@@ -13,9 +13,12 @@ packages = [{include = "monitorboss"}]
 [tool.poetry.dependencies]
 python = "^3.10,<3.13"
 tomlkit = "^0.12.4"
+pyudev = {version = "^0.24.1", platform = "linux"}
+
 
 [tool.poetry.group.mccs.dependencies]
-pyudev = { version = ">=0.23,<0.25", markers = "sys_platform != 'win32'" }
+pyudev = { version = ">=0.23,<0.25", platform = "linux" }
+cython = {version = "^3.0.10", platform = "macos"}
 
 [tool.poetry.group.build.dependencies]
 pyinstaller = "^6.5.0"
