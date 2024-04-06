@@ -1,5 +1,53 @@
+import enum
 from dataclasses import dataclass
 from enum import Enum, unique
+
+
+@enum.unique
+class InputSourceNames(enum.Enum):
+    off = 0x00,
+    analog1 = 0x01,
+    analog2 = 0x02,
+    dvi1 = 0x03,
+    dvi2 = 0x04,
+    composite1 = 0x05,
+    composite2 = 0x06,
+    svideo1 = 0x07,
+    svideo2 = 0x08,
+    tuner1 = 0x09,
+    tuner2 = 0x0a,
+    tuner3 = 0x0b,
+    cmponent1 = 0x0c,
+    cmponent2 = 0x0d,
+    cmponent3 = 0x0e,
+    dp1 = 0x0f,
+    dp2 = 0x10,
+    hdmi1 = 0x11,
+    hdmi2 = 0x12
+
+
+@enum.unique
+class PowerModeNames(enum.Enum):
+    on = 0x01,
+    standby = 0x02,
+    suspend = 0x03,
+    off_soft = 0x04,
+    off_hard = 0x05
+
+
+@enum.unique
+class ColorPresetNames(enum.Enum):
+    color_temp_4000k = 0x03,
+    color_temp_5000k = 0x04,
+    color_temp_6500k = 0x05,
+    color_temp_7500k = 0x06,
+    color_temp_8200k = 0x07,
+    color_temp_9300k = 0x08,
+    color_temp_10000k = 0x09,
+    color_temp_11500k = 0x0a,
+    color_temp_user1 = 0x0b,
+    color_temp_user2 = 0x0c,
+    color_temp_user3 = 0x0d
 
 
 @unique
@@ -14,65 +62,77 @@ class VCPCommand:
     name: str
     desc: str
     value: int
-    type: ComType
+    readable: bool
+    writeable: bool
     discreet: bool
-
-    def readable(self) -> bool:
-        return 'r' in self.type.value
-
-    def writeable(self) -> bool:
-        return 'w' in self.type.value
+    param_names: dict | None
 
 
 __VCP_COMMANDS = [
     VCPCommand(
-        name="image_factory_default",
+        name="restore_factory_default",
         desc="restore factory default image",
         value=0x04,
-        type=ComType.wo,
-        discreet=True),
+        readable=False,
+        writeable=True,
+        discreet=True,
+        param_names=None),
     VCPCommand(
         name="image_luminance",
         desc="image luminance",
         value=0x10,
-        type=ComType.rw,
-        discreet=False),
+        readable=True,
+        writeable=True,
+        discreet=False,
+        param_names=None),
     VCPCommand(
         name="image_contrast",
         desc="image contrast",
         value=0x12,
-        type=ComType.rw,
-        discreet=False),
+        readable=True,
+        writeable=True,
+        discreet=False,
+        param_names=None),
     VCPCommand(
         name="image_color_preset",
         desc="image color preset",
         value=0x14,
-        type=ComType.rw,
-        discreet=False),
+        readable=True,
+        writeable=True,
+        discreet=False,
+        param_names=dict(ColorPresetNames.__members__)),
     VCPCommand(
         name="active_control",
         desc="active control",
         value=0x52,
-        type=ComType.ro,
-        discreet=True),
+        readable=True,
+        writeable=False,
+        discreet=True,
+        param_names=None),
     VCPCommand(
         name="input_select",
         desc="input select",
         value=0x60,
-        type=ComType.rw,
-        discreet=True),
+        readable=True,
+        writeable=True,
+        discreet=True,
+        param_names=dict(InputSourceNames.__members__)),
     VCPCommand(
         name="image_orientation",
         desc="image orientation",
         value=0xAA,
-        type=ComType.ro,
-        discreet=True),
+        readable=True,
+        writeable=False,
+        discreet=True,
+        param_names=None),
     VCPCommand(
         name="display_power_mode",
         desc="display power mode",
         value=0xD6,
-        type=ComType.rw,
-        discreet=True),
+        readable=True,
+        writeable=False,
+        discreet=True,
+        param_names=dict(PowerModeNames.__members__)),
 ]
 
 
@@ -87,10 +147,10 @@ def get_vcp_com(key: str | int) -> VCPCommand:
     raise LookupError(f"No VCP code matched key: {key}")
 
 
-def add_vcp_com(name: str, desc: str, value: int, com_type: ComType, discreet: bool):
+def create_vcp_com(name: str, desc: str, value: int, com_type: ComType, discreet: bool):
     for com in __VCP_COMMANDS:
         if name == com.name:
             raise ValueError(f"VCP code with name {name} already exists")
         if value == com.value:
             raise ValueError(f"VCP code with value {value} already exists")
-    __VCP_COMMANDS.append(VCPCommand(name, desc, value, com_type, discreet))
+    return VCPCommand(name, desc, value, com_type, discreet)

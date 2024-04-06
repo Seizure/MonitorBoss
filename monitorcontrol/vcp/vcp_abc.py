@@ -44,9 +44,9 @@ class VCP(abc.ABC):
 
     def set_vcp_feature(self, code: VCPCommand, value: int):
         assert self._in_ctx, "This function must be run within the context manager"
-        if not code.writeable():
+        if not code.writeable:
             raise TypeError(f"cannot write read-only code: {code.name}")
-        elif code.readable() and code.discreet is False:
+        elif code.readable and code.discreet is False:
             maximum = self._get_code_maximum(code)
             if value > maximum:
                 raise ValueError(f"value of {value} exceeds code maximum of {maximum} for {code.name}")
@@ -59,7 +59,7 @@ class VCP(abc.ABC):
 
     def get_vcp_feature(self, code: VCPCommand) -> Tuple[int, int]:
         assert self._in_ctx, "This function must be run within the context manager"
-        if not code.readable():
+        if not code.readable:
             raise TypeError(f"cannot read write-only code: {code.name}")
         self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply(_, {code.name=}, None, _, _)")
         return self._get_vcp_feature(code)
