@@ -11,6 +11,7 @@
 #ifndef DDC_Panel_DDC_h
 #define DDC_Panel_DDC_h
 
+#include <CoreFoundation/CoreFoundation.h> // this needs to be included to get the needed CFTypeRef
 #include <IOKit/i2c/IOI2CInterface.h>
 #include <CoreGraphics/CGDirectDisplay.h>
 #include <CoreGraphics/CGDisplayConfiguration.h>
