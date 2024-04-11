@@ -1,3 +1,5 @@
+# see https://github.com/kfix/ddcctl for reference/ObjC implementation of ddc/ci on macOS
+
 from __future__ import annotations
 from types import TracebackType
 from typing import List, Optional, Type, Tuple
