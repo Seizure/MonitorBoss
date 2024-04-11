@@ -95,6 +95,12 @@ NSMutableArray *getDisplayIds(void)
     return _displayIDs;
 }
 
+int test(void)
+{
+    NSMutableArray *nsa = getDisplayIds();
+    return [nsa count];
+}
+
 io_service_t getFrameBuffer(NSUInteger displayId)
 {
     NSMutableArray *_displayIDs = getDisplayIds();
