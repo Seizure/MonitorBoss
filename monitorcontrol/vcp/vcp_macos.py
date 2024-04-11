@@ -48,7 +48,7 @@ class macOSVCP(VCP):
         vcps = []
         for s in screens:
             screen_desc = s._.deviceDescription
-            is_screen = screen_desc.objectForKey_('NSDeviceIsScreen')
+            is_screen = screen_desc["NSDeviceIsScreen"]
             if is_screen == "YES":
                 screen_id = screen_desc["NSScreenNumber"]
                 if not Quartz.CGDisplayIsBuiltin(screen_id):
