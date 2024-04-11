@@ -2,14 +2,17 @@ from __future__ import annotations
 from types import TracebackType
 from typing import List, Optional, Type, Tuple
 
+import AppKit
+import Quartz
+
 from monitorcontrol.vcp import VCPCommand
 from monitorcontrol.vcp.vcp_abc import VCP
 
 
 class macOSVCP(VCP):
-    def __init__(self):
+    def __init__(self, display_id: int):
         super().__init__()
-
+        self.display_id = display_id
 
     def __enter__(self):
         super().__enter__()
@@ -37,5 +40,17 @@ class macOSVCP(VCP):
 
     @staticmethod
     def get_vcps() -> List[macOSVCP]:
-        pass
+        NSScreen = AppKit.NSScreen
+
+        screens = NSScreen.screens()
+        vcps = []
+        for s in screens:
+            screen_desc = s._.deviceDescription
+            is_screen = screen_desc.objectForKey_('NSDeviceIsScreen')
+            if is_screen == "YES":
+                screen_id = screen_desc.objectForKey_("NSScreenNumber").integerValue()
+                if not Quartz.CGDisplayIsBuiltin(screen_id):
+                    vcps.append(macOSVCP(screen_id))
+
+        return vcps
 

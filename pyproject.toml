@@ -13,12 +13,11 @@ packages = [{include = "monitorboss"}]
 [tool.poetry.dependencies]
 python = "^3.10,<3.13"
 tomlkit = "^0.12.4"
+
+[tool.poetry.group.ddcci.dependencies]
 pyudev = {version = "^0.24.1", platform = "linux"}
-
-
-[tool.poetry.group.mccs.dependencies]
-pyudev = { version = ">=0.23,<0.25", platform = "linux" }
-cython = {version = "^3.0.10", platform = "macos"}
+pyobjc-framework-cocoa = {version = "^10.2", platform = "darwin"}
+pyobjc-framework-quartz = {version = "^10.2", platform = "darwin"}
 
 [tool.poetry.group.build.dependencies]
 pyinstaller = "^6.5.0"
@@ -26,5 +25,3 @@ pyinstaller = "^6.5.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-
