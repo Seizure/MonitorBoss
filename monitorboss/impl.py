@@ -41,6 +41,7 @@ def list_monitors() -> list[VCP]:
     try:
         return VCP.get_vcps()
     except Exception as err:
+        # TODO: this condition has nothing to do with being a laptop. What are the potential error sources?
         raise MonitorBossError(f"could not list monitors; are you using a laptop?") from err
 
 
