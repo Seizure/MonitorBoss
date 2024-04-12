@@ -41,9 +41,6 @@ class Attribute(Enum):
     clr = AttributeData("color preset", get_vcp_com(0x14),
                         "(currently active) color preset",
                         "Must be a valid color temperature preset, as defined by built-in aliases")
-    # vcp = AttributeData("VCP capabilities", mc.get_capabilities, None,
-    #                     "summary of the Virtual Control Panel's abilities",
-    #                     "This attribute can only be read")
 
     def __str__(self):
         return self.name
