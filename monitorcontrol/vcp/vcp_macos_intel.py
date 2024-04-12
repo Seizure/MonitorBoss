@@ -11,7 +11,7 @@ from monitorcontrol.vcp import VCPCommand
 from monitorcontrol.vcp.vcp_abc import VCP
 
 
-class macOSVCP(VCP):
+class MacOSIntelVCP(VCP):
     def __init__(self, display_id: int):
         super().__init__()
         self.display_id = display_id
@@ -41,7 +41,7 @@ class macOSVCP(VCP):
         pass
 
     @staticmethod
-    def get_vcps() -> List[macOSVCP]:
+    def get_vcps() -> List[MacOSIntelVCP]:
         NSScreen = AppKit.NSScreen
 
         screens = NSScreen.screens()
@@ -52,7 +52,7 @@ class macOSVCP(VCP):
             if is_screen == "YES":
                 screen_id = screen_desc["NSScreenNumber"]
                 if not Quartz.CGDisplayIsBuiltin(screen_id):
-                    vcps.append(macOSVCP(screen_id))
+                    vcps.append(MacOSIntelVCP(screen_id))
 
         return vcps
 
