@@ -8,15 +8,6 @@ from monitorboss import MonitorBossError
 from monitorboss.config import get_config
 
 
-# def get_input_source(monitor: VCP) -> int:
-#     try:
-#         input_source_com = get_vcp_com(0x60)
-#         return monitor.get_vcp_feature(input_source_com)[0]
-#     except InputSourceValueError as err:
-#         # Some monitors use non-standard codes that are outside of spec.
-#         return err.value
-
-
 @dataclass
 class AttributeData:
     short_desc: str
