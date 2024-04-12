@@ -37,17 +37,17 @@ class PowerModeNames(enum.Enum):
 
 @enum.unique
 class ColorPresetNames(enum.Enum):
-    color_temp_4000k = 0x03,
-    color_temp_5000k = 0x04,
-    color_temp_6500k = 0x05,
-    color_temp_7500k = 0x06,
-    color_temp_8200k = 0x07,
-    color_temp_9300k = 0x08,
-    color_temp_10000k = 0x09,
-    color_temp_11500k = 0x0a,
-    color_temp_user1 = 0x0b,
-    color_temp_user2 = 0x0c,
-    color_temp_user3 = 0x0d
+    ct4000k = 0x03,
+    ct5000k = 0x04,
+    ct6500k = 0x05,
+    ct7500k = 0x06,
+    ct8200k = 0x07,
+    ct9300k = 0x08,
+    ct10000k = 0x09,
+    ct11500k = 0x0a,
+    ctuser1 = 0x0b,
+    ctuser2 = 0x0c,
+    ctuser3 = 0x0d
 
 
 @unique
@@ -66,6 +66,7 @@ class VCPCommand:
     writeable: bool
     discreet: bool
     param_names: dict | None
+
 
 
 __VCP_COMMANDS = [
@@ -154,3 +155,4 @@ def create_vcp_com(name: str, desc: str, value: int, com_type: ComType, discreet
         if value == com.value:
             raise ValueError(f"VCP code with value {value} already exists")
     return VCPCommand(name, desc, value, com_type, discreet)
+
