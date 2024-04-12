@@ -5,7 +5,7 @@ from pprint import PrettyPrinter
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
 from monitorboss.impl import Attribute
-from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute
+from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
 
 
 def __check_attr(attr: str) -> Attribute:
@@ -127,15 +127,20 @@ def __list_mons(args, cfg: Config):
                 print(f"  - color presets: {', '.join(map(color_preset_name, caps['color_presets']))}")
 
 
+def __get_caps(args, cfg: Config) -> dict:
+    mon = __check_mon(args.mon, cfg)
+    caps = get_vcp_capabilities(mon)
+    pprinter = PrettyPrinter(indent=4)
+    pprinter.pprint(caps)
+    return caps
+
 def __get_attr(args, cfg: Config) -> str:
     attr = __check_attr(args.attr)
     mon = __check_mon(args.mon, cfg)
     val = get_attribute(mon, attr)
-    if isinstance(val, Enum):
-        val = val.name.removeprefix("color_temp_")
     pprinter = PrettyPrinter(indent=4)
     pprinter.pprint(val)
-    return str(val)
+    return str(val[0])
 
 
 def __set_attr(args, cfg: Config) -> str:
@@ -162,6 +167,11 @@ mon_subparsers = parser.add_subparsers(title="monitor commands", help=text, dest
 text = "list all the monitors and their possible attributes"
 list_parser = mon_subparsers.add_parser("list", help=text, description=text)
 list_parser.set_defaults(func=__list_mons)
+
+text = "Get the capabilities dictionary of a monitor"
+list_parser = mon_subparsers.add_parser("caps", help=text, description=text)
+list_parser.set_defaults(func=__get_caps)
+list_parser.add_argument("mon", type=str, help="the monitor to retrieve capabilities from")
 
 text = "return the value of a given attribute"
 get_parser = mon_subparsers.add_parser("get", help=text, description=text)

@@ -20,8 +20,6 @@ from monitorboss.config import get_config
 #         # Some monitors use non-standard codes that are outside of spec.
 #         return err.value
 
-def get_vcp_capabilities(monitor: VCP) -> dict:
-    return monitor.get_vcp_capabilities()
 
 @dataclass
 class AttributeData:
@@ -68,6 +66,11 @@ def __get_monitor(index: int) -> VCP:
         return monitors[index]
     except IndexError as err:
         raise MonitorBossError(f"monitor #{index} does not exist.") from err
+
+
+def get_vcp_capabilities(mon: int) -> dict:
+    with __get_monitor(mon) as monitor:
+        return monitor.get_vcp_capabilities()
 
 
 def get_attribute(mon: int, attr: Attribute) -> (int, int):
