@@ -4,7 +4,7 @@ from pprint import PrettyPrinter
 
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
-from monitorboss.impl import Attribute, ColorPreset, InputSource, PowerMode
+from monitorboss.impl import Attribute
 from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute
 
 
@@ -27,31 +27,30 @@ def __check_mon(mon: str, cfg: Config) -> int:
         ) from err
 
 
-def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSource | PowerMode | int:
+def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
     match attr:
         case Attribute.src:
             if val in cfg.input_source_names:
-                val = cfg.input_source_names[val]
+                return cfg.input_source_names[val]
+            elif val in attr.value.com.param_names:
+                return attr.value.com.param_names[val]
             try:
-                return InputSource[val]
-            except KeyError:
-                try:
-                    return int(val)
-                except ValueError as err:
-                    raise MonitorBossError(
-                        f"""{val} is not a valid input source.\nValid input sources are: {
-                        ', '.join(list(InputSource.__members__) + list(cfg.input_source_names))
-                        }, or a code number."""
-                        "\nNOTE: A particular monitor will probably support only some of these values,"
-                        " if any. Check your monitor's specs for the inputs it accepts."
-                    ) from err
+                return int(val)
+            except ValueError as err:
+                raise MonitorBossError(
+                    f"""{val} is not a valid input source.\nValid input sources are: {
+                    ', '.join(list(attr.value.com.param_names.keys()) + list(cfg.input_source_names))
+                    }, or a code number (non-negative integer)."""
+                    "\nNOTE: A particular monitor will probably support only some of these values."
+                    "Check your monitor's specs for the inputs it accepts."
+                ) from err
 
         case Attribute.cnt:
             try:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
-                    f"{val} is not a valid contrast value.\nValid contrast values are typically 0-100."
+                    f"{val} is not a valid contrast value.\nValid contrast values are non-negative integers."
                 ) from err
 
         case Attribute.lum:
@@ -59,33 +58,40 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> ColorPreset | InputSo
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
-                    f"{val} is not a valid luminance value.\nValid luminance values are typically 0-100."
+                    f"{val} is not a valid luminance value.\nValid luminance values are non-negative integers"
                 ) from err
 
         case Attribute.pwr:
+            if val in attr.value.com.param_names:
+                return attr.value.com.param_names[val]
             try:
-                return PowerMode[val]
-            except KeyError as err:
+                return int(val)
+            except ValueError as err:
                 raise MonitorBossError(
                     f"""{val} is not a valid power mode.\nValid power modes are: {
-                    ", ".join(PowerMode.__members__)
-                    }."""
+                    ', '.join(list(attr.value.com.param_names.keys()))
+                    }, or a code number (non-negative integer)."""
+                    "\nNOTE: A particular monitor will probably support only some of these values."
+                    "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
         case Attribute.clr:
-            # ColorPreset values all start with "color_temp_".
+            if val in attr.value.com.param_names:
+                return attr.value.com.param_names[val]
             try:
-                return ColorPreset[f"color_temp_{val}"]
-            except KeyError as err:
+                return int(val)
+            except ValueError as err:
                 raise MonitorBossError(
                     f"""{val} is not a valid color preset.\nValid color presets are: {
-                    ", ".join(m.removeprefix("color_temp_") for m in ColorPreset.__members__)
-                    }."""
+                    ', '.join(list(attr.value.com.param_names.keys()))
+                    }, or a code number (non-negative integer)."""
+                    "\nNOTE: A particular monitor will probably support only some of these values."
+                    "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
-
+# TODO: this is probably not working as intended after the changes, need to review
 def __list_mons(args, cfg: Config):
-    def input_source_name(src):
+    def input_source_name(src: int):
         if isinstance(src, Enum):
             return src.name
         for src_name, src_value in cfg.input_source_names.items():
@@ -93,7 +99,7 @@ def __list_mons(args, cfg: Config):
                 return f"{src} ({src_name})"
         return str(src)
 
-    def color_preset_name(clr):
+    def color_preset_name(clr: int):
         return clr.name.removeprefix("color_temp_") if isinstance(clr, Enum) else str(clr)
 
     for index, monitor in enumerate(list_monitors()):
@@ -132,7 +138,7 @@ def __get_attr(args, cfg: Config) -> str:
     return str(val)
 
 
-def __set_attr(args, cfg: Config):
+def __set_attr(args, cfg: Config) -> str:
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
     val = __check_val(attr, args.val, cfg)

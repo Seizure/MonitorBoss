@@ -148,7 +148,7 @@ def _convert_to_dict(caps_str: str) -> dict:
             prev_val = val
     return caps_dict
 
-
+# TODO: this should probably return the raw dict, and not help/add extra info; that's for MonitorBoss to do
 def _parse_capabilities(caps_str: str) -> dict:
     """
     Converts the capabilities string into a nice dict
