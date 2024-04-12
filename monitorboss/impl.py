@@ -1,12 +1,8 @@
-from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
 from time import sleep
 
-import monitorcontrol.monitorcontrol as mc
-from monitorcontrol.monitorcontrol import InputSourceValueError
-from monitorcontrol.vcp import VCP, VCPCommand, get_vcp_com
+from monitorcontrol import VCP, VCPCommand, get_vcp_com
 
 from monitorboss import MonitorBossError
 from monitorboss.config import get_config
