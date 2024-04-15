@@ -39,7 +39,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
             except ValueError as err:
                 raise MonitorBossError(
                     f"""{val} is not a valid input source.\nValid input sources are: {
-                    ', '.join(list(attr.value.com.param_names.keys()) + list(cfg.input_source_names))
+                        ', '.join(list(attr.value.com.param_names.keys()) + list(cfg.input_source_names))
                     }, or a code number (non-negative integer)."""
                     "\nNOTE: A particular monitor will probably support only some of these values."
                     "Check your monitor's specs for the inputs it accepts."
@@ -69,7 +69,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
             except ValueError as err:
                 raise MonitorBossError(
                     f"""{val} is not a valid power mode.\nValid power modes are: {
-                    ', '.join(list(attr.value.com.param_names.keys()))
+                        ', '.join(list(attr.value.com.param_names.keys()))
                     }, or a code number (non-negative integer)."""
                     "\nNOTE: A particular monitor will probably support only some of these values."
                     "Check your monitor's specs for the inputs it accepts."
@@ -88,6 +88,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
                     "\nNOTE: A particular monitor will probably support only some of these values."
                     "Check your monitor's specs for the inputs it accepts."
                 ) from err
+
 
 # TODO: this is probably not working as intended after the changes, need to review
 def __list_mons(args, cfg: Config):
@@ -133,6 +134,7 @@ def __get_caps(args, cfg: Config) -> dict:
     pprinter = PrettyPrinter(indent=4)
     pprinter.pprint(caps)
     return caps
+
 
 def __get_attr(args, cfg: Config) -> str:
     attr = __check_attr(args.attr)
