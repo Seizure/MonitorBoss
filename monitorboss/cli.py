@@ -141,7 +141,7 @@ def __get_attr(args, cfg: Config) -> str:
     mon = __check_mon(args.mon, cfg)
     val = get_attribute(mon, attr)
     pprinter = PrettyPrinter(indent=4)
-    pprinter.pprint(val)
+    pprinter.pprint(val[0])
     return str(val[0])
 
 
