@@ -67,12 +67,13 @@ def get_config(path: str | None = None) -> Config:
     doc = __get_toml(path)
     cfg = Config()
     try:
-        for key, value in doc[TomlKeys.monitors].items():
+        for key, value in doc[TomlKeys.monitors.value].items():
             cfg.monitor_names[key] = value
-        for key, value in doc[TomlKeys.inputs].items():
+        for key, value in doc[TomlKeys.inputs.value].items():
             cfg.input_source_names[key] = value
-        cfg.wait_time = doc[TomlKeys.settings][TomlKeys.wait]
-    except:
+        cfg.wait_time = doc[TomlKeys.settings.value][TomlKeys.wait.value]
+    except Exception as err:
+        print(err)
         raise MonitorBossError(f'could not parse config file: "{path}"')
     # As far as I can tell, negative numbers in python's sleep has undefined behavior, so we want to catch that
     if cfg.wait_time < 0:
@@ -92,28 +93,28 @@ def __write_toml(config: TOMLDocument, path: str | None = None):
 def set_monitor_alias(alias: str, mon_id: int, path: str | None = None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     doc = __get_toml(path)
-    doc[TomlKeys.monitors][alias] = mon_id
+    doc[TomlKeys.monitors.value][alias] = mon_id
     __write_toml(doc, path)
 
 
 def remove_monitor_alias(alias: str, path: str | None = None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     doc = __get_toml(path)
-    doc.remove(doc[TomlKeys.monitors][alias])
+    doc.remove(doc[TomlKeys.monitors.value][alias])
     __write_toml(doc, path)
 
 
 def set_input_alias(alias: str, input_id: int, path: str | None = None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     doc = __get_toml(path)
-    doc[TomlKeys.inputs][alias] = input_id
+    doc[TomlKeys.inputs.value][alias] = input_id
     __write_toml(doc, path)
 
 
 def remove_input_alias(alias: str, path: str | None = None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     doc = __get_toml(path)
-    doc.remove(doc[TomlKeys.inputs][alias])
+    doc.remove(doc[TomlKeys.inputs.value][alias])
     __write_toml(doc, path)
 
 
@@ -122,7 +123,7 @@ def set_wait_time(wait: float, path: str | None = None):
     if wait < 0:
         raise MonitorBossError(f'invalid wait time: {wait}')
     doc = __get_toml(path)
-    doc[TomlKeys.settings][TomlKeys.wait] = wait
+    doc[TomlKeys.settings.value][TomlKeys.wait.value] = wait
     __write_toml(doc, path)
 
 
