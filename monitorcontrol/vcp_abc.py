@@ -189,24 +189,4 @@ def _parse_capabilities(caps_str: str) -> dict:
             cap = _convert_to_dict(cap)
         caps_dict[key] = cap
 
-    # Parse the input sources into a text list for readability
-    input_source_cap = get_vcp_com("input_select").value
-    if input_source_cap in caps_dict["vcp"]:
-        caps_dict["inputs"] = []
-        input_val_list = list(caps_dict["vcp"][input_source_cap].keys())
-        input_val_list.sort()
-        for val in input_val_list:
-            input_source = val
-            caps_dict["inputs"].append(input_source)
-
-    # Parse the color presets into a text list for readability
-    color_preset_cap = get_vcp_com("image_color_preset").value
-    if color_preset_cap in caps_dict["vcp"]:
-        caps_dict["color_presets"] = []
-        color_val_list = list(caps_dict["vcp"][color_preset_cap])
-        color_val_list.sort()
-        for val in color_val_list:
-            color_source = val
-            caps_dict["color_presets"].append(color_source)
-
     return caps_dict
