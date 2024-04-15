@@ -1,3 +1,4 @@
+from pathlib import Path
 from dataclasses import dataclass, field
 
 from tomlkit import parse, dump, comment, document, table, TOMLDocument
@@ -38,6 +39,7 @@ def default_toml() -> TOMLDocument:
 
 def __get_toml(path: str | None = None) -> TOMLDocument:
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
+
     try:
         with open(path, "r", encoding="utf8") as file:
             content = file.read()
@@ -48,6 +50,12 @@ def __get_toml(path: str | None = None) -> TOMLDocument:
 
 def get_config(path: str | None = None) -> Config:
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
+
+    if not Path(path).parent.exists():
+        Path(path).parent.mkdir(parents=True)
+    if not Path(path).exists():
+        reset_config()
+
     doc = __get_toml(path)
     cfg = Config()
     try:
