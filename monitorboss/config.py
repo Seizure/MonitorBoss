@@ -1,3 +1,4 @@
+import enum
 from pathlib import Path
 from dataclasses import dataclass, field
 
@@ -6,6 +7,13 @@ from tomlkit import parse, dump, comment, document, table, TOMLDocument
 from monitorboss import MonitorBossError
 
 DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.toml"
+
+
+class TomlKeys(enum.Enum):
+    monitors = "monitor_names"
+    inputs = "input_names"
+    settings = "settings"
+    wait = "wait"
 
 
 @dataclass
@@ -27,12 +35,12 @@ def default_toml() -> TOMLDocument:
     input_names["USBC"].comment("27 seems to be the \"standard non-standard\" ID for USB-C among manufacturers")
 
     settings = table()
-    settings.add("wait", 2.0)
+    settings.add(TomlKeys.wait, 2.0)
 
     doc = document()
-    doc.add("monitor_names", mon_names)
-    doc.add("input_names", input_names)
-    doc.add("settings", settings)
+    doc.add(TomlKeys.monitors, mon_names)
+    doc.add(TomlKeys.inputs, input_names)
+    doc.add(TomlKeys.settings, settings)
 
     return doc
 
@@ -59,11 +67,11 @@ def get_config(path: str | None = None) -> Config:
     doc = __get_toml(path)
     cfg = Config()
     try:
-        for key, value in doc["monitor_names"].items():
+        for key, value in doc[TomlKeys.monitors].items():
             cfg.monitor_names[key] = value
-        for key, value in doc["input_names"].items():
+        for key, value in doc[TomlKeys.inputs].items():
             cfg.input_source_names[key] = value
-        cfg.wait_time = doc["settings"]["wait"]
+        cfg.wait_time = doc[TomlKeys.settings][TomlKeys.wait]
     except:
         raise MonitorBossError(f'could not parse config file: "{path}"')
     # As far as I can tell, negative numbers in python's sleep has undefined behavior, so we want to catch that
@@ -84,28 +92,28 @@ def __write_toml(config: TOMLDocument, path: str | None = None):
 def set_monitor_alias(alias: str, mon_id: int, path: str | None = None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     doc = __get_toml(path)
-    doc["monitor_names"][alias] = mon_id
+    doc[TomlKeys.monitors][alias] = mon_id
     __write_toml(doc, path)
 
 
 def remove_monitor_alias(alias: str, path: str | None = None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     doc = __get_toml(path)
-    doc.remove(doc["monitor_names"][alias])
+    doc.remove(doc[TomlKeys.monitors][alias])
     __write_toml(doc, path)
 
 
 def set_input_alias(alias: str, input_id: int, path: str | None = None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     doc = __get_toml(path)
-    doc["input_names"][alias] = input_id
+    doc[TomlKeys.inputs][alias] = input_id
     __write_toml(doc, path)
 
 
 def remove_input_alias(alias: str, path: str | None = None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     doc = __get_toml(path)
-    doc.remove(doc["input_names"][alias])
+    doc.remove(doc[TomlKeys.inputs][alias])
     __write_toml(doc, path)
 
 
@@ -114,7 +122,7 @@ def set_wait_time(wait: float, path: str | None = None):
     if wait < 0:
         raise MonitorBossError(f'invalid wait time: {wait}')
     doc = __get_toml(path)
-    doc["settings"]["wait"] = wait
+    doc[TomlKeys.settings][TomlKeys.wait] = wait
     __write_toml(doc, path)
 
 
