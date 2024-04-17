@@ -6,7 +6,7 @@ from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
 from monitorboss.impl import Attribute
 from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
-
+from monitorcontrol import parse_capabilities, get_vcp_com
 
 def __check_attr(attr: str) -> Attribute:
     try:
@@ -90,8 +90,57 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
                 ) from err
 
 
-# TODO: this is probably not working as intended after the changes, need to review
-def __list_mons(args, cfg: Config):
+def __translate_cmds(cmds: list):
+    for i, c in enumerate(cmds):
+        com = get_vcp_com(c)
+        if com is not None:
+            cmds[i] = com.name
+
+
+def __translate_vcp_entry(cmd: int, codes: list) -> (str | int, list[str | int]):
+    com = get_vcp_com(cmd)
+    tcmd = f"{com.name} ({com.value})" if com is not None else cmd
+
+    tcodes = []
+    for c in codes:
+        flag = True
+        if com is not None and com.param_names is not None:
+            for k in com.param_names:
+                v = com.param_names[k].value
+                if c == v:
+                    tcodes.append(f"{k} ({v})")
+                    flag = False
+        if flag:
+            tcodes.append(c)
+
+    return tcmd, tcodes
+
+
+def __translate_caps(caps: dict):
+    if 'cmds' in caps:
+        __translate_cmds(caps['cmds'])
+    if 'vcp' in caps:
+        for i, c in enumerate(caps['vcp']):
+            if isinstance(c, int):
+                com = get_vcp_com(c)
+                if com is not None:
+                    caps['vcp'][i] = f"{com.name} ({caps['vcp'][i]})"
+            else:
+                k, v = c.popitem()
+                cmd, codes = __translate_vcp_entry(k, v)
+                c[cmd] = codes
+
+
+def __list_mons(args, cfg):
+    for index, monitor in enumerate(list_monitors()):
+        print(f"monitor #{index}", end="")
+        if index in cfg.monitor_names.values():
+            print(f" ({', '.join([name for name, value in cfg.monitor_names.items() if index == value])})", end="")
+        print()
+
+
+# TODO: this is not working as intended after the changes, need to fix
+def __summarize_mon(args, cfg: Config):
     def input_source_name(src: int):
         if isinstance(src, Enum):
             return src.name
@@ -103,35 +152,44 @@ def __list_mons(args, cfg: Config):
     def color_preset_name(clr: int):
         return clr.name.removeprefix("color_temp_") if isinstance(clr, Enum) else str(clr)
 
-    for index, monitor in enumerate(list_monitors()):
-        with monitor:
-            try:
-                caps = monitor.get_vcp_capabilities()
-            except Exception as err:
-                raise MonitorBossError(f"could not list information for monitor #{index}.") from err
-            print(f"monitor #{index}", end="")
-            for name, value in cfg.monitor_names.items():
-                if value == index:
-                    print(f" ({name})", end="")
-                    break
-            print(":", end="")
-            if caps["type"]:
-                print(f" {caps['type']}", end="")
-            if caps["type"] and caps["model"]:
-                print(",", end="")
-            if caps["model"]:
-                print(f" model {caps['model']}", end="")
-            print()
-            if caps["inputs"]:
-                print(f"  - input sources: {', '.join(map(input_source_name, caps['inputs']))}")
-            if caps["color_presets"]:
-                print(f"  - color presets: {', '.join(map(color_preset_name, caps['color_presets']))}")
+    mon = __check_mon(args.mon, cfg)
+
+    try:
+        caps = parse_capabilities(get_vcp_capabilities(mon))
+    except Exception as err:
+        raise MonitorBossError(f"could not list information for monitor {args.mon} ({mon}).") from err
+    print(f"monitor #{mon}", end="")
+    for name, value in cfg.monitor_names.items():
+        if value == mon:
+            print(f" ({name})", end="")
+            break
+    print(":", end="")
+    if caps["type"]:
+        print(f" {caps['type']}", end="")
+    if caps["type"] and caps["model"]:
+        print(",", end="")
+    if caps["model"]:
+        print(f" model {caps['model']}", end="")
+    print()
+    if caps["inputs"]:
+        print(f"  - input sources: {', '.join(map(input_source_name, caps['inputs']))}")
+    if caps["color_presets"]:
+        print(f"  - color presets: {', '.join(map(color_preset_name, caps['color_presets']))}")
 
 
-def __get_caps(args, cfg: Config) -> dict:
+def __get_caps(args, cfg: Config) -> str | dict:
     mon = __check_mon(args.mon, cfg)
     caps = get_vcp_capabilities(mon)
     pprinter = PrettyPrinter(indent=4)
+
+    if args.raw:
+        print(caps)
+        return caps
+
+    caps = parse_capabilities(caps)
+
+    __translate_caps(caps)
+
     pprinter.pprint(caps)
     return caps
 
@@ -162,18 +220,24 @@ def __tog_attr(args, cfg: Config) -> str:
     return str(new_val)
 
 
-text = "commands for manipulating and polling your monitors"
+text = "Commands for manipulating and polling your monitors"
 parser = ArgumentParser(description="Boss your monitors around.")
 mon_subparsers = parser.add_subparsers(title="monitor commands", help=text, dest="subcommand", required=True)
 
-text = "list all the monitors and their possible attributes"
+text = "List all available monitors"
 list_parser = mon_subparsers.add_parser("list", help=text, description=text)
 list_parser.set_defaults(func=__list_mons)
 
-text = "Get the capabilities dictionary of a monitor"
-list_parser = mon_subparsers.add_parser("caps", help=text, description=text)
-list_parser.set_defaults(func=__get_caps)
-list_parser.add_argument("mon", type=str, help="the monitor to retrieve capabilities from")
+text = "Get the capabilities dictionary of a monitor, by default parsed into a dictionary format"
+caps_parser = mon_subparsers.add_parser("caps", help=text, description=text)
+caps_parser.set_defaults(func=__get_caps)
+caps_parser.add_argument("mon", type=str, help="the monitor to retrieve capabilities from")
+caps_parser.add_argument("-r", "--raw", action='store_true', help="do not parse the capabilities, just return the original string")
+
+text = "Summarize a monitor's details and most common/useful capabilities"
+sum_parser = mon_subparsers.add_parser("summary", help=text, description=text)
+sum_parser.set_defaults(func=__summarize_mon)
+sum_parser.add_argument("mon", type=str, help="the monitor to summarize")
 
 text = "return the value of a given attribute"
 get_parser = mon_subparsers.add_parser("get", help=text, description=text)

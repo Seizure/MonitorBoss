@@ -1,7 +1,7 @@
 import sys
 
 from .vcp_codes import VCPCommand
-from .vcp_abc import VCPError, VCPIOError, VCPPermissionError
+from .vcp_abc import VCPError, VCPIOError, VCPPermissionError, parse_capabilities
 
 from .vcp_codes import get_vcp_com, create_vcp_com, VCPCommand
 

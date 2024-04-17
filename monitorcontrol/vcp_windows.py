@@ -1,8 +1,11 @@
 from __future__ import annotations
+
+from collections import namedtuple
+
 from .vcp_codes import VCPCommand
 from .vcp_abc import VCP, VCPError
 from types import TracebackType
-from typing import List, Optional, Tuple, Type
+from typing import List, Optional, Type
 import ctypes
 import sys
 
@@ -81,7 +84,7 @@ class WindowsVCP(VCP):
         except OSError as err:
             raise VCPError("failed to close handle") from err
 
-    def _get_vcp_feature(self, code: VCPCommand) -> Tuple[int, int]:
+    def _get_vcp_feature(self, code: VCPCommand) -> (int, int):
         feature_current = DWORD()
         feature_max = DWORD()
         try:
@@ -96,7 +99,9 @@ class WindowsVCP(VCP):
         except OSError as err:
             raise VCPError("failed to get VCP feature") from err
         self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply -> ({feature_current.value}, {feature_max.value})")
-        return feature_current.value, feature_max.value
+        Get = namedtuple("GetResult", ["value", "max"])
+        get = Get(feature_current.value, feature_max.value)
+        return get
 
     def _get_vcp_capabilities_str(self) -> str:
         cap_length = DWORD()

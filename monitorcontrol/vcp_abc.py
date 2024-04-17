@@ -2,9 +2,9 @@ from __future__ import annotations
 import abc
 import logging
 from types import TracebackType
-from typing import Optional, Tuple, Type, List
+from typing import Optional, Type, List, NamedTuple
 
-from .vcp_codes import VCPCommand, get_vcp_com
+from .vcp_codes import VCPCommand
 
 
 class VCPError(Exception):
@@ -57,7 +57,7 @@ class VCP(abc.ABC):
     def _set_vcp_feature(self, code: VCPCommand, value: int):
         pass
 
-    def get_vcp_feature(self, code: VCPCommand) -> Tuple[int, int]:
+    def get_vcp_feature(self, code: VCPCommand) -> NamedTuple[int, int]:
         assert self._in_ctx, "This function must be run within the context manager"
         if not code.readable:
             raise TypeError(f"cannot read write-only code: {code.name}")
@@ -65,13 +65,12 @@ class VCP(abc.ABC):
         return self._get_vcp_feature(code)
 
     @abc.abstractmethod
-    def _get_vcp_feature(self, code: VCPCommand) -> Tuple[int, int]:
+    def _get_vcp_feature(self, code: VCPCommand) -> NamedTuple[int, int]:
         pass
 
-    def get_vcp_capabilities(self) -> dict:
+    def get_vcp_capabilities(self) -> str:
         assert self._in_ctx, "This function must be run within the context manager"
-        caps_str = self._get_vcp_capabilities_str()
-        return _parse_capabilities(caps_str)
+        return self._get_vcp_capabilities_str()
 
     @abc.abstractmethod
     def _get_vcp_capabilities_str(self) -> str:
@@ -94,99 +93,141 @@ class VCP(abc.ABC):
         pass
 
 
-def _extract_a_cap(caps_str: str, key: str) -> str:
-    """
-    Splits the capabilities string into individual sets.
-
-    Returns:
-        Dict of all values for the capability
-    """
-    start_of_filter = caps_str.upper().find(key.upper())
-    if start_of_filter == -1:
-        # Not all keys are returned by monitor.
-        # Also, sometimes the string has errors.
-        return ""
-    start_of_filter += len(key)
-    filtered_caps_str = caps_str[start_of_filter:]
-    end_of_filter = 0
-    for i in range(len(filtered_caps_str)):
-        if filtered_caps_str[i] == "(":
-            end_of_filter += 1
-        elif filtered_caps_str[i] == ")":
-            end_of_filter -= 1
-        if end_of_filter == 0:
-            # 1:i to remove the first character "(" and the closing ")"
-            return filtered_caps_str[1:i]
-    return filtered_caps_str
+Capabilities = int | str | list['Capabilities'] | dict[str, 'Capabilities']
 
 
-def _convert_to_dict(caps_str: str) -> dict:
-    """
-    Example:
-    >>> _convert_to_dict("04 14(05 06) 16")
-    {4: {}, 20: {5: {}, 6: {}}, 22: {}}
-    """
-    caps_dict = {}
-    group = []
-    prev_val = None
-    for chunk in caps_str.replace("(", " ( ").replace(")", " ) ").split():
-        if chunk == "":
-            continue
-        elif chunk == "(":
-            group.append(prev_val)
-        elif chunk == ")":
-            group.pop(-1)
-        else:
-            val = int(chunk, 16)
-            if len(group) == 0:
-                caps_dict[val] = {}
+def _get_close_paren_index(caps_str: str, open_index: int) -> int:
+    assert caps_str[open_index] == '('
+    depth = 1
+    for close_index in range(open_index + 1, len(caps_str)):
+        char = caps_str[close_index]
+        if char == '(':
+            depth += 1
+        elif char == ')':
+            depth -= 1
+            if not depth:
+                break
+    if depth > 0:
+        # '(' without ')'; just ignore it
+        return len(caps_str)
+    assert caps_str[close_index] == ')'
+    return close_index
+
+
+def _parse_caps_hex_list(caps_str: str) -> Capabilities:
+    # Data is a list of two-digit hexadecimal op-codes, possibly with associated enumeration values.
+    caps_data = []
+    index = 0
+    while index < len(caps_str):
+        if caps_str[index] == '(':
+            close_index = _get_close_paren_index(caps_str, index)
+            substr = caps_str[index + 1:close_index]
+            value = _parse_caps_hex_list(substr)
+            if caps_data and isinstance(caps_data[-1], (int, str)):
+                # Associate enumeration values with op-code
+                caps_data[-1] = {caps_data[-1]: value}
             else:
-                d = caps_dict
-                for g in group:
-                    d = d[g]
-                d[val] = {}
-            prev_val = val
-    return caps_dict
+                # Enumeration values have no prior op-code; this should not strictly happen.
+                # Examples: "vcps((01 02) 03 04)", or "vcps(01(02 03) (04 05) 06)", or
+                # "vcps(01(02(03)))", etc.
+                caps_data.append(value)
+            index = close_index + 1
+        else:
+            size = 2 if index + 1 < len(caps_str) and caps_str[index + 1] != '(' else 1
+            value = caps_str[index:index + size]
+            try:
+                value = int(value, 16)
+            except ValueError as err:
+                # invalid hex value; just ignore it and keep the string
+                pass
+            caps_data.append(value)
+            index += size
+    return caps_data
 
-# TODO: this should probably return the raw dict, and not help/add extra info; that's for MonitorBoss to do
-def _parse_capabilities(caps_str: str) -> dict:
-    """
-    Converts the capabilities string into a nice dict
-    """
-    caps_dict = {
-        # Used to specify the protocol class
-        "prot": "",
-        # Identifies the type of display
-        "type": "",
-        # The display model number
-        "model": "",
-        # A list of supported VCP codes. Somehow not the same as "vcp"
-        "cmds": "",
-        # A list of supported VCP codes with a list of supported values
-        # for each nc code
-        "vcp": "",
-        # undocumented
-        "mswhql": "",
-        # undocumented
-        "asset_eep": "",
-        # MCCS version implemented
-        "mccs_ver": "",
-        # Specifies the window, window type (PIP or Zone) safe area size
-        # (bounded safe area) maximum size of the window, minimum size of
-        # the window, and window supports VCP codes for control/adjustment.
-        "window": "",
-        # Alternate name to be used for control
-        "vcpname": "",
-        # Parsed input sources into text. Not part of capabilities string.
-        "inputs": "",
-        # Parsed color presets into text. Not part of capabilities string.
-        "color_presets": "",
-    }
 
-    for key in caps_dict:
-        cap = _extract_a_cap(caps_str, key)
-        if key in {"cmds", "vcp"}:
-            cap = _convert_to_dict(cap)
-        caps_dict[key] = cap
+def _parse_caps_dict(caps_str: str) -> Capabilities:
+    # Data is a series of key-value pairs.
+    # Some keys have standard meanings and expected value formats.
+    known_keys = {'prot', 'cmds', 'vcp', 'type', 'mccs_ver', 'asset_eep', 'mpu_ver', 'model',
+                  'mswhql', 'gamma_table', 'c_tmp_ofst'}
+    caps_data = {}
+    key = ''
+    index = 0
+    while index < len(caps_str):
+        char = caps_str[index]
+        if char == '(':
+            close_index = _get_close_paren_index(caps_str, index)
+            substr = caps_str[index + 1:close_index]
+            # Apple Cinema Display monitors are known to use uppercase "VCP" keys.
+            # LG 24UD58 monitors are known to report the "model" value without a key,
+            # i.e. "24UD58cmds(...)" instead of "model(24UD58)cmds(...)".
+            for known_key in known_keys:
+                if key.lower().endswith(known_key):
+                    extra, key = key[:-len(known_key)], known_key
+                    if extra:
+                        # Treat the extra prefix as a key with no value
+                        caps_data[extra] = {}
+                    break
+            # Some keys' values are expected to be lists of two-digit hexadecimal op-codes:
+            # "cmds" lists supported monitor device protocol commands, and "vcp" lists
+            # monitor control panel functions (some with associated enumeration values).
+            # These keys may have a suffix, e.g. "vcp_p02" or "vcp_p10".
+            if any(key.lower().startswith(k) for k in {'cmds', 'vcp'}):
+                # Remove all whitespace; it should not be meaningful, and hinders parsing.
+                substr = substr.replace(' ', '').replace('\t', '')
+                value = _parse_caps_hex_list(substr)
+            else:
+                value = _parse_caps_dict(substr)
+            if key:
+                # Associate key with its value.
+                caps_data[key] = value
+                key = ''
+            elif isinstance(value, dict) and not caps_data:
+                # The entire capabilities string is a parenthesized key-value dict itself.
+                caps_data = value
+            else:
+                # Value has no associated key; this should not strictly happen.
+                # Examples: "(prot monitor)", or "(prot(monitor)(type)(LCD)", or
+                # "(()(()())())", etc. Try to keep as much parsed data as possible anyway.
+                # It cannot be a hex list, because that would have been handled already.
+                assert not isinstance(value, list)
+                if isinstance(value, (int, str)):
+                    value = {value: {}}
+                # Un-nest the value, making sure that any keys shared with prior data
+                # do not overwrite prior data values.
+                caps_data = value | caps_data
+            index = close_index + 1
+        elif char.isspace():
+            if key:
+                # Asus PB287 monitors are known to report the "model" value without parentheses,
+                # i.e. "model LCDPB287" instead of "model(LCDPB287)".
+                value = ''
+                while index < len(caps_str) and caps_str[index].isspace():
+                    index += 1
+                while index < len(caps_str) and not caps_str[index].isspace() and caps_str[index] != '(':
+                    value += caps_str[index]
+                    index += 1
+                # Associate key with its value.
+                caps_data[key] = value
+                key = ''
+            index += 1
+        else:
+            key += char
+            index += 1
+    if key:
+        # The final key does not have a value.
+        if caps_data:
+            caps_data[key] = {}
+        else:
+            # This must be parsing a value substring of a full capabilities string;
+            # just return the string itself, e.g. "monitor" in "(prot(monitor))".
+            caps_data = key
+    return caps_data
 
+
+def parse_capabilities(caps_str: str) -> dict[str, Capabilities]:
+    caps_dict = _parse_caps_dict(caps_str)
+    if not isinstance(caps_dict, dict):
+        # The entire string is malformed to not be a series of key-value pairs.
+        caps_dict = {'': caps_dict}
     return caps_dict

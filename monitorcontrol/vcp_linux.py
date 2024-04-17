@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from collections import namedtuple
+
 from .vcp_codes import VCPCommand
 from .vcp_abc import VCP, VCPIOError, VCPPermissionError
 from types import TracebackType
@@ -109,7 +112,7 @@ class LinuxVCP(VCP):
         # store time of last set VCP
         self.last_set = time.time()
 
-    def _get_vcp_feature(self, code: VCPCommand) -> Tuple[int, int]:
+    def _get_vcp_feature(self, code: VCPCommand) -> (int, int):
         self.rate_limit()
         # transmission data
         data = bytearray()
@@ -160,7 +163,8 @@ class LinuxVCP(VCP):
             except KeyError:
                 message = f"received result with unknown code: {result_code}"
             raise VCPIOError(message)
-        return feature_current, feature_max
+        Get = namedtuple("GetResult", ["value", "max"])
+        get = Get(feature_current.value, feature_max.value)
 
     def _get_vcp_capabilities_str(self) -> str:
         # Create an empty capabilities string to be filled with the data

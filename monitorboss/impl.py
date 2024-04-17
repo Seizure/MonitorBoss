@@ -53,7 +53,7 @@ def __get_monitor(index: int) -> VCP:
         raise MonitorBossError(f"monitor #{index} does not exist.") from err
 
 
-def get_vcp_capabilities(mon: int) -> dict:
+def get_vcp_capabilities(mon: int) -> str:
     with __get_monitor(mon) as monitor:
         return monitor.get_vcp_capabilities()
 

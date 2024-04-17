@@ -50,13 +50,6 @@ class ColorPresetNames(enum.Enum):
     ctuser3 = 0x0d
 
 
-@unique
-class ComType(Enum):
-    ro = "ro"
-    wo = "wo"
-    rw = "rw"
-
-
 @dataclass(frozen=True)
 class VCPCommand:
     name: str
@@ -73,7 +66,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="restore_factory_default",
         desc="restore factory default image",
-        value=0x04,
+        value=4,  # 0x04
         readable=False,
         writeable=True,
         discreet=True,
@@ -81,7 +74,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="image_luminance",
         desc="image luminance",
-        value=0x10,
+        value=16,  # 0x10
         readable=True,
         writeable=True,
         discreet=False,
@@ -89,7 +82,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="image_contrast",
         desc="image contrast",
-        value=0x12,
+        value=18,  # 0x12
         readable=True,
         writeable=True,
         discreet=False,
@@ -97,7 +90,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="image_color_preset",
         desc="image color preset",
-        value=0x14,
+        value=20,  # 0x14
         readable=True,
         writeable=True,
         discreet=False,
@@ -105,7 +98,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="active_control",
         desc="active control",
-        value=0x52,
+        value=82,  # 0x52
         readable=True,
         writeable=False,
         discreet=True,
@@ -113,7 +106,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="input_source",
         desc="input source",
-        value=0x60,
+        value=96,  # 0x60
         readable=True,
         writeable=True,
         discreet=True,
@@ -121,7 +114,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="image_orientation",
         desc="image orientation",
-        value=0xAA,
+        value=170,  # 0xAA
         readable=True,
         writeable=False,
         discreet=True,
@@ -129,7 +122,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="display_power_mode",
         desc="display power mode",
-        value=0xD6,
+        value=214,  # 0xD6
         readable=True,
         writeable=False,
         discreet=True,
@@ -137,7 +130,7 @@ __VCP_COMMANDS = [
 ]
 
 
-def get_vcp_com(key: str | int) -> VCPCommand:
+def get_vcp_com(key: str | int) -> VCPCommand | None:
     if not (isinstance(key, str) or isinstance(key, int)):
         raise TypeError(f"key must be string or int. Got {type(key)}.")
     for com in __VCP_COMMANDS:
@@ -145,14 +138,15 @@ def get_vcp_com(key: str | int) -> VCPCommand:
             return com
         elif com.value == key:
             return com
-    raise LookupError(f"No VCP code matched key: {key}")
+    return None
 
 
-def create_vcp_com(name: str, desc: str, value: int, com_type: ComType, discreet: bool):
+def create_vcp_com(name: str, desc: str, value: int, readable: bool, writeable: bool, discreet: bool, param_names: dict | None = None):
     for com in __VCP_COMMANDS:
         if name == com.name:
             raise ValueError(f"VCP code with name {name} already exists")
         if value == com.value:
             raise ValueError(f"VCP code with value {value} already exists")
-    return VCPCommand(name, desc, value, com_type, discreet)
+    return VCPCommand(name, desc, value, readable, writeable, discreet, param_names)
+
 
