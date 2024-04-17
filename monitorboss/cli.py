@@ -1,12 +1,14 @@
 from argparse import ArgumentParser
 from enum import Enum
 from pprint import PrettyPrinter
+from typing import Tuple
 
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
 from monitorboss.impl import Attribute
 from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
 from monitorcontrol import parse_capabilities, get_vcp_com
+
 
 def __check_attr(attr: str) -> Attribute:
     try:
@@ -90,16 +92,12 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
                 ) from err
 
 
-def __translate_cmds(cmds: list):
-    for i, c in enumerate(cmds):
-        com = get_vcp_com(c)
-        if com is not None:
-            cmds[i] = com.name
-
-
-def __translate_vcp_entry(cmd: int, codes: list) -> (str | int, list[str | int]):
+def __translate_vcp_entry(cmd: int, codes: list | None = None) -> int | Tuple[str | int, list[str | int]]:
     com = get_vcp_com(cmd)
     tcmd = f"{com.name} ({com.value})" if com is not None else cmd
+
+    if codes is None:
+        return tcmd
 
     tcodes = []
     for c in codes:
@@ -118,13 +116,13 @@ def __translate_vcp_entry(cmd: int, codes: list) -> (str | int, list[str | int])
 
 def __translate_caps(caps: dict):
     if 'cmds' in caps:
-        __translate_cmds(caps['cmds'])
+        for i, c in enumerate(caps['cmds']):
+            caps['cmds'][i] = __translate_vcp_entry(c)
     if 'vcp' in caps:
         for i, c in enumerate(caps['vcp']):
             if isinstance(c, int):
-                com = get_vcp_com(c)
-                if com is not None:
-                    caps['vcp'][i] = f"{com.name} ({caps['vcp'][i]})"
+                c = __translate_vcp_entry(c)
+                caps['vcp'][i] = c
             else:
                 k, v = c.popitem()
                 cmd, codes = __translate_vcp_entry(k, v)
@@ -141,16 +139,16 @@ def __list_mons(args, cfg):
 
 # TODO: this is not working as intended after the changes, need to fix
 def __summarize_mon(args, cfg: Config):
-    def input_source_name(src: int):
-        if isinstance(src, Enum):
-            return src.name
-        for src_name, src_value in cfg.input_source_names.items():
-            if src_value == src:
-                return f"{src} ({src_name})"
-        return str(src)
-
-    def color_preset_name(clr: int):
-        return clr.name.removeprefix("color_temp_") if isinstance(clr, Enum) else str(clr)
+    # def input_source_name(src: int):
+    #     if isinstance(src, Enum):
+    #         return src.name
+    #     for src_name, src_value in cfg.input_source_names.items():
+    #         if src_value == src:
+    #             return f"{src} ({src_name})"
+    #     return str(src)
+    #
+    # def color_preset_name(clr: int):
+    #     return clr.name.removeprefix("color_temp_") if isinstance(clr, Enum) else str(clr)
 
     mon = __check_mon(args.mon, cfg)
 
