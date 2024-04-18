@@ -100,7 +100,7 @@ def __translate_vcp_entry(cmd: int, codes: list | None = None) -> int | tuple[st
     tcodes = []
     for c in codes:
         flag = True
-        if com is not None and com.param_names is not None:
+        if com is not None:
             for k in com.param_names:
                 v = com.param_names[k].value
                 if c == v:

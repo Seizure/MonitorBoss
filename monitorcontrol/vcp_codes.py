@@ -58,8 +58,7 @@ class VCPCommand:
     readable: bool
     writeable: bool
     discreet: bool
-    param_names: dict | None
-
+    param_names: dict
 
 
 __VCP_COMMANDS = [
@@ -70,7 +69,7 @@ __VCP_COMMANDS = [
         readable=False,
         writeable=True,
         discreet=True,
-        param_names=None),
+        param_names={}),
     VCPCommand(
         name="image_luminance",
         desc="image luminance",
@@ -78,7 +77,7 @@ __VCP_COMMANDS = [
         readable=True,
         writeable=True,
         discreet=False,
-        param_names=None),
+        param_names={}),
     VCPCommand(
         name="image_contrast",
         desc="image contrast",
@@ -86,7 +85,7 @@ __VCP_COMMANDS = [
         readable=True,
         writeable=True,
         discreet=False,
-        param_names=None),
+        param_names={}),
     VCPCommand(
         name="image_color_preset",
         desc="image color preset",
@@ -102,7 +101,7 @@ __VCP_COMMANDS = [
         readable=True,
         writeable=False,
         discreet=True,
-        param_names=None),
+        param_names={}),
     VCPCommand(
         name="input_source",
         desc="input source",
@@ -118,7 +117,7 @@ __VCP_COMMANDS = [
         readable=True,
         writeable=False,
         discreet=True,
-        param_names=None),
+        param_names={}),
     VCPCommand(
         name="display_power_mode",
         desc="display power mode",
