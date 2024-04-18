@@ -1,13 +1,11 @@
 from argparse import ArgumentParser
-from enum import Enum
 from pprint import PrettyPrinter
-from typing import Tuple
 
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
 from monitorboss.impl import Attribute
 from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
-from monitorcontrol import parse_capabilities, get_vcp_com
+from monitorcontrol import parse_capabilities, get_vcp_com, VCPIOError
 
 
 def __check_attr(attr: str) -> Attribute:
@@ -92,7 +90,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
                 ) from err
 
 
-def __translate_vcp_entry(cmd: int, codes: list | None = None) -> int | Tuple[str | int, list[str | int]]:
+def __translate_vcp_entry(cmd: int, codes: list | None = None) -> int | tuple[str | int, list[str | int]]:
     com = get_vcp_com(cmd)
     tcmd = f"{com.name} ({com.value})" if com is not None else cmd
 
@@ -154,8 +152,8 @@ def __summarize_mon(args, cfg: Config):
 
     try:
         caps = parse_capabilities(get_vcp_capabilities(mon))
-    except Exception as err:
-        raise MonitorBossError(f"could not list information for monitor {args.mon} ({mon}).") from err
+    except (OSError, VCPIOError) as err:
+        raise MonitorBossError(f"Could not list information for monitor {args.mon} ({mon}).") from err
     print(f"monitor #{mon}", end="")
     for name, value in cfg.monitor_names.items():
         if value == mon:
@@ -177,7 +175,10 @@ def __summarize_mon(args, cfg: Config):
 
 def __get_caps(args, cfg: Config) -> str | dict:
     mon = __check_mon(args.mon, cfg)
-    caps = get_vcp_capabilities(mon)
+    try:
+        caps = get_vcp_capabilities(mon)
+    except (OSError, VCPIOError) as err:
+        raise MonitorBossError(f"Could not list information for monitor {args.mon} ({mon}).") from err
     pprinter = PrettyPrinter(indent=4)
 
     if args.raw:
@@ -194,19 +195,21 @@ def __get_caps(args, cfg: Config) -> str | dict:
 
 def __get_attr(args, cfg: Config) -> str:
     attr = __check_attr(args.attr)
-    mon = __check_mon(args.mon, cfg)
-    val = get_attribute(mon, attr)
-    pprinter = PrettyPrinter(indent=4)
-    pprinter.pprint(val[0])
-    return str(val[0])
+    mons = [__check_mon(m, cfg) for m in args.mon]
+    vals = []
+    for m in mons:
+        vals.append(get_attribute(m, attr).value)
+    return str(vals if len(vals) > 1 else vals[0])
 
 
 def __set_attr(args, cfg: Config) -> str:
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
     val = __check_val(attr, args.val, cfg)
-    new_val = set_attribute(mons, attr, val)
-    return str(new_val)
+    new_vals = []
+    for m in mons:
+        new_vals.append(set_attribute(m, attr, val))
+    return str(new_vals if len(new_vals) > 1 else new_vals[0])
 
 
 def __tog_attr(args, cfg: Config) -> str:
@@ -214,8 +217,10 @@ def __tog_attr(args, cfg: Config) -> str:
     mons = [__check_mon(m, cfg) for m in args.mon]
     val1 = __check_val(attr, args.val1, cfg)
     val2 = __check_val(attr, args.val2, cfg)
-    new_val = toggle_attribute(mons, attr, val1, val2)
-    return str(new_val)
+    new_vals = []
+    for m in mons:
+        new_vals.append(toggle_attribute(m, attr, val1, val2))
+    return str(new_vals if len(new_vals) > 1 else new_vals[0])
 
 
 text = "Commands for manipulating and polling your monitors"
@@ -241,7 +246,7 @@ text = "return the value of a given attribute"
 get_parser = mon_subparsers.add_parser("get", help=text, description=text)
 get_parser.set_defaults(func=__get_attr)
 get_parser.add_argument("attr", type=str, help="the attribute to return")
-get_parser.add_argument("mon", type=str, help="the monitor to control")
+get_parser.add_argument("mon", type=str, nargs="+", help="the monitor to control")
 
 text = "sets a given attribute to a given value"
 set_parser = mon_subparsers.add_parser("set", help=text, description=text)

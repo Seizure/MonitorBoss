@@ -1,8 +1,9 @@
+from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from time import sleep
 
-from monitorcontrol import VCP, VCPCommand, get_vcp_com
+from monitorcontrol import VCP, VCPCommand, get_vcp_com, VCPError
 
 from monitorboss import MonitorBossError
 from monitorboss.config import get_config
@@ -40,9 +41,9 @@ class Attribute(Enum):
 def list_monitors() -> list[VCP]:
     try:
         return VCP.get_vcps()
-    except Exception as err:
-        # TODO: this condition has nothing to do with being a laptop. What are the potential error sources?
-        raise MonitorBossError(f"could not list monitors; are you using a laptop?") from err
+    except VCPError as err:
+        # this can only happen in Windows
+        raise MonitorBossError(f"Failed to list VCPs.") from err
 
 
 def __get_monitor(index: int) -> VCP:
@@ -55,56 +56,48 @@ def __get_monitor(index: int) -> VCP:
 
 def get_vcp_capabilities(mon: int) -> str:
     with __get_monitor(mon) as monitor:
-        return monitor.get_vcp_capabilities()
+        try:
+            return monitor.get_vcp_capabilities()
+        except VCPError as err:
+            raise MonitorBossError(f"Could not list information for monitor {mon}") from err
 
 
 def get_attribute(mon: int, attr: Attribute) -> (int, int):
+    com = attr.value.com
+    if not com.readable:
+        raise MonitorBossError(f"'{attr.value.short_desc}' attribute is not readable.")
+
     with __get_monitor(mon) as monitor:
-        com = attr.value.com
-        if not com.readable:
-            raise MonitorBossError(f"'{attr.value.short_desc}' attribute is not readable.")
         try:
             return monitor.get_vcp_feature(com)
-        except Exception as err:
+        except VCPError as err:
             raise MonitorBossError(f"could not get {attr.value.short_desc} for monitor #{mon}.") from err
 
 
-def set_attribute(mons: int | list[int], attr: Attribute, val: int) -> int:
-    if isinstance(mons, int):
-        mons = [mons]
+def set_attribute(mon: int, attr: Attribute, val: int) -> int:
     com = attr.value.com
+    if not com.writeable:
+        raise MonitorBossError(f"`{attr.value.short_desc}` attribute is not writeable.")
 
-    for mon in mons:
-        with __get_monitor(mon) as monitor:
-            if not com.writeable:
-                raise MonitorBossError(f"`{attr.value.short_desc}` attribute is not writeable.")
-            try:
-                monitor.set_vcp_feature(com, val)
-            except Exception as err:
-                raise MonitorBossError(f"could not set {attr.value.short_desc} for monitor #{mon} to {val}.") from err
-            # TODO: make this return val from a getter, it didn't work when we first tried this
-            return val
+    with __get_monitor(mon) as monitor:
+        try:
+            monitor.set_vcp_feature(com, val)
+        except VCPError as err:
+            raise MonitorBossError(f"could not set {attr.value.short_desc} for monitor #{mon} to {val}.") from err
+        # TODO: make this return val from a getter, it didn't work when we first tried this
+        return val
 
 
-def toggle_attribute(mons: int | list[int], attr: Attribute, val1: int, val2: int) -> int:
-    if isinstance(mons, int):
-        mons = [mons]
+def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int) -> (int, int):
     com = attr.value.com
+    if not (com.readable and com.writeable):
+        raise MonitorBossError(f"'{attr.value.short_desc}' attribute is not both readable and writeable.")
 
-    for mon in mons:
-        if not (com.readable and com.writeable):
-            raise MonitorBossError(f"'{attr.value.short_desc}' attribute is not both readable and writeable.")
-        try:
-            cur_val = get_attribute(mon, attr)[0]
-        except Exception as err:
-            raise MonitorBossError(f"could not get current {attr.value.short_desc} for monitor #{mon}.") from err
-        new_val = val2 if cur_val == val1 else val1
-        try:
-            set_attribute(mon, attr, new_val)
-        except Exception as err:
-            raise MonitorBossError(
-                f"could not toggle {attr.value.short_desc} for monitor #{mon} to {new_val}.") from err
-        return new_val
+    cur_val = get_attribute(mon, attr).value
+    new_val = val2 if cur_val == val1 else val1
+    set_attribute(mon, attr, new_val)
+    Vals = namedtuple("Vals", ["mon", "old", "new"])
+    return Vals(mon, cur_val, new_val)
 
 
 def signal_monitor(mon: int):
