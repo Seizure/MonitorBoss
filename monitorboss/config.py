@@ -51,7 +51,8 @@ def __get_toml(path: str | None = None) -> TOMLDocument:
     try:
         with open(path, "r", encoding="utf8") as file:
             content = file.read()
-    except:
+    except Exception as err:
+        print(err)
         raise MonitorBossError(f'could not open config file for reading: "{path}"')
     return parse(content)
 
@@ -86,7 +87,8 @@ def __write_toml(config: TOMLDocument, path: str | None = None):
     try:
         with open(path, "w", encoding="utf8") as file:
             dump(config, file)
-    except:
+    except Exception as err:
+        print(err)
         raise MonitorBossError(f'could not open config file for writing: "{path}"')
 
 

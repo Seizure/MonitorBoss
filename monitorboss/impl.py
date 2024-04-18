@@ -58,7 +58,7 @@ def get_vcp_capabilities(mon: int) -> str:
     with __get_monitor(mon) as monitor:
         try:
             return monitor.get_vcp_capabilities()
-        except VCPError as err:
+        except (OSError, VCPError) as err:
             raise MonitorBossError(f"Could not list information for monitor {mon}") from err
 
 
@@ -103,11 +103,11 @@ def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int) -> (int, i
 def signal_monitor(mon: int):
     cfg = get_config()
     wait = cfg.wait_time
-    with __get_monitor(mon) as monitor:
-        cur_lum, max_lum = get_attribute(mon, Attribute.lum)
-        sleep(wait)
-        set_attribute(mon, Attribute.lum, max_lum)
-        sleep(wait)
-        set_attribute(mon, Attribute.lum, 0)
-        sleep(wait)
-        set_attribute(mon, Attribute.lum, cur_lum)
+
+    cur_lum, max_lum = get_attribute(mon, Attribute.lum)
+    sleep(wait)
+    set_attribute(mon, Attribute.lum, max_lum)
+    sleep(wait)
+    set_attribute(mon, Attribute.lum, 0)
+    sleep(wait)
+    set_attribute(mon, Attribute.lum, cur_lum)

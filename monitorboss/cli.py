@@ -175,10 +175,7 @@ def __summarize_mon(args, cfg: Config):
 
 def __get_caps(args, cfg: Config) -> str | dict:
     mon = __check_mon(args.mon, cfg)
-    try:
-        caps = get_vcp_capabilities(mon)
-    except (OSError, VCPIOError) as err:
-        raise MonitorBossError(f"Could not list information for monitor {args.mon} ({mon}).") from err
+    caps = get_vcp_capabilities(mon)
     pprinter = PrettyPrinter(indent=4)
 
     if args.raw:
@@ -220,6 +217,7 @@ def __tog_attr(args, cfg: Config) -> str:
     new_vals = []
     for m in mons:
         new_vals.append(toggle_attribute(m, attr, val1, val2))
+
     return str(new_vals if len(new_vals) > 1 else new_vals[0])
 
 
