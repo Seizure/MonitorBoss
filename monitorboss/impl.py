@@ -58,7 +58,7 @@ def get_vcp_capabilities(mon: int) -> str:
     with __get_monitor(mon) as monitor:
         try:
             return monitor.get_vcp_capabilities()
-        except (OSError, VCPError) as err:
+        except VCPError as err:
             raise MonitorBossError(f"Could not list information for monitor {mon}") from err
 
 
