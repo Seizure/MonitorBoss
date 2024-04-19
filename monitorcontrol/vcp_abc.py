@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 import abc
-import logging
+
+from logging import getLogger
 from types import TracebackType
 from typing import Optional, Type, List, NamedTuple
 
@@ -23,7 +25,7 @@ class VCP(abc.ABC):
 
     @abc.abstractmethod
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
+        self.logger = getLogger(__name__)
         self.code_maximum = {}
         self._in_ctx = False
 
