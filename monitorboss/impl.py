@@ -1,12 +1,15 @@
 from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
+from logging import getLogger
 from time import sleep
 
 from monitorcontrol import VCP, VCPCommand, get_vcp_com, VCPError
 
 from monitorboss import MonitorBossError
 from monitorboss.config import get_config
+
+_log = getLogger(__name__)
 
 
 @dataclass
@@ -39,22 +42,25 @@ class Attribute(Enum):
 
 
 def list_monitors() -> list[VCP]:
+    _log.debug("list monitors")
     try:
         return VCP.get_vcps()
     except VCPError as err:
-        # this can only happen in Windows
+        # this can only happen on Windows
         raise MonitorBossError(f"Failed to list VCPs.") from err
 
 
-def __get_monitor(index: int) -> VCP:
+def __get_monitor(mon: int) -> VCP:
+    _log.debug(f"get monitor: {mon}")
     monitors = list_monitors()
     try:
-        return monitors[index]
+        return monitors[mon]
     except IndexError as err:
-        raise MonitorBossError(f"monitor #{index} does not exist.") from err
+        raise MonitorBossError(f"monitor #{mon} does not exist.") from err
 
 
 def get_vcp_capabilities(mon: int) -> str:
+    _log.debug(f"get VCP capabilities for monitor #{mon}")
     with __get_monitor(mon) as monitor:
         try:
             return monitor.get_vcp_capabilities()
@@ -63,6 +69,7 @@ def get_vcp_capabilities(mon: int) -> str:
 
 
 def get_attribute(mon: int, attr: Attribute) -> (int, int):
+    _log.debug(f"get attribute: {attr} (for monitor #{mon})")
     with __get_monitor(mon) as monitor:
         try:
             return monitor.get_vcp_feature(attr.value.com)
@@ -71,6 +78,7 @@ def get_attribute(mon: int, attr: Attribute) -> (int, int):
 
 
 def set_attribute(mon: int, attr: Attribute, val: int) -> int:
+    _log.debug(f"set attribute: {attr} = {val} (for monitor #{mon})")
     with __get_monitor(mon) as monitor:
         try:
             monitor.set_vcp_feature(attr.value.com, val)
@@ -81,6 +89,7 @@ def set_attribute(mon: int, attr: Attribute, val: int) -> int:
 
 
 def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int) -> (int, int):
+    _log.debug(f"toggle attribute: {attr} between {val1} and {val2} (for monitor #{mon})")
     cur_val = get_attribute(mon, attr).value
     new_val = val2 if cur_val == val1 else val1
     set_attribute(mon, attr, new_val)
@@ -89,13 +98,13 @@ def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int) -> (int, i
 
 
 def signal_monitor(mon: int):
+    _log.debug(f"signal monitor #{mon} (cycle its luminance)")
     cfg = get_config()
-    wait = cfg.wait_time
-
+    wait_time = cfg.wait_time
     cur_lum, max_lum = get_attribute(mon, Attribute.lum)
-    sleep(wait)
+    sleep(wait_time)
     set_attribute(mon, Attribute.lum, max_lum)
-    sleep(wait)
+    sleep(wait_time)
     set_attribute(mon, Attribute.lum, 0)
-    sleep(wait)
+    sleep(wait_time)
     set_attribute(mon, Attribute.lum, cur_lum)

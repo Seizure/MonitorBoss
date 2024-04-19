@@ -1,4 +1,6 @@
 from argparse import ArgumentParser
+from collections.abc import Sequence
+from logging import getLogger
 from pprint import PrettyPrinter
 
 from monitorboss import MonitorBossError
@@ -7,8 +9,11 @@ from monitorboss.impl import Attribute
 from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
 from monitorcontrol import parse_capabilities, get_vcp_com, VCPIOError
 
+_log = getLogger(__name__)
+
 
 def __check_attr(attr: str) -> Attribute:
+    _log.debug(f"check attribute: {attr!r}")
     try:
         return Attribute[attr]
     except KeyError as err:
@@ -18,6 +23,7 @@ def __check_attr(attr: str) -> Attribute:
 
 
 def __check_mon(mon: str, cfg: Config) -> int:
+    _log.debug(f"check monitor: {mon!r}")
     mon = cfg.monitor_names.get(mon, mon)
     try:
         return int(mon)
@@ -28,6 +34,7 @@ def __check_mon(mon: str, cfg: Config) -> int:
 
 
 def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
+    _log.debug(f"check attribute value: attr {attr}, value {val}")
     match attr:
         case Attribute.src:
             if val in cfg.input_source_names:
@@ -91,28 +98,27 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
 
 
 def __translate_vcp_entry(cmd: int, codes: list | None = None) -> int | tuple[str | int, list[str | int]]:
+    _log.debug(f"translate VCP entry: command {cmd}, codes {codes}")
     com = get_vcp_com(cmd)
-    tcmd = f"{com.name} ({com.value})" if com is not None else cmd
-
+    trans_cmd = f"{com.name} ({com.value})" if com is not None else cmd
     if codes is None:
-        return tcmd
-
-    tcodes = []
+        return trans_cmd
+    trans_codes = []
     for c in codes:
         flag = True
         if com is not None:
             for k in com.param_names:
                 v = com.param_names[k].value
                 if c == v:
-                    tcodes.append(f"{k} ({v})")
+                    trans_codes.append(f"{k} ({v})")
                     flag = False
         if flag:
-            tcodes.append(c)
-
-    return tcmd, tcodes
+            trans_codes.append(c)
+    return (trans_cmd, trans_codes)
 
 
 def __translate_caps(caps: dict):
+    _log.debug(f"translate capabilities: {caps}")
     if 'cmds' in caps:
         for i, c in enumerate(caps['cmds']):
             caps['cmds'][i] = __translate_vcp_entry(c)
@@ -127,7 +133,8 @@ def __translate_caps(caps: dict):
                 c[cmd] = codes
 
 
-def __list_mons(args, cfg):
+def __list_mons(args, cfg: Config):
+    _log.debug(f"list monitors: {args}")
     for index, monitor in enumerate(list_monitors()):
         print(f"monitor #{index}", end="")
         if index in cfg.monitor_names.values():
@@ -137,6 +144,7 @@ def __list_mons(args, cfg):
 
 # TODO: this is not working as intended after the changes, need to fix
 def __summarize_mon(args, cfg: Config):
+    _log.debug(f"summarize monitor: {args}")
     # def input_source_name(src: int):
     #     if isinstance(src, Enum):
     #         return src.name
@@ -149,7 +157,6 @@ def __summarize_mon(args, cfg: Config):
     #     return clr.name.removeprefix("color_temp_") if isinstance(clr, Enum) else str(clr)
 
     mon = __check_mon(args.mon, cfg)
-
     try:
         caps = parse_capabilities(get_vcp_capabilities(mon))
     except (OSError, VCPIOError) as err:
@@ -174,23 +181,19 @@ def __summarize_mon(args, cfg: Config):
 
 
 def __get_caps(args, cfg: Config) -> str | dict:
+    _log.debug(f"get capabilities: {args}")
     mon = __check_mon(args.mon, cfg)
     caps = get_vcp_capabilities(mon)
+    if not args.raw:
+        caps = parse_capabilities(caps)
+        __translate_caps(caps)
     pprinter = PrettyPrinter(indent=4)
-
-    if args.raw:
-        print(caps)
-        return caps
-
-    caps = parse_capabilities(caps)
-
-    __translate_caps(caps)
-
     pprinter.pprint(caps)
     return caps
 
 
 def __get_attr(args, cfg: Config) -> str:
+    _log.debug(f"get attribute: {args}")
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
     vals = []
@@ -200,6 +203,7 @@ def __get_attr(args, cfg: Config) -> str:
 
 
 def __set_attr(args, cfg: Config) -> str:
+    _log.debug(f"set attribute: {args}")
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
     val = __check_val(attr, args.val, cfg)
@@ -210,6 +214,7 @@ def __set_attr(args, cfg: Config) -> str:
 
 
 def __tog_attr(args, cfg: Config) -> str:
+    _log.debug(f"toggle attribute: {args}")
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
     val1 = __check_val(attr, args.val1, cfg)
@@ -277,7 +282,8 @@ def get_help_texts():
                                          mon_subparsers.choices.items()}
 
 
-def run(args=None):
+def run(args: str | Sequence[str] | None = None):
+    _log.debug(f"run CLI: {args}")
     if isinstance(args, str):
         args = args.split()
     args = parser.parse_args(args)
