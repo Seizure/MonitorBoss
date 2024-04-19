@@ -60,6 +60,9 @@ class VCPCommand:
     discreet: bool
     param_names: dict
 
+    def __str__(self):
+        return f"VCPCommand: {self.name} ({self.value})"
+
 
 __VCP_COMMANDS = [
     VCPCommand(
