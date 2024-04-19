@@ -12,6 +12,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - name: Install PyInstaller
+        shell: pwsh
+        run: |
+          pip install pyinstaller
       - name: Build
         shell: pwsh
         run: |
