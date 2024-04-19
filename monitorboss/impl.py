@@ -58,7 +58,7 @@ def get_vcp_capabilities(mon: int) -> str:
     with __get_monitor(mon) as monitor:
         try:
             return monitor.get_vcp_capabilities()
-        except (OSError, VCPError) as err:
+        except VCPError as err:
             raise MonitorBossError(f"Could not list information for monitor {mon}") from err
 
 
@@ -81,10 +81,6 @@ def set_attribute(mon: int, attr: Attribute, val: int) -> int:
 
 
 def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int) -> (int, int):
-    com = attr.value.com
-    if not (com.readable and com.writeable):
-        raise MonitorBossError(f"'{attr.value.short_desc}' attribute is not both readable and writeable.")
-
     cur_val = get_attribute(mon, attr).value
     new_val = val2 if cur_val == val1 else val1
     set_attribute(mon, attr, new_val)
