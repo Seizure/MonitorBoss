@@ -7,7 +7,7 @@ from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
 from monitorboss.impl import Attribute
 from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
-from monitorcontrol import parse_capabilities, get_vcp_com, VCPIOError
+from pyddc import parse_capabilities, get_vcp_com, VCPIOError
 
 _log = getLogger(__name__)
 

@@ -4,7 +4,7 @@ from enum import Enum
 from logging import getLogger
 from time import sleep
 
-from monitorcontrol import VCP, VCPCommand, get_vcp_com, VCPError
+from pyddc import VCP, VCPCommand, get_vcp_com, VCPError
 
 from monitorboss import MonitorBossError
 from monitorboss.config import get_config

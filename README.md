@@ -20,7 +20,6 @@ Either Windows or Linux. Other systems are ***not*** supported at the moment, in
 
 ### Source Dependencies
 
-* [monitorcontrol](https://pypi.org/project/monitorcontrol/) - provides support for the MCCS protocol
 * [PyInstaller](https://pypi.org/project/pyinstaller/) - for building application binaries
 * Python version ???
 
