@@ -147,7 +147,7 @@ def __get_caps(args, cfg: Config) -> str | dict:
         caps = parse_capabilities(caps)
         if args.summary:
             summary = f"monitor #{mon}"
-            if (mon_names := [name for name, value in cfg.monitor_names.items() if value == mon]):
+            if mon_names := [name for name, value in cfg.monitor_names.items() if value == mon]:
                 summary += f" ({', '.join(mon_names)}),"
             summary += ":"
             if caps["type"]:
@@ -215,11 +215,15 @@ text = "List all available monitors"
 list_parser = mon_subparsers.add_parser("list", help=text, description=text)
 list_parser.set_defaults(func=__list_mons)
 
-text = "Get the capabilities dictionary of a monitor, by default parsed into a dictionary format"
-caps_parser = mon_subparsers.add_parser("caps", help=text, description=text)
+text = "Get the capabilities dictionary of a monitor"
+description = ("Get the capabilities dictionary of a monitor. By default, this command parses the standard "
+               "capabilities string into a structured and readable format, as well as provides human-readable"
+               "names for known VCP codes and their defined options. If the --raw option is used, "
+               "all other arguments will be ignored.")
+caps_parser = mon_subparsers.add_parser("caps", help=text, description=description)
 caps_parser.set_defaults(func=__get_caps)
 caps_parser.add_argument("mon", type=str, help="the monitor to retrieve capabilities from")
-caps_parser.add_argument("-r", "--raw", action='store_true', help="do not parse the capabilities, just return the original string")
+caps_parser.add_argument("-r", "--raw", action='store_true', help="return the original, unparsed capabilities string")
 caps_parser.add_argument("-s", "--summary", action='store_true', help="return a highly formatted and abridged summary of the capabilities")
 
 text = "return the value of a given attribute"
@@ -251,7 +255,9 @@ tog_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to cont
 # -f : perform set without confirmation even if alias already exists
 # what should behavior be if removing an alias that doesn't exist?
 
-del text  # We're done with the subparsers
+# We're done with the subparsers
+del text
+del description
 
 
 def get_help_texts():
