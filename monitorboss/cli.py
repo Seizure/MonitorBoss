@@ -8,6 +8,7 @@ from monitorboss.config import Config, get_config
 from monitorboss.impl import Attribute
 from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
 from pyddc import parse_capabilities, get_vcp_com, VCPIOError
+from pyddc.vcp_abc import Capability, Capabilities
 
 _log = getLogger(__name__)
 
@@ -97,40 +98,35 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
                 ) from err
 
 
-def __translate_vcp_entry(cmd: int, codes: list | None = None) -> int | tuple[str | int, list[str | int]]:
-    _log.debug(f"translate VCP entry: command {cmd}, codes {codes}")
-    com = get_vcp_com(cmd)
-    trans_cmd = f"{com.name} ({com.value})" if com is not None else cmd
-    if codes is None:
-        return trans_cmd
-    trans_codes = []
-    for c in codes:
-        flag = True
-        if com is not None:
-            for k in com.param_names:
-                v = com.param_names[k].value
-                if c == v:
-                    trans_codes.append(f"{k} ({v})")
-                    flag = False
-        if flag:
-            trans_codes.append(c)
-    return (trans_cmd, trans_codes)
+def __translate_vcp_entry(cap: Capability) -> Capability:
+    _log.debug(f"translate VCP entry: {cap}")
+    com = get_vcp_com(cap.cap)
+    if com is None:
+        return cap
+    cap.cap = f"{com.name} ({com.value})"
+    if cap.values is not None:
+        def translate_vcp_value(value: int | str | Capability) -> int | str:
+            if isinstance(value, Capability):
+                if value.values is not None:
+                    return value
+                value = value.cap
+            for param_name in com.param_names:
+                if value == com.param_names[param_name].value:
+                    return f"{param_name}={value}"
+            return value
+        cap.values = [translate_vcp_value(value) for value in cap.values]
+    return cap
 
 
-def __translate_caps(caps: dict):
+def __translate_caps(caps: dict[str, Capabilities]):
     _log.debug(f"translate capabilities: {caps}")
     if 'cmds' in caps:
         for i, c in enumerate(caps['cmds']):
             caps['cmds'][i] = __translate_vcp_entry(c)
     if 'vcp' in caps:
         for i, c in enumerate(caps['vcp']):
-            if isinstance(c, int):
-                c = __translate_vcp_entry(c)
-                caps['vcp'][i] = c
-            else:
-                k, v = c.popitem()
-                cmd, codes = __translate_vcp_entry(k, v)
-                c[cmd] = codes
+            c = __translate_vcp_entry(c)
+            caps['vcp'][i] = c
 
 
 def __list_mons(args, cfg: Config):

@@ -134,7 +134,7 @@ __VCP_COMMANDS = [
 
 
 def get_vcp_com(key: str | int) -> VCPCommand | None:
-    if not (isinstance(key, str) or isinstance(key, int)):
+    if not isinstance(key, (int, str)):
         raise TypeError(f"key must be string or int. Got {type(key)}.")
     for com in __VCP_COMMANDS:
         if isinstance(key, str) and com.name == key:

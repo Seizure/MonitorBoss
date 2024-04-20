@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import abc
+from dataclasses import dataclass
 
 from logging import getLogger
 from types import TracebackType
@@ -95,7 +96,20 @@ class VCP(abc.ABC):
         pass
 
 
-Capabilities = int | str | list['Capabilities'] | dict[str, 'Capabilities']
+@dataclass
+class Capability:
+    cap: int | str
+    values: list[int | str] | None
+
+    def __str__(self):
+        if self.values is None:
+            return f"<{self.cap}>"
+        return f"<{self.cap} ({', '.join(map(str, self.values))})>"
+
+    def __repr__(self):
+        if self.values is None:
+            return f"<{self.cap}>"
+        return f"<{self.cap} ({', '.join(map(str, self.values))})>"
 
 
 def _get_close_paren_index(caps_str: str, open_index: int) -> int:
@@ -109,6 +123,9 @@ def _get_close_paren_index(caps_str: str, open_index: int) -> int:
             depth -= 1
             if not depth:
                 break
+    else:
+        assert open_index + 1 == len(caps_str)
+        return len(caps_str)
     if depth > 0:
         # '(' without ')'; just ignore it
         return len(caps_str)
@@ -116,7 +133,7 @@ def _get_close_paren_index(caps_str: str, open_index: int) -> int:
     return close_index
 
 
-def _parse_caps_hex_list(caps_str: str) -> Capabilities:
+def _parse_caps_hex_list(caps_str: str) -> list[Capability]:
     # Data is a list of two-digit hexadecimal op-codes, possibly with associated enumeration values.
     caps_data = []
     index = 0
@@ -125,14 +142,14 @@ def _parse_caps_hex_list(caps_str: str) -> Capabilities:
             close_index = _get_close_paren_index(caps_str, index)
             substr = caps_str[index + 1:close_index]
             value = _parse_caps_hex_list(substr)
-            if caps_data and isinstance(caps_data[-1], (int, str)):
+            if caps_data and caps_data[-1].values is None:
                 # Associate enumeration values with op-code
-                caps_data[-1] = {caps_data[-1]: value}
+                caps_data[-1].values = value
             else:
                 # Enumeration values have no prior op-code; this should not strictly happen.
                 # Examples: "vcps((01 02) 03 04)", or "vcps(01(02 03) (04 05) 06)", or
                 # "vcps(01(02(03)))", etc.
-                caps_data.append(value)
+                caps_data.extend(value)
             index = close_index + 1
         else:
             size = 2 if index + 1 < len(caps_str) and caps_str[index + 1] != '(' else 1
@@ -142,12 +159,16 @@ def _parse_caps_hex_list(caps_str: str) -> Capabilities:
             except ValueError as err:
                 # invalid hex value; just ignore it and keep the string
                 pass
-            caps_data.append(value)
+            cap = Capability(value, None)
+            caps_data.append(cap)
             index += size
     return caps_data
 
 
-def _parse_caps_dict(caps_str: str) -> Capabilities:
+Capabilities = int | str | list[Capability] | dict[str, 'Capabilities']
+
+
+def _parse_caps_dict(caps_str: str) -> dict[str, Capabilities]:
     # Data is a series of key-value pairs.
     # Some keys have standard meanings and expected value formats.
     known_keys = {'prot', 'cmds', 'vcp', 'type', 'mccs_ver', 'asset_eep', 'mpu_ver', 'model',
