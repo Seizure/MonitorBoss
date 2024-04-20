@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from collections.abc import Sequence
+import json
 from logging import getLogger
 from pprint import PrettyPrinter
 
@@ -143,31 +144,33 @@ def __get_caps(args, cfg: Config) -> str | dict:
     mon = __check_mon(args.mon, cfg)
     caps = get_vcp_capabilities(mon)
 
-    if not args.raw:
-        caps = parse_capabilities(caps)
-        if args.summary:
-            summary = f"monitor #{mon}"
-            if mon_names := [name for name, value in cfg.monitor_names.items() if value == mon]:
-                summary += f" ({', '.join(mon_names)}),"
-            summary += ":"
-            if caps["type"]:
-                summary += f" {caps['type']}"
-            if caps["type"] and caps["model"]:
-                summary += ","
-            if caps["model"]:
-                summary += f" model {caps['model']}"
-            summary += '\n'
-            if caps["vcp"]:
-                for c in caps['vcp']:
-                    if c.cap == 96 and c.values is not None:
-                        c = __translate_vcp_entry(c)
-                        summary += f"  - input sources: {', '.join(map(str, c.values))}\n"
-                    elif c.cap == 20 and c.values is not None:
-                        c = __translate_vcp_entry(c)
-                        summary += f"  - color presets: {', '.join(map(str, c.values))}\n"
-            print(summary)
-            return summary
-        __translate_caps(caps)
+    if args.raw:
+        print(caps)
+        return caps
+    caps = parse_capabilities(caps)
+    if args.summary:
+        summary = f"monitor #{mon}"
+        if mon_names := [name for name, value in cfg.monitor_names.items() if value == mon]:
+            summary += f" ({', '.join(mon_names)}),"
+        summary += ":"
+        if caps["type"]:
+            summary += f" {caps['type']}"
+        if caps["type"] and caps["model"]:
+            summary += ","
+        if caps["model"]:
+            summary += f" model {caps['model']}"
+        summary += '\n'
+        if caps["vcp"]:
+            for c in caps['vcp']:
+                if c.cap == 96 and c.values is not None:
+                    c = __translate_vcp_entry(c)
+                    summary += f"  - input sources: {', '.join(map(str, c.values))}\n"
+                elif c.cap == 20 and c.values is not None:
+                    c = __translate_vcp_entry(c)
+                    summary += f"  - color presets: {', '.join(map(str, c.values))}\n"
+        print(summary)
+        return summary
+    __translate_caps(caps)
     pprinter = PrettyPrinter(indent=4)
     pprinter.pprint(caps)
     return caps
@@ -217,9 +220,9 @@ list_parser.set_defaults(func=__list_mons)
 
 text = "Get the capabilities dictionary of a monitor"
 description = ("Get the capabilities dictionary of a monitor. By default, this command parses the standard "
-               "capabilities string into a structured and readable format, as well as provides human-readable"
-               "names for known VCP codes and their defined options. If the --raw option is used, "
-               "all other arguments will be ignored.")
+               "capabilities string into a structured and readable format, as well as provides human-readable names"
+               "for known VCP codes and their defined options. If the --raw option is used, all other arguments will "
+               "be ignored. Otherwise, if the --summary argument is used, all other arguments will be ignored.")
 caps_parser = mon_subparsers.add_parser("caps", help=text, description=description)
 caps_parser.set_defaults(func=__get_caps)
 caps_parser.add_argument("mon", type=str, help="the monitor to retrieve capabilities from")
