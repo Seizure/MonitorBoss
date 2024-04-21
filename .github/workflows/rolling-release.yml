@@ -26,7 +26,7 @@ jobs:
           git tag ${{ env.RELEASE_TAG }} -f
           git push --tags -f "https://Seizure:$GITHUB_TOKEN@github.com/Seizure/MonitorBoss.git"
       - name: Create new release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           name: Rolling release
@@ -36,7 +36,7 @@ jobs:
           prerelease: false
       - name: Upload monitorboss.exe
         id: upload
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           files: |
