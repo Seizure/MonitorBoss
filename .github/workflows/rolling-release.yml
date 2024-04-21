@@ -6,9 +6,6 @@ on:
 env:
   RELEASE_TAG: "rolling-release"
 jobs:
-  build:
-    name: "Continuous build"
-    uses: Seizure/MonitorBoss/.github/workflows/build.yml@master
   release:
     runs-on: windows-2022
     permissions: write-all
@@ -16,12 +13,14 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Download monitorboss.exe
-        uses: actions/download-artifact@v4
-      - name: Delete old release
-        uses: cb80/delrel@latest
-        with:
-          tag: ${{ env.RELEASE_TAG }}
+      - name: Install PyInstaller
+        shell: pwsh
+        run: |
+          pip install pyinstaller
+      - name: Build MonitorBoss
+        shell: pwsh
+        run: |
+          ./build.ps1
       - name: Advance release tag to master
         run: |
           git tag ${{ env.RELEASE_TAG }} -f
@@ -40,4 +39,4 @@ jobs:
         with:
           tag_name: ${{ env.RELEASE_TAG }}
           files: |
-            ./monitorboss.exe
+            ./dist/monitorboss.exe
