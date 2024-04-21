@@ -11,14 +11,12 @@ jobs:
     uses: Seizure/MonitorBoss/.github/workflows/build.yml@master
   release:
     runs-on: windows-2022
+    permissions: write-all
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
       - name: Download monitorboss.exe
-        uses: actions/download-artifact@v3
-        with:
-          name: monitorboss.exe
-          path: dist/monitorboss.exe
+        uses: actions/download-artifact@v4
       - name: Delete old release
         uses: cb80/delrel@latest
         with:
