@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import namedtuple
 
 from .vcp_codes import VCPCommand
-from .vcp_abc import VCP, VCPError
+from .vcp_abc import VCP, VCPError, VCPFeatureReturn
 from types import TracebackType
 from typing import List, Optional, Type
 import ctypes
@@ -99,9 +99,7 @@ class WindowsVCP(VCP):
         except OSError as err:
             raise VCPError("failed to get VCP feature") from err
         self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply -> ({feature_current.value}, {feature_max.value})")
-        Get = namedtuple("GetResult", ["value", "max"])
-        get = Get(feature_current.value, feature_max.value)
-        return get
+        return VCPFeatureReturn(feature_current.value, feature_max.value)
 
     def _get_vcp_capabilities_str(self) -> str:
         cap_length = DWORD()
