@@ -12,6 +12,7 @@ jobs:
   release:
     runs-on: windows-2022
     permissions: write-all
+    if: github.repository == 'Seizure/MonitorBoss'
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -35,7 +36,6 @@ jobs:
           draft: false
           prerelease: false
       - name: Upload monitorboss.exe
-        id: upload
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
