@@ -180,9 +180,9 @@ def __get_attr(args, cfg: Config) -> str:
     _log.debug(f"get attribute: {args}")
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
-    vals = []
-    for m in mons:
-        vals.append(get_attribute(m, attr).value)
+    vals = [get_attribute(m, attr).value for m in mons]
+    for mon, val in zip(args.mon, vals):
+        print(f"{attr} for monitor #{mon} is {val}")
     return str(vals if len(vals) > 1 else vals[0])
 
 
@@ -191,9 +191,9 @@ def __set_attr(args, cfg: Config) -> str:
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
     val = __check_val(attr, args.val, cfg)
-    new_vals = []
-    for m in mons:
-        new_vals.append(set_attribute(m, attr, val))
+    new_vals = [set_attribute(m, attr, val) for m in mons]
+    for mon, new_val in zip(args.mon, new_vals):
+        print(f"set {attr} for monitor #{mon} to {new_val}")
     return str(new_vals if len(new_vals) > 1 else new_vals[0])
 
 

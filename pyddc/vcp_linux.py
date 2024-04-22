@@ -164,7 +164,8 @@ class LinuxVCP(VCP):
                 message = f"received result with unknown code: {result_code}"
             raise VCPIOError(message)
         Get = namedtuple("GetResult", ["value", "max"])
-        get = Get(feature_current.value, feature_max.value)
+        get = Get(feature_current, feature_max)
+        return get
 
     def _get_vcp_capabilities_str(self) -> str:
         # Create an empty capabilities string to be filled with the data
