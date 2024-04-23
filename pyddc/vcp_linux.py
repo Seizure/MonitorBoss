@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import namedtuple
 
 from .vcp_codes import VCPCommand
-from .vcp_abc import VCP, VCPIOError, VCPPermissionError
+from .vcp_abc import VCP, VCPIOError, VCPPermissionError, VCPFeatureReturn
 from types import TracebackType
 from typing import List, Optional, Tuple, Type
 import os
@@ -163,9 +163,8 @@ class LinuxVCP(VCP):
             except KeyError:
                 message = f"received result with unknown code: {result_code}"
             raise VCPIOError(message)
-        Get = namedtuple("GetResult", ["value", "max"])
-        get = Get(feature_current, feature_max)
-        return get
+
+        return VCPFeatureReturn(feature_current, feature_max)
 
     def _get_vcp_capabilities_str(self) -> str:
         # Create an empty capabilities string to be filled with the data
