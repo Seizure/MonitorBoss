@@ -1,24 +1,20 @@
 from __future__ import annotations
 
-from collections import namedtuple
-
 from pyddc.vcp_codes import VCPCommand
 from pyddc.vcp_abc import VCP, VCPError, VCPFeatureReturn
 from types import TracebackType
 from typing import List, Optional, Type
 
-
-supported_codes = {}
-supported_codes[4] = [] # factory reset code (WO) TODO: should find a better WO command (with actual values)
-supported_codes[16] = None # luminance (RW/continuous)
-supported_codes[18] = None # contrast (RW/continuous)
-supported_codes[96] = [27, 15, 17] # input source code (RW/discreet); with params for USBC, dp1, and hdm1
-supported_codes[170] = [1, 2, 4] # image orientation (RO/discreet); with params for who knows what
-
+supported_codes = {
+    4: [],  # factory reset code (WO) TODO: should find a better WO command (with actual values)
+    16: None,  # luminance (RW/continuous)
+    18: None,  # contrast (RW/continuous)
+    96: [27, 15, 17],  # input source code (RW/discreet); with params for USBC, dp1, and hdm1
+    170: [1, 2, 4]  # image orientation (RO/discreet); with params for who knows what
+}
 caps_str = "(prot(monitor)type(LCD)model(DUMM13)cmds(04)vcp(10 12 60(1B 0F 11 ) AA(01 02 04 ) )mccs_ver(2.1))"
 
-
-current_values = {16: 75, 96: 27, 170: 2} # lum is 75, input is USBC(27), image orientation is 2 (whatever that means)
+current_values = {16: 75, 96: 27, 170: 2}  # lum is 75, input is USBC(27), image orientation is 2 (whatever that means)
 max_values = {16: 80, 18: 100}
 
 
