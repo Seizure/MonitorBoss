@@ -7,7 +7,7 @@ sys.platform = "test"
 # otherwise, Python loads unnecessary OS-specific files,
 # which can potentially cause errors if running on an otherwise unsupported OS
 # there is probably a better way to do this.
-from pyddc import VCP, VCPCommand, create_vcp_com, get_vcp_com, parse_capabilities
+from pyddc import VCP, get_vcp_com, parse_capabilities
 
 vcps = VCP.get_vcps()
 input_command = get_vcp_com(96)
@@ -55,6 +55,7 @@ class TestSetFeature:
     def test_unsupported_code(self):
         # TODO: need to sort out expected/proper behavior for this
         pass
+
 
 class TestCapabilitiesFunctions:
 
