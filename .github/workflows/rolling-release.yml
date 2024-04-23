@@ -1,0 +1,42 @@
+name: "Rolling release"
+on:
+  push:
+    branches:
+      - master
+env:
+  RELEASE_TAG: "rolling-release"
+jobs:
+  release:
+    runs-on: windows-2022
+    permissions: write-all
+    if: github.repository == 'Seizure/MonitorBoss'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install PyInstaller
+        shell: pwsh
+        run: |
+          pip install pyinstaller
+      - name: Build MonitorBoss
+        shell: pwsh
+        run: |
+          ./build.ps1
+      - name: Advance release tag to master
+        run: |
+          git tag ${{ env.RELEASE_TAG }} -f
+          git push --tags -f "https://Seizure:$GITHUB_TOKEN@github.com/Seizure/MonitorBoss.git"
+      - name: Create new release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: Rolling release
+          body: |
+            This is a rolling release build of the master branch of MonitorBoss.
+          draft: false
+          prerelease: false
+      - name: Upload monitorboss.exe
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: |
+            ./dist/monitorboss.exe

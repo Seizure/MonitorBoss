@@ -1,1 +1,1 @@
-pyinstaller -F --noconsole -n monitorboss.exe src/main.py
+pyinstaller --onefile -n monitorboss.exe main.py

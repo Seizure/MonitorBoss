@@ -1,14 +1,21 @@
 from argparse import ArgumentParser
-from enum import Enum
+from collections.abc import Sequence
+import json
+from logging import getLogger
 from pprint import PrettyPrinter
 
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
 from monitorboss.impl import Attribute
 from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
+from pyddc import parse_capabilities, get_vcp_com, VCPIOError
+from pyddc.vcp_abc import Capability, Capabilities
+
+_log = getLogger(__name__)
 
 
 def __check_attr(attr: str) -> Attribute:
+    _log.debug(f"check attribute: {attr!r}")
     try:
         return Attribute[attr]
     except KeyError as err:
@@ -18,6 +25,7 @@ def __check_attr(attr: str) -> Attribute:
 
 
 def __check_mon(mon: str, cfg: Config) -> int:
+    _log.debug(f"check monitor: {mon!r}")
     mon = cfg.monitor_names.get(mon, mon)
     try:
         return int(mon)
@@ -28,6 +36,7 @@ def __check_mon(mon: str, cfg: Config) -> int:
 
 
 def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
+    _log.debug(f"check attribute value: attr {attr}, value {val}")
     match attr:
         case Attribute.src:
             if val in cfg.input_source_names:
@@ -39,7 +48,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
             except ValueError as err:
                 raise MonitorBossError(
                     f"""{val} is not a valid input source.\nValid input sources are: {
-                    ', '.join(list(attr.value.com.param_names.keys()) + list(cfg.input_source_names))
+                        ', '.join(list(attr.value.com.param_names.keys()) + list(cfg.input_source_names))
                     }, or a code number (non-negative integer)."""
                     "\nNOTE: A particular monitor will probably support only some of these values."
                     "Check your monitor's specs for the inputs it accepts."
@@ -69,7 +78,7 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
             except ValueError as err:
                 raise MonitorBossError(
                     f"""{val} is not a valid power mode.\nValid power modes are: {
-                    ', '.join(list(attr.value.com.param_names.keys()))
+                        ', '.join(list(attr.value.com.param_names.keys()))
                     }, or a code number (non-negative integer)."""
                     "\nNOTE: A particular monitor will probably support only some of these values."
                     "Check your monitor's specs for the inputs it accepts."
@@ -89,95 +98,142 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
                     "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
-# TODO: this is probably not working as intended after the changes, need to review
+
+def __translate_vcp_entry(cap: Capability) -> Capability:
+    _log.debug(f"translate VCP entry: {cap}")
+    com = get_vcp_com(cap.cap)
+    if com is None:
+        return cap
+    cap.cap = f"{com.name} ({com.value})"
+    if cap.values is not None:
+        def translate_vcp_value(value: int | str | Capability) -> int | str:
+            if isinstance(value, Capability):
+                if value.values is not None:
+                    return value
+                value = value.cap
+            for param_name in com.param_names:
+                if value == com.param_names[param_name].value:
+                    return f"{param_name}={value}"
+            return value
+        cap.values = [translate_vcp_value(value) for value in cap.values]
+    return cap
+
+
+def __translate_caps(caps: dict[str, Capabilities]):
+    _log.debug(f"translate capabilities: {caps}")
+    if 'cmds' in caps:
+        for i, c in enumerate(caps['cmds']):
+            caps['cmds'][i] = __translate_vcp_entry(c)
+    if 'vcp' in caps:
+        for i, c in enumerate(caps['vcp']):
+            c = __translate_vcp_entry(c)
+            caps['vcp'][i] = c
+
+
 def __list_mons(args, cfg: Config):
-    def input_source_name(src: int):
-        if isinstance(src, Enum):
-            return src.name
-        for src_name, src_value in cfg.input_source_names.items():
-            if src_value == src:
-                return f"{src} ({src_name})"
-        return str(src)
-
-    def color_preset_name(clr: int):
-        return clr.name.removeprefix("color_temp_") if isinstance(clr, Enum) else str(clr)
-
+    _log.debug(f"list monitors: {args}")
     for index, monitor in enumerate(list_monitors()):
-        with monitor:
-            try:
-                caps = monitor.get_vcp_capabilities()
-            except Exception as err:
-                raise MonitorBossError(f"could not list information for monitor #{index}.") from err
-            print(f"monitor #{index}", end="")
-            for name, value in cfg.monitor_names.items():
-                if value == index:
-                    print(f" ({name})", end="")
-                    break
-            print(":", end="")
-            if caps["type"]:
-                print(f" {caps['type']}", end="")
-            if caps["type"] and caps["model"]:
-                print(",", end="")
-            if caps["model"]:
-                print(f" model {caps['model']}", end="")
-            print()
-            if caps["inputs"]:
-                print(f"  - input sources: {', '.join(map(input_source_name, caps['inputs']))}")
-            if caps["color_presets"]:
-                print(f"  - color presets: {', '.join(map(color_preset_name, caps['color_presets']))}")
+        print(f"monitor #{index}", end="")
+        if index in cfg.monitor_names.values():
+            print(f" ({', '.join([name for name, value in cfg.monitor_names.items() if index == value])})", end="")
+        print()
 
 
-def __get_caps(args, cfg: Config) -> dict:
+def __get_caps(args, cfg: Config) -> str | dict:
+    _log.debug(f"get capabilities: {args}")
     mon = __check_mon(args.mon, cfg)
     caps = get_vcp_capabilities(mon)
+
+    if args.raw:
+        print(caps)
+        return caps
+    caps = parse_capabilities(caps)
+    if args.summary:
+        summary = f"monitor #{mon}"
+        if mon_names := [name for name, value in cfg.monitor_names.items() if value == mon]:
+            summary += f" ({', '.join(mon_names)}),"
+        summary += ":"
+        if caps["type"]:
+            summary += f" {caps['type']}"
+        if caps["type"] and caps["model"]:
+            summary += ","
+        if caps["model"]:
+            summary += f" model {caps['model']}"
+        summary += '\n'
+        if caps["vcp"]:
+            for c in caps['vcp']:
+                if c.cap == 96 and c.values is not None:
+                    c = __translate_vcp_entry(c)
+                    summary += f"  - input sources: {', '.join(map(str, c.values))}\n"
+                elif c.cap == 20 and c.values is not None:
+                    c = __translate_vcp_entry(c)
+                    summary += f"  - color presets: {', '.join(map(str, c.values))}\n"
+        print(summary)
+        return summary
+    __translate_caps(caps)
     pprinter = PrettyPrinter(indent=4)
     pprinter.pprint(caps)
     return caps
 
+
 def __get_attr(args, cfg: Config) -> str:
+    _log.debug(f"get attribute: {args}")
     attr = __check_attr(args.attr)
-    mon = __check_mon(args.mon, cfg)
-    val = get_attribute(mon, attr)
-    pprinter = PrettyPrinter(indent=4)
-    pprinter.pprint(val)
-    return str(val[0])
+    mons = [__check_mon(m, cfg) for m in args.mon]
+    vals = [get_attribute(m, attr).value for m in mons]
+    for mon, val in zip(args.mon, vals):
+        print(f"{attr} for monitor #{mon} is {val}")
+    return str(vals if len(vals) > 1 else vals[0])
 
 
 def __set_attr(args, cfg: Config) -> str:
+    _log.debug(f"set attribute: {args}")
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
     val = __check_val(attr, args.val, cfg)
-    new_val = set_attribute(mons, attr, val)
-    return str(new_val)
+    new_vals = [set_attribute(m, attr, val) for m in mons]
+    for mon, new_val in zip(args.mon, new_vals):
+        print(f"set {attr} for monitor #{mon} to {new_val}")
+    return str(new_vals if len(new_vals) > 1 else new_vals[0])
 
 
 def __tog_attr(args, cfg: Config) -> str:
+    _log.debug(f"toggle attribute: {args}")
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
     val1 = __check_val(attr, args.val1, cfg)
     val2 = __check_val(attr, args.val2, cfg)
-    new_val = toggle_attribute(mons, attr, val1, val2)
-    return str(new_val)
+    new_vals = []
+    for m in mons:
+        new_vals.append(toggle_attribute(m, attr, val1, val2))
+
+    return str(new_vals if len(new_vals) > 1 else new_vals[0])
 
 
-text = "commands for manipulating and polling your monitors"
+text = "Commands for manipulating and polling your monitors"
 parser = ArgumentParser(description="Boss your monitors around.")
 mon_subparsers = parser.add_subparsers(title="monitor commands", help=text, dest="subcommand", required=True)
 
-text = "list all the monitors and their possible attributes"
+text = "List all available monitors"
 list_parser = mon_subparsers.add_parser("list", help=text, description=text)
 list_parser.set_defaults(func=__list_mons)
 
 text = "Get the capabilities dictionary of a monitor"
-list_parser = mon_subparsers.add_parser("caps", help=text, description=text)
-list_parser.set_defaults(func=__get_caps)
-list_parser.add_argument("mon", type=str, help="the monitor to retrieve capabilities from")
+description = ("Get the capabilities dictionary of a monitor. By default, this command parses the standard "
+               "capabilities string into a structured and readable format, as well as provides human-readable names"
+               "for known VCP codes and their defined options. If the --raw option is used, all other arguments will "
+               "be ignored. Otherwise, if the --summary argument is used, all other arguments will be ignored.")
+caps_parser = mon_subparsers.add_parser("caps", help=text, description=description)
+caps_parser.set_defaults(func=__get_caps)
+caps_parser.add_argument("mon", type=str, help="the monitor to retrieve capabilities from")
+caps_parser.add_argument("-r", "--raw", action='store_true', help="return the original, unparsed capabilities string")
+caps_parser.add_argument("-s", "--summary", action='store_true', help="return a highly formatted and abridged summary of the capabilities")
 
 text = "return the value of a given attribute"
 get_parser = mon_subparsers.add_parser("get", help=text, description=text)
 get_parser.set_defaults(func=__get_attr)
 get_parser.add_argument("attr", type=str, help="the attribute to return")
-get_parser.add_argument("mon", type=str, help="the monitor to control")
+get_parser.add_argument("mon", type=str, nargs="+", help="the monitor to control")
 
 text = "sets a given attribute to a given value"
 set_parser = mon_subparsers.add_parser("set", help=text, description=text)
@@ -202,7 +258,9 @@ tog_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to cont
 # -f : perform set without confirmation even if alias already exists
 # what should behavior be if removing an alias that doesn't exist?
 
-del text  # We're done with the subparsers
+# We're done with the subparsers
+del text
+del description
 
 
 def get_help_texts():
@@ -210,7 +268,8 @@ def get_help_texts():
                                          mon_subparsers.choices.items()}
 
 
-def run(args=None):
+def run(args: str | Sequence[str] | None = None):
+    _log.debug(f"run CLI: {args}")
     if isinstance(args, str):
         args = args.split()
     args = parser.parse_args(args)
