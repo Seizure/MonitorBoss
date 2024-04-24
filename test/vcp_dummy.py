@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from pyddc.vcp_codes import VCPCommand
-from pyddc.vcp_abc import VCP, VCPError, VCPFeatureReturn
+from test import VCPCommand, VCPFeatureReturn
 from types import TracebackType
 from typing import List, Optional, Type
+
+from pyddc.vcp_abc import VCP
 
 supported_codes = {
     4: [],  # factory reset code (WO) TODO: should find a better WO command (with actual values)

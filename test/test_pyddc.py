@@ -1,13 +1,6 @@
 import pytest
-
-
-import sys
-sys.platform = "test"
-# this is part of a demonic hack to load in a dummy VCP in the test framework
-# otherwise, Python loads unnecessary OS-specific files,
-# which can potentially cause errors if running on an otherwise unsupported OS
-# there is probably a better way to do this.
-from pyddc import VCP, get_vcp_com, parse_capabilities
+from test import get_vcp_com, parse_capabilities
+from .vcp_dummy import DummyVCP as VCP
 
 vcps = VCP.get_vcps()
 input_command = get_vcp_com(96)
