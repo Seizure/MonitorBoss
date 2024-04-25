@@ -98,8 +98,30 @@ class TestCapabilitiesFunctions:
         with pytest.raises(AssertionError):
             self.vcp.get_vcp_capabilities()
 
+    # TODO: test different string formats/edge cases
+
     def test_caps_parsing(self):
         with self.vcp as vcp:
             caps = parse_capabilities(vcp.get_vcp_capabilities())
             # TODO: caps parsing is changing soon, this will break as soon as it does
             assert caps.__str__() == "{'prot': 'monitor', 'type': 'LCD', 'model': 'DUMM13', 'cmds': [<4>], 'vcp': [<16>, <18>, <96 (<27>, <15>, <17>)>, <170 (<1>, <2>, <4>)>], 'mccs_ver': '2.1'}"
+
+
+class TestGetVCPCom:
+
+    def test_get_with_bad_type(self):
+        with pytest.raises(TypeError):
+            get_vcp_com(1.3)
+
+    def test_get_none_by_int(self):
+        assert get_vcp_com(1048) is None
+
+    def test_get_none_by_str(self):
+        assert get_vcp_com("rawr") is None
+
+    def test_get_com_by_int(self):
+        assert get_vcp_com(16).name == "image_luminance"
+
+    def test_get_com_by_str(self):
+        assert get_vcp_com("image_luminance").value == 16
+
