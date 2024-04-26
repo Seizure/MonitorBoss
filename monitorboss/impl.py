@@ -75,6 +75,8 @@ def get_attribute(mon: int, attr: Attribute) -> (int, int):
             return monitor.get_vcp_feature(attr.value.com)
         except VCPError as err:
             raise MonitorBossError(f"could not get {attr.value.short_desc} for monitor #{mon}.") from err
+        except TypeError as err:
+            raise MonitorBossError(f"{attr} is not a readable feature.") from err
 
 
 def set_attribute(mon: int, attr: Attribute, val: int) -> int:
@@ -84,6 +86,10 @@ def set_attribute(mon: int, attr: Attribute, val: int) -> int:
             monitor.set_vcp_feature(attr.value.com, val)
         except VCPError as err:
             raise MonitorBossError(f"could not set {attr.value.short_desc} for monitor #{mon} to {val}.") from err
+        except TypeError as err:
+            raise MonitorBossError(f"{attr} is not a writeable feature.") from err
+        except ValueError as err:
+            raise MonitorBossError(f"Provided value ({val}) is above the max for this feature ({attr})") from err
         # TODO: make this return val from a getter, it didn't work when we first tried this
         return val
 
