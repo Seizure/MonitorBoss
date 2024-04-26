@@ -125,3 +125,7 @@ class TestGetVCPCom:
     def test_get_com_by_str(self):
         assert get_vcp_com("image_luminance").value == 16
 
+
+class TestCreateVCPCom:
+    pass
+    # TODO: need to discuss whether this function needs its current protections, or if its needed at all
