@@ -17,10 +17,12 @@ if error:
 IOKit = Foundation.NSBundle.bundleWithIdentifier_('com.apple.framework.IOKit')
 IOKIT_functions = [("IORegistryGetRootEntry", b"II"),
                    ("IOObjectRelease", b"iI"),
-                   ("IORegistryEntryCreateIterator", b"iI*I^I", '', {'arguments': {3: {'type_modifier': b'o'}}}),
+                   ("IORegistryEntryCreateIterator", b"iI*I^I", '',
+                    {'arguments': {3: {'type_modifier': b'o'}}}),
                    ("IOIteratorNext", b"II"),
                    ("IORegistryEntryGetName", b"iI*", '',
-                    {'arguments': {1: {'c_array_delimited_by_null': True, 'type_modifier': b'N'}}})]
+                    {'arguments': {1: {'c_array_delimited_by_null': True, 'type_modifier': b'N'}}}),
+                   ("IORegistryEntryCreateCFProperty", b"^@I{name=CFStringRef}{name=CFAllocatorRef}I")]
 objc.loadBundleFunctions(IOKit, globals(), IOKIT_functions)
 
 # constants = [("KERN_SUCCESS", b"i"),
@@ -35,38 +37,43 @@ kIOMasterPortDefault = 0  # IOKit constant
 kIORegistryIterateRecursively = 1  # IOKit constant
 IO_OBJECT_NULL = 0  # IOKit constant
 MACH_PORT_NULL = 0  # A constant, don't know what framework but probably IOKit?
+kCFAllocatorDefault = None  # NULL. A constant from Core Foundation
 
 
 @dataclass
 class IOregService:
-    edidUUID: str
-    manufacturer: str
-    productName: str
-    serialNumber: int
-    alphanumericSerialNumber: str
-    location: str
-    ioDisplayLocation: str
-    transportUpstream: str
-    transportDownstream: str
-    # service: IOAVService
-    serviceLocation: int
-    displayAttributes: dict
+    edidUUID: str = None
+    manufacturer: str = None
+    productName: str = None
+    serialNumber: int = None
+    alphanumericSerialNumber: str = None
+    location: str = None
+    ioDisplayLocation: str = None
+    transportUpstream: str = None
+    transportDownstream: str = None
+    # service: IOAVService = None
+    serviceLocation: int = None
+    displayAttributes: dict = None
 
 
 @dataclass
 class Arm64Service:
-    strdisplayID: int
-    # strservice: IOAVService
-    strserviceLocation: int
-    strdiscouraged: bool
-    strdummy: bool
-    strserviceDetails: IOregService
-    strmatchScore: int
+    strdisplayID: int = None
+    # strservice: IOAVService = None
+    strserviceLocation: int = None
+    strdiscouraged: bool = None
+    strdummy: bool = None
+    strserviceDetails: IOregService = None
+    strmatchScore: int = None
+
+
+def getIORegServiceAppleCDC2Properties(entry: int) -> IOregService:
+    ioregService = IOregService()
+
 
 
 def ioregIterateToNextObjectOfInterest(interests: list[str], iterator: int) -> (str, int, int):
-    entry = preceedingEntry = IO_OBJECT_NULL
-    name = ""
+    entry = IO_OBJECT_NULL
 
     while True:
         preceedingEntry = entry
@@ -74,15 +81,15 @@ def ioregIterateToNextObjectOfInterest(interests: list[str], iterator: int) -> (
         if entry == MACH_PORT_NULL:
             break
         ret, name = IORegistryEntryGetName(entry, bytearray(128))
-        name = name.decode()
         if ret != KERN_SUCCESS:
             break
+        name = name.decode()
         for interest in interests:
             if interest in name:
                 ObjectOfInterest = namedtuple("ObjectOfInterest", ["name", "entry", "preceedingEntry"])
                 objectOfInterest = ObjectOfInterest(name, entry, preceedingEntry)
-                print(objectOfInterest)
-                # return objectOfInterest
+                # print(objectOfInterest)
+                return objectOfInterest
 
     return None
 
@@ -90,11 +97,11 @@ def ioregIterateToNextObjectOfInterest(interests: list[str], iterator: int) -> (
 #####
 # get list of IOregService, for matching displays against
 #####
-def getIoregServicesForMatching():
+def getIoregServicesForMatching() -> list[IOregService]:
     serviceLocation = 0
     ioregServicesForMatching = []  # a list[IOregService]
     ioregRoot = IORegistryGetRootEntry(kIOMasterPortDefault)
-    ioregService = IORegService()
+    ioregService: IOregService
 
     try:
         ret, iterator = IORegistryEntryCreateIterator(ioregRoot, "IOService".encode('utf-8'),
