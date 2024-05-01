@@ -1,5 +1,6 @@
 from collections import namedtuple
 from dataclasses import dataclass
+from PyObjCTools import Conversion
 
 import objc
 import Foundation
@@ -17,12 +18,14 @@ if error:
 IOKit = Foundation.NSBundle.bundleWithIdentifier_('com.apple.framework.IOKit')
 IOKIT_functions = [("IORegistryGetRootEntry", b"II"),
                    ("IOObjectRelease", b"iI"),
-                   ("IORegistryEntryCreateIterator", b"iI*I^I", '',
+                   ("IORegistryEntryCreateIterator", b"iI*I^I", '', # this is technically a [c128] not a * but this works with less hoops. Should check back later to consider ramifications
                     {'arguments': {3: {'type_modifier': b'o'}}}),
                    ("IOIteratorNext", b"II"),
-                   ("IORegistryEntryGetName", b"iI*", '',
+                   ("IORegistryEntryGetName", b"iI[128c]", '',
                     {'arguments': {1: {'c_array_delimited_by_null': True, 'type_modifier': b'N'}}}),
-                   ("IORegistryEntryCreateCFProperty", b"^@I{name=CFStringRef}{name=CFAllocatorRef}I")]
+                   ("IORegistryEntryCreateCFProperty", b"@I@@I"),
+                   ("IORegistryEntryGetPath", b"iI*[512c]"), # this is technically a [c128] not a * but this works with less hoops. Should check back later to consider ramifications
+                   ("IOAVServiceCreateWithService", b"@@I")]
 objc.loadBundleFunctions(IOKit, globals(), IOKIT_functions)
 
 # constants = [("KERN_SUCCESS", b"i"),
@@ -38,12 +41,13 @@ kIORegistryIterateRecursively = 1  # IOKit constant
 IO_OBJECT_NULL = 0  # IOKit constant
 MACH_PORT_NULL = 0  # A constant, don't know what framework but probably IOKit?
 kCFAllocatorDefault = None  # NULL. A constant from Core Foundation
+kIOServicePlane = "IOService"  # IOKit constant
 
 
 @dataclass
 class IOregService:
     edidUUID: str = None
-    manufacturer: str = None
+    manufacturerID: str = None
     productName: str = None
     serialNumber: int = None
     alphanumericSerialNumber: str = None
@@ -70,6 +74,51 @@ class Arm64Service:
 def getIORegServiceAppleCDC2Properties(entry: int) -> IOregService:
     ioregService = IOregService()
 
+    # I'm getting None back for edidUUID on the first use. Need to make sure that's expected
+    edidUUID = IORegistryEntryCreateCFProperty(entry, "EDID UUID", kCFAllocatorDefault, kIORegistryIterateRecursively)
+    if edidUUID:
+        # print(f"edidUUID: {edidUUID}")
+        ioregService.edidUUID = edidUUID
+
+    cpath = bytearray(512)
+    IORegistryEntryGetPath(entry, kIOServicePlane.encode("utf-8"), cpath)
+    cpath = cpath.decode().rstrip('\0')
+    # print(f"cpath: {cpath}")
+    ioregService.ioDisplayLocation = cpath
+
+    NSDictDisplayAttrs = IORegistryEntryCreateCFProperty(entry, "DisplayAttributes", kCFAllocatorDefault, kIORegistryIterateRecursively)
+    # print(f"NSDictDisplayAttrs: {NSDictDisplayAttrs}")
+    # print(f"NSDictDisplayAttrs class: {NSDictDisplayAttrs.__class__}")
+    if NSDictDisplayAttrs:
+        displayAttrs = Conversion.pythonCollectionFromPropertyList(NSDictDisplayAttrs)
+        ioregService.displayAttributes = displayAttrs
+        if "ProductAttributes" in displayAttrs:
+            productAttributes = displayAttrs["ProductAttributes"]
+            ioregService.manufacturerID = productAttributes.get("ManufacturerID")
+            ioregService.productName = productAttributes.get("ProductName")
+            ioregService.serialNumber = productAttributes.get("SerialNumber")
+            ioregService.alphanumericSerialNumber = productAttributes.get("AlphanumericSerialNumber")
+            # print(productAttributes)
+            # print(type(productAttributes))
+
+    NSDictTransport = IORegistryEntryCreateCFProperty(entry, "Transport", kCFAllocatorDefault, kIORegistryIterateRecursively)
+    if NSDictTransport:
+        transport = Conversion.pythonCollectionFromPropertyList(NSDictTransport)
+        ioregService.transportUpstream = transport.get("Upstream")
+        ioregService.transportDownstream = transport.get("Downstream")
+
+    return ioregService
+
+
+def setIORegServiceDCPAVServiceProxy(entry: int, ioregService: IOregService):
+    location = IORegistryEntryCreateCFProperty(entry, "Location", kCFAllocatorDefault, kIORegistryIterateRecursively)
+    if location:
+        ioregService.location = location
+        if location == "External":
+            ioavService = IOAVServiceCreateWithService(kCFAllocatorDefault, entry)
+            print(ioavService)
+            print(type(ioavService))
+            ioregService.service = ioavService
 
 
 def ioregIterateToNextObjectOfInterest(interests: list[str], iterator: int) -> (str, int, int):
@@ -110,16 +159,17 @@ def getIoregServicesForMatching() -> list[IOregService]:
             return ioregServicesForMatching
         keyDCPAVServiceProxy = "DCPAVServiceProxy"
         keysFramebuffer = ["AppleCLCD2", "IOMobileFramebufferShim"]
+        ioregService = IOregService()
         while True:
             objectOfInterest = ioregIterateToNextObjectOfInterest([keyDCPAVServiceProxy] + keysFramebuffer, iterator)
             if not objectOfInterest:
                 break
             if objectOfInterest.name in keysFramebuffer:
-                ##ioregService = self.getIORegServiceAppleCDC2Properties(objectOfInterest.entry)
+                ioregService = getIORegServiceAppleCDC2Properties(objectOfInterest.entry)
                 serviceLocation += 1
                 ioregService.serviceLocation = serviceLocation
             elif objectOfInterest.name == keyDCPAVServiceProxy:
-                ##self.setIORegServiceDCPAVServiceProxy(objectOfInterest.entry, ioregService) # ioregService should be a pointer to itself
+                setIORegServiceDCPAVServiceProxy(objectOfInterest.entry, ioregService)
                 ioregServicesForMatching.append(ioregService)
         return ioregServicesForMatching
     finally:
