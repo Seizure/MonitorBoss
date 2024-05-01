@@ -34,7 +34,7 @@ objc.loadBundleFunctions(IOKit, globals(), IOKIT_functions)
 #
 # objc.loadBundleVariables(IOKit, globals(), constants, skip_undefined=False)
 
-# objc.loadBundleVariables could be used to load constants?? But I'm not sure which frameworks they are in
+# objc.loadBundleVariables could be used to load constants?? But doesn't seem to be working
 KERN_SUCCESS = 0  # IOKit constant
 kIOMasterPortDefault = 0  # IOKit constant
 kIORegistryIterateRecursively = 1  # IOKit constant
