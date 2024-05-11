@@ -200,4 +200,8 @@ class DriverLinux(Driver):
         pass
 
 
-drivers = [__windows_driver]
+__drivers = [__windows_driver]
+
+
+def register_os_driver(driver: Driver):
+    __drivers.append(driver)
