@@ -58,7 +58,7 @@ class DummyVCP(VCP):
         if code not in supported_codes:
             # TODO: what should happen when an unsupported VCP command is sent?
             pass
-        if not com.discreet:
+        if not com.discrete:
             maxv = unknown_max_values[code]
         else:
             maxv = 0

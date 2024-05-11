@@ -58,7 +58,7 @@ class VCPCommand:
     value: int
     readable: bool
     writeable: bool
-    discreet: bool
+    discrete: bool
     param_names: dict
 
     def __str__(self):
@@ -72,7 +72,7 @@ __VCP_COMMANDS = [
         value=4,  # 0x04
         readable=False,
         writeable=True,
-        discreet=True,
+        discrete=True,
         param_names={}),
     VCPCommand(
         name="image_luminance",
@@ -80,7 +80,7 @@ __VCP_COMMANDS = [
         value=16,  # 0x10
         readable=True,
         writeable=True,
-        discreet=False,
+        discrete=False,
         param_names={}),
     VCPCommand(
         name="image_contrast",
@@ -88,7 +88,7 @@ __VCP_COMMANDS = [
         value=18,  # 0x12
         readable=True,
         writeable=True,
-        discreet=False,
+        discrete=False,
         param_names={}),
     VCPCommand(
         name="image_color_preset",
@@ -96,7 +96,7 @@ __VCP_COMMANDS = [
         value=20,  # 0x14
         readable=True,
         writeable=True,
-        discreet=False,
+        discrete=False,
         param_names=dict(ColorPresetNames.__members__)),
     VCPCommand(
         name="active_control",
@@ -104,7 +104,7 @@ __VCP_COMMANDS = [
         value=82,  # 0x52
         readable=True,
         writeable=False,
-        discreet=True,
+        discrete=True,
         param_names={}),
     VCPCommand(
         name="input_source",
@@ -112,7 +112,7 @@ __VCP_COMMANDS = [
         value=96,  # 0x60
         readable=True,
         writeable=True,
-        discreet=True,
+        discrete=True,
         param_names=dict(InputSourceNames.__members__)),
     VCPCommand(
         name="image_orientation",
@@ -120,7 +120,7 @@ __VCP_COMMANDS = [
         value=170,  # 0xAA
         readable=True,
         writeable=False,
-        discreet=True,
+        discrete=True,
         param_names={}),
     VCPCommand(
         name="display_power_mode",
@@ -128,7 +128,7 @@ __VCP_COMMANDS = [
         value=214,  # 0xD6
         readable=True,
         writeable=False,
-        discreet=True,
+        discrete=True,
         param_names=dict(PowerModeNames.__members__)),
 ]
 
@@ -142,14 +142,3 @@ def get_vcp_com(key: str | int) -> VCPCommand | None:
         elif com.value == key:
             return com
     return None
-
-
-def create_vcp_com(name: str, desc: str, value: int, readable: bool, writeable: bool, discreet: bool, param_names: dict | None = None):
-    for com in __VCP_COMMANDS:
-        if name == com.name:
-            raise ValueError(f"VCP code with name {name} already exists")
-        if value == com.value:
-            raise ValueError(f"VCP code with value {value} already exists")
-    return VCPCommand(name, desc, value, readable, writeable, discreet, param_names)
-
-
