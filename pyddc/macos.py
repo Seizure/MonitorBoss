@@ -142,21 +142,16 @@ def getIORegServiceAppleCDC2Properties(entry: int) -> IOregService:
     ioregService = IOregService()
 
     edidUUID = IORegistryEntryCreateCFProperty(entry, "EDID UUID", kCFAllocatorDefault, kIORegistryIterateRecursively)
-    print(edidUUID)
     if edidUUID:
-        # print(f"edidUUID: {edidUUID}")
         ioregService.edidUUID = edidUUID
 
     cpath = bytearray(512)
     IORegistryEntryGetPath(entry, kIOServicePlane.encode("utf-8"), cpath)
     cpath = cpath.decode().rstrip('\0')
-    # print(f"cpath: {cpath}")
     ioregService.ioDisplayLocation = cpath
 
     NSDictDisplayAttrs = IORegistryEntryCreateCFProperty(entry, "DisplayAttributes", kCFAllocatorDefault,
                                                          kIORegistryIterateRecursively)
-    # print(f"NSDictDisplayAttrs: {NSDictDisplayAttrs}")
-    # print(f"NSDictDisplayAttrs class: {NSDictDisplayAttrs.__class__}")
     if NSDictDisplayAttrs:
         displayAttrs = Conversion.pythonCollectionFromPropertyList(NSDictDisplayAttrs)
         ioregService.displayAttributes = displayAttrs
@@ -166,8 +161,6 @@ def getIORegServiceAppleCDC2Properties(entry: int) -> IOregService:
             ioregService.productName = productAttributes.get("ProductName")
             ioregService.serialNumber = productAttributes.get("SerialNumber")
             ioregService.alphanumericSerialNumber = productAttributes.get("AlphanumericSerialNumber")
-            # print(productAttributes)
-            # print(type(productAttributes))
 
     NSDictTransport = IORegistryEntryCreateCFProperty(entry, "Transport", kCFAllocatorDefault,
                                                       kIORegistryIterateRecursively)
@@ -189,9 +182,6 @@ def setIORegServiceDCPAVServiceProxy(entry: int, ioregService: IOregService):
         ioregService.location = location
         if location == "External":
             ioavService = IOAVServiceCreateWithService(kCFAllocatorDefault, entry)
-            # print(ioavService)
-            # print(type(ioavService))
-            # print(dir(ioavService))
             ioregService.service = ioavService
 
 
@@ -228,7 +218,7 @@ def getIoregServicesForMatching() -> list[IOregService]:
         - setIORegServiceDCPAVServiceProxy() - is provided the supplementary display comms item, and fills out IORegService
     https://github.com/MonitorControl/MonitorControl/blob/main/MonitorControl/Support/Arm64DDC.swift#L232"""
     serviceLocation = 0
-    ioregServicesForMatching = []  # a list[IOregService]
+    ioregServicesForMatching = []
     ioregRoot = IORegistryGetRootEntry(kIOMasterPortDefault)
     ioregService: IOregService
 
