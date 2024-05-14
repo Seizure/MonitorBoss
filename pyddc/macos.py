@@ -1,3 +1,4 @@
+import ctypes
 from collections import namedtuple
 from dataclasses import dataclass
 from typing import Union
@@ -7,6 +8,7 @@ import time
 import objc
 import Foundation
 
+read_buffer_size = 15  # have seen multiple decisions on this, what should it be?
 
 # initial thread with argument metadata: https://stackoverflow.com/questions/51862518/calling-function-with-ctypes-or-pyobjc
 IOKit = Foundation.NSBundle.bundleWithIdentifier_('com.apple.framework.IOKit')
@@ -22,12 +24,12 @@ IOKIT_functions = [("IORegistryGetRootEntry", b"II"),
                    ("IORegistryEntryGetPath", b"iI*[512c]"),
                    # this is technically a [c128] not a * but this works with less hoops. Should check back later to consider ramifications
                    ("IOAVServiceCreateWithService", b"@@I"),
-                   ("IOAVServiceWriteI2C", b"i@II@I", '',
-                    {'arguments': {4: {'type_modifier': b'n'}}}),
+                   ("IOAVServiceWriteI2C", b"i@II^[I]I", '',
+                    {'arguments': {3: {'type_modifier': b'n', 'c_array_length_in_arg': 4}}}),
                    # https://gist.github.com/alin23/531151c49e013554e6ca2186cef3fa90
                    ("IOAVServiceReadI2C", b"i@II^[I]I", '',
                     # https://gist.github.com/alin23/531151c49e013554e6ca2186cef3fa90
-                    {'arguments': {3: {'type_modifier': b'o', 'c_array_of_fixed_length': 15}}})]
+                    {'arguments': {3: {'type_modifier': b'o', 'c_array_of_fixed_length': read_buffer_size}}})]
 objc.loadBundleFunctions(IOKit, globals(), IOKIT_functions)
 
 KERN_SUCCESS = 0  # IOKit constant
@@ -39,8 +41,6 @@ kCFAllocatorDefault = None  # NULL. A constant from Core Foundation
 kIOServicePlane = "IOService"  # IOKit constant
 ARM64_DDC_DATA_ADDRESS = 0x51  # defined in Arm64DDC.swift in MonitorControl project
 ARM64_DDC_7BIT_ADDRESS = 0x37  # defined in Arm64DDC.swift in MonitorControl project
-
-read_buffer_size = 15  # have seen multiple decisions on this, what should it be?
 
 
 @dataclass
@@ -99,22 +99,22 @@ def read(ioavservice,
     else:
         return None
 
-
 def performDDCCommunication(ioavservice, send: [int], read_reply: bool, writeSleepTime: float = 0.01,
                             numOfWriteCycles: int = 2,
-                            readSleepTime: float = 0.05, numOfRetryAttempts: int = 4, retrySleepTime: int = 0) \
+                            readSleepTime: float = 0.05, numOfRetryAttempts: int = 4, retrySleepTime: float = 0.01) \
         -> (bool, list[int]):
     assert ioavservice is not None, "Are you dumb?"
 
     success = False
 
-    packet = [0x80 | len(send) + 1, len(send)]
+    packet = [0x80 | (len(send) + 1), len(send)]
     for snd in send:
         packet.append(snd)
     packet.append(0)  # per comments in Arm64DDC.swift: the last byte is the place of the checksum, see next line!
     packet[-1] = checksum(ARM64_DDC_7BIT_ADDRESS << 1 if len(send) == 1 else ARM64_DDC_7BIT_ADDRESS << 1 ^ dataAddress,
                           packet, 0, len(packet) - 2)
 
+    print(f"packet to send: {packet}")
     # here is where I changed things
     for _ in range(0, numOfRetryAttempts):
         # why do we have multiple, default of 2, write cycles? Do we need this?
@@ -134,6 +134,32 @@ def performDDCCommunication(ioavservice, send: [int], read_reply: bool, writeSle
         time.sleep(retrySleepTime)
 
     return success, []
+
+
+def readFeature(ioavservice, feature: int, write_sleep: float = 0.01, read_sleep: float = 0.05) -> (bool, list[int] | None):
+    assert ioavservice is not None, "Are you dumb?"
+
+    packet = bytearray()
+    # doesnt look like we need to manually include destination and source address with macOS functions
+    packet.append(0x82) # length of the message OR'd with x80, pg 18 in DDC/CI specs
+    packet.append(0x01) # Get VCP feature command
+    packet.append(feature)
+    chksm = checksum(ARM64_DDC_7BIT_ADDRESS << 1, packet, 0, len(packet) - 1)
+    packet.append(chksm)
+
+    print(f"packet to send: {list(packet)}")
+
+    success = IOAVServiceWriteI2C(ioavservice, ARM64_DDC_7BIT_ADDRESS, ARM64_DDC_DATA_ADDRESS, packet, len(packet)) == 0
+
+    if not success:
+        return success, None
+
+    success, rep = IOAVServiceReadI2C(ioavservice, ARM64_DDC_7BIT_ADDRESS, ARM64_DDC_DATA_ADDRESS, None, read_buffer_size)
+
+    if success != 0:
+        return success, []
+
+    return success, list(rep)
 
 
 def getIORegServiceAppleCDC2Properties(entry: int) -> IOregService:
@@ -249,5 +275,7 @@ services = getIoregServicesForMatching()
 for i, s in enumerate(services):
     print(f'services[{i}]:', s)
 
-result = read(services[1].service, 96, 0.05, 10)
-print(f'read(services[1].service={services[1].service}, 96, 0.05, 10) =>', result)
+feature = 16
+# result = read(services[1].service, 16, 0.05, 10)
+result = readFeature(services[1].service, feature)
+print(f'read(services[1].service={services[1].service}, feature={feature}) =>', result)
