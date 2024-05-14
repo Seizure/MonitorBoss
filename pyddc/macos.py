@@ -91,7 +91,7 @@ def read(ioavservice,
 
     success, reply = performDDCCommunication(ioavservice, send, True, writeSleepTime, numOfWriteCycles, readSleepTime,
                                          numOfRetryAttempts, retrySleepTime)
-    print('reply', list(reply))
+    print('reply', (success, list(reply)))
     if success:
         val_max = reply[6] * 256 + reply[7]
         val_cur = reply[8] * 256 + reply[9]
@@ -106,34 +106,34 @@ def performDDCCommunication(ioavservice, send: [int], read_reply: bool, writeSle
     assert ioavservice is not None, "Are you dumb?"
 
     success = False
-
-    packet = [0x80 | (len(send) + 1), len(send)]
+    packet = bytearray()
+    packet.append(0x80 | (len(send) + 1))
+    packet.append(len(send))
     for snd in send:
         packet.append(snd)
     packet.append(0)  # per comments in Arm64DDC.swift: the last byte is the place of the checksum, see next line!
     packet[-1] = checksum(ARM64_DDC_7BIT_ADDRESS << 1 if len(send) == 1 else ARM64_DDC_7BIT_ADDRESS << 1 ^ dataAddress,
                           packet, 0, len(packet) - 2)
 
-    print(f"packet to send: {packet}")
-    # here is where I changed things
+    print(f"packet to send: {list(packet)}")
+
+    rep = []
     for _ in range(0, numOfRetryAttempts):
         # why do we have multiple, default of 2, write cycles? Do we need this?
-        # for _ in range(0, max(numOfWriteCycles, 1)):
-        time.sleep(writeSleepTime)
-        success = IOAVServiceWriteI2C(ioavservice, ARM64_DDC_7BIT_ADDRESS, ARM64_DDC_DATA_ADDRESS, packet, len(packet)) == 0
-        reply = []
+        for _ in range(0, max(numOfWriteCycles, 1)):
+            time.sleep(writeSleepTime)
+            success = IOAVServiceWriteI2C(ioavservice, ARM64_DDC_7BIT_ADDRESS, ARM64_DDC_DATA_ADDRESS, packet, len(packet)) == 0
+        rep = []
         if read_reply:
             time.sleep(readSleepTime)
             ret, rep = IOAVServiceReadI2C(ioavservice, ARM64_DDC_7BIT_ADDRESS, ARM64_DDC_DATA_ADDRESS, None, read_buffer_size)
             if ret == 0:
                 success = checksum(0x50, rep, 0, len(rep) - 2) == rep[-1]
-                if success:
-                    reply = rep
         if success:
-            return success, reply
+            return success, rep
         time.sleep(retrySleepTime)
 
-    return success, []
+    return success, rep
 
 
 def readFeature(ioavservice, feature: int, write_sleep: float = 0.01, read_sleep: float = 0.05) -> (bool, list[int] | None):
@@ -275,7 +275,7 @@ services = getIoregServicesForMatching()
 for i, s in enumerate(services):
     print(f'services[{i}]:', s)
 
-feature = 16
-# result = read(services[1].service, 16, 0.05, 10)
-result = readFeature(services[1].service, feature)
-print(f'read(services[1].service={services[1].service}, feature={feature}) =>', result)
+feature = 18
+result = read(services[2].service, feature, 0.05, 10)
+# result = readFeature(services[2].service, feature)
+print(f'read(services[1].service={services[2].service}, feature={feature}) =>', result)
