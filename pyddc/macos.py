@@ -1,4 +1,3 @@
-import ctypes
 from collections import namedtuple
 from dataclasses import dataclass
 from typing import Union
@@ -8,7 +7,7 @@ import time
 import objc
 import Foundation
 
-read_buffer_size = 11  # have seen multiple decisions on this, what should it be?
+read_buffer_size = 11  # MonitorControl says this should be 11. If we make it anything else, things start fucking up.
 
 # initial thread with argument metadata: https://stackoverflow.com/questions/51862518/calling-function-with-ctypes-or-pyobjc
 IOKit = Foundation.NSBundle.bundleWithIdentifier_('com.apple.framework.IOKit')
@@ -36,9 +35,10 @@ KERN_SUCCESS = 0  # IOKit constant
 kIOMasterPortDefault = 0  # IOKit constant
 kIORegistryIterateRecursively = 1  # IOKit constant
 IO_OBJECT_NULL = 0  # IOKit constant
-MACH_PORT_NULL = 0  # A constant, don't know what framework but probably IOKit?
-kCFAllocatorDefault = None  # NULL. A constant from Core Foundation
+MACH_PORT_NULL = 0  # A constant from https://opensource.apple.com/source/xnu/xnu-792.2.4/osfmk/mach/port.h
+kCFAllocatorDefault = None # NULL. A constant from Core Foundation. objc.NULL is actually distinct from None, but if I try to make it the former Python crashes
 kIOServicePlane = "IOService"  # IOKit constant
+
 ARM64_DDC_DATA_ADDRESS = 0x51  # defined in Arm64DDC.swift in MonitorControl project
 ARM64_DDC_7BIT_ADDRESS = 0x37  # defined in Arm64DDC.swift in MonitorControl project
 
@@ -62,18 +62,10 @@ class IOregService:
         return f"< IORegservice: Model={self.productName}; Serial={self.serialNumber}; Location={self.location} >"
 
 
-@dataclass
-class Arm64Service:
-    strdisplayID: int = None
-    # strservice: IOAVService = None
-    strserviceLocation: int = None
-    strdiscouraged: bool = None
-    strdummy: bool = None
-    strserviceDetails: IOregService = None
-    strmatchScore: int = None
-
-
 def checksum(chk: int, data: [int], start: int, end: int) -> int:
+    """ported directly from MonitorControl
+    performs checksum calculations on the sent/received messages
+    https://github.com/MonitorControl/MonitorControl/blob/main/MonitorControl/Support/Arm64DDC.swift#L120"""
     chkd = chk
     for i in range(start, end + 1):
         chkd ^= data[i]
@@ -87,6 +79,9 @@ def read(ioavservice,
          readSleepTime: float = 0.05,
          numOfRetryAttempts: int = 4,
          retrySleepTime: int = 0) -> Union[tuple[int, int], None]:
+    """ported directly from MonitorControl
+    wrapper function around performDDCCommunication() to read VCP features
+    https://github.com/MonitorControl/MonitorControl/blob/main/MonitorControl/Support/Arm64DDC.swift#L72"""
     send = [command]
 
     success, reply = performDDCCommunication(ioavservice, send, True, writeSleepTime, numOfWriteCycles, readSleepTime,
@@ -104,6 +99,9 @@ def performDDCCommunication(ioavservice, send: [int], read_reply: bool, writeSle
                             numOfWriteCycles: int = 2,
                             readSleepTime: float = 0.05, numOfRetryAttempts: int = 4, retrySleepTime: float = 0.01) \
         -> (bool, list[int]):
+    """ported directly from MonitorControl
+    main logic and base-level function calling for DDC/CI comms
+    https://github.com/MonitorControl/MonitorControl/blob/main/MonitorControl/Support/Arm64DDC.swift#L92"""
     assert ioavservice is not None, "Are you dumb?"
 
     success = False
@@ -138,10 +136,13 @@ def performDDCCommunication(ioavservice, send: [int], read_reply: bool, writeSle
 
 
 def getIORegServiceAppleCDC2Properties(entry: int) -> IOregService:
+    """ported directly from MonitorControl
+    gathers the properties of an IORegServe via its entry handle, and returns an IORegService object
+    https://github.com/MonitorControl/MonitorControl/blob/main/MonitorControl/Support/Arm64DDC.swift#L187"""
     ioregService = IOregService()
 
-    # I'm getting None back for edidUUID on the first use. Need to make sure that's expected
     edidUUID = IORegistryEntryCreateCFProperty(entry, "EDID UUID", kCFAllocatorDefault, kIORegistryIterateRecursively)
+    print(edidUUID)
     if edidUUID:
         # print(f"edidUUID: {edidUUID}")
         ioregService.edidUUID = edidUUID
@@ -179,6 +180,10 @@ def getIORegServiceAppleCDC2Properties(entry: int) -> IOregService:
 
 
 def setIORegServiceDCPAVServiceProxy(entry: int, ioregService: IOregService):
+    """ported directly from MonitorControl
+    gathers the comms channel as a string, and the comms object (IOAVService) of an IORegService via its entry handle,
+    and inserts it into IORegService object
+    https://github.com/MonitorControl/MonitorControl/blob/main/MonitorControl/Support/Arm64DDC.swift#L223"""
     location = IORegistryEntryCreateCFProperty(entry, "Location", kCFAllocatorDefault, kIORegistryIterateRecursively)
     if location:
         ioregService.location = location
@@ -191,6 +196,9 @@ def setIORegServiceDCPAVServiceProxy(entry: int, ioregService: IOregService):
 
 
 def ioregIterateToNextObjectOfInterest(interests: list[str], iterator: int) -> (str, int, int):
+    """ported directly from MonitorControl
+    iterates over the IOReg entry list, and selects desired items to return by filtering for specified names
+    https://github.com/MonitorControl/MonitorControl/blob/main/MonitorControl/Support/Arm64DDC.swift#L166"""
     entry = IO_OBJECT_NULL
 
     while True:
@@ -212,10 +220,13 @@ def ioregIterateToNextObjectOfInterest(interests: list[str], iterator: int) -> (
     return None
 
 
-#####
-# get list of IOregService, for matching displays against
-#####
 def getIoregServicesForMatching() -> list[IOregService]:
+    """ported directly from MonitorControl
+    main logic for collecting list of displays, making use of the following functions:
+        - ioregIterateToNextObjectOfInterest(): iterates over IOReg list, and grabs items related to displays
+        - getIORegServiceAppleCDC2Properties() - is provided the main display item to create an initial IORegService
+        - setIORegServiceDCPAVServiceProxy() - is provided the supplementary display comms item, and fills out IORegService
+    https://github.com/MonitorControl/MonitorControl/blob/main/MonitorControl/Support/Arm64DDC.swift#L232"""
     serviceLocation = 0
     ioregServicesForMatching = []  # a list[IOregService]
     ioregRoot = IORegistryGetRootEntry(kIOMasterPortDefault)
