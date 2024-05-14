@@ -8,7 +8,7 @@ import time
 import objc
 import Foundation
 
-read_buffer_size = 15  # have seen multiple decisions on this, what should it be?
+read_buffer_size = 11  # have seen multiple decisions on this, what should it be?
 
 # initial thread with argument metadata: https://stackoverflow.com/questions/51862518/calling-function-with-ctypes-or-pyobjc
 IOKit = Foundation.NSBundle.bundleWithIdentifier_('com.apple.framework.IOKit')
@@ -91,13 +91,14 @@ def read(ioavservice,
 
     success, reply = performDDCCommunication(ioavservice, send, True, writeSleepTime, numOfWriteCycles, readSleepTime,
                                          numOfRetryAttempts, retrySleepTime)
-    print('reply', (success, list(reply)))
+    # print('reply', (success, list(reply)))
     if success:
         val_max = reply[6] * 256 + reply[7]
         val_cur = reply[8] * 256 + reply[9]
         return val_cur, val_max
     else:
         return None
+
 
 def performDDCCommunication(ioavservice, send: [int], read_reply: bool, writeSleepTime: float = 0.01,
                             numOfWriteCycles: int = 2,
@@ -115,7 +116,7 @@ def performDDCCommunication(ioavservice, send: [int], read_reply: bool, writeSle
     packet[-1] = checksum(ARM64_DDC_7BIT_ADDRESS << 1 if len(send) == 1 else ARM64_DDC_7BIT_ADDRESS << 1 ^ dataAddress,
                           packet, 0, len(packet) - 2)
 
-    print(f"packet to send: {list(packet)}")
+    # print(f"packet to send: {list(packet)}")
 
     rep = []
     for _ in range(0, numOfRetryAttempts):
@@ -134,32 +135,6 @@ def performDDCCommunication(ioavservice, send: [int], read_reply: bool, writeSle
         time.sleep(retrySleepTime)
 
     return success, rep
-
-
-def readFeature(ioavservice, feature: int, write_sleep: float = 0.01, read_sleep: float = 0.05) -> (bool, list[int] | None):
-    assert ioavservice is not None, "Are you dumb?"
-
-    packet = bytearray()
-    # doesnt look like we need to manually include destination and source address with macOS functions
-    packet.append(0x82) # length of the message OR'd with x80, pg 18 in DDC/CI specs
-    packet.append(0x01) # Get VCP feature command
-    packet.append(feature)
-    chksm = checksum(ARM64_DDC_7BIT_ADDRESS << 1, packet, 0, len(packet) - 1)
-    packet.append(chksm)
-
-    print(f"packet to send: {list(packet)}")
-
-    success = IOAVServiceWriteI2C(ioavservice, ARM64_DDC_7BIT_ADDRESS, ARM64_DDC_DATA_ADDRESS, packet, len(packet)) == 0
-
-    if not success:
-        return success, None
-
-    success, rep = IOAVServiceReadI2C(ioavservice, ARM64_DDC_7BIT_ADDRESS, ARM64_DDC_DATA_ADDRESS, None, read_buffer_size)
-
-    if success != 0:
-        return success, []
-
-    return success, list(rep)
 
 
 def getIORegServiceAppleCDC2Properties(entry: int) -> IOregService:
@@ -271,11 +246,12 @@ def getIoregServicesForMatching() -> list[IOregService]:
         IOObjectRelease(iterator)
 
 
-services = getIoregServicesForMatching()
-for i, s in enumerate(services):
-    print(f'services[{i}]:', s)
+features = {'contrast': 18, 'luminance': 16, 'input': 96}
+displays = getIoregServicesForMatching()
+ddc_displays = [d for d in displays if d.service is not None]
 
-feature = 18
-result = read(services[2].service, feature, 0.05, 10)
-# result = readFeature(services[2].service, feature)
-print(f'read(services[1].service={services[2].service}, feature={feature}) =>', result)
+for d in ddc_displays:
+    print(f"{d}:")
+    for f in features:
+        result = read(d.service, features[f], 0.05, 10)
+        print(f"\tFeature <{f}>: {result}")
