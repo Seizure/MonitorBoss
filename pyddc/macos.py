@@ -7,7 +7,9 @@ import time
 import objc
 import Foundation
 
-read_buffer_size = 11  # MonitorControl says this should be 11. If we make it anything else, things start fucking up.
+read_buffer_size = 11
+# Expected size of a VCP feature reply
+# per DDC specs: 11 bytes total - macOS cuts off first byte (dest. addr.) + undocumented checksum byte at end = 11
 
 # initial thread with argument metadata: https://stackoverflow.com/questions/51862518/calling-function-with-ctypes-or-pyobjc
 IOKit = Foundation.NSBundle.bundleWithIdentifier_('com.apple.framework.IOKit')
@@ -111,14 +113,14 @@ def performDDCCommunication(ioavservice, send: [int], read_reply: bool, writeSle
     for snd in send:
         packet.append(snd)
     packet.append(0)  # per comments in Arm64DDC.swift: the last byte is the place of the checksum, see next line!
-    packet[-1] = checksum(ARM64_DDC_7BIT_ADDRESS << 1 if len(send) == 1 else ARM64_DDC_7BIT_ADDRESS << 1 ^ dataAddress,
+    packet[-1] = checksum(ARM64_DDC_7BIT_ADDRESS << 1 if len(send) == 1 else ARM64_DDC_7BIT_ADDRESS << 1 ^ ARM64_DDC_DATA_ADDRESS,
                           packet, 0, len(packet) - 2)
 
     # print(f"packet to send: {list(packet)}")
 
     rep = []
     for _ in range(0, numOfRetryAttempts):
-        # why do we have multiple, default of 2, write cycles? Do we need this?
+        # Does not work if you run it only once. Needs to be 2 or more times. Why? Who knows.
         for _ in range(0, max(numOfWriteCycles, 1)):
             time.sleep(writeSleepTime)
             success = IOAVServiceWriteI2C(ioavservice, ARM64_DDC_7BIT_ADDRESS, ARM64_DDC_DATA_ADDRESS, packet, len(packet)) == 0
@@ -129,9 +131,11 @@ def performDDCCommunication(ioavservice, send: [int], read_reply: bool, writeSle
             if ret == 0:
                 success = checksum(0x50, rep, 0, len(rep) - 2) == rep[-1]
         if success:
+            print(f"Successful: {success} | Reply: {list(rep)}")
             return success, rep
         time.sleep(retrySleepTime)
 
+    print(f"Successful: {success} | Reply: {list(rep)}")
     return success, rep
 
 
