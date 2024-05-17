@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from test import VCPCommand, VCPFeatureReturn
+import os
 from types import TracebackType
 from typing import List, Optional, Type
 
-from pyddc.vcp_abc import VCP
+os.environ["PYDDC_SKIP_DRIVER"] = "true"
+from pyddc import VCPCommand, VCPFeatureReturn, ABCVCP
 
 supported_codes = {
     4: [],  # factory reset code (WO) TODO: should find a better WO command (with actual values)
@@ -19,7 +20,7 @@ current_values = {16: 75, 96: 27, 170: 2}  # lum is 75, input is USBC(27), image
 unknown_max_values = {16: 80, 18: 100}
 
 
-class DummyVCP(VCP):
+class DummyVCP(ABCVCP):
     def __init__(self):
         super().__init__()
 
