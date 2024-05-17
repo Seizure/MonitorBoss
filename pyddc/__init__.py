@@ -2,9 +2,9 @@ import sys
 import os
 
 from .vcp_abc import VCPError, VCPIOError, VCPPermissionError, parse_capabilities, VCPFeatureReturn
-from .vcp_codes import get_vcp_com, create_vcp_com, VCPCommand
+from .vcp_codes import get_vcp_com, VCPCommand
 
-if os.environ.get("PYDDC_SKIP_DRIVER").casefold() == "true":
+if os.environ.get("PYDDC_SKIP_DRIVER") is not None and os.environ.get("PYDDC_SKIP_DRIVER").casefold() == "true":
     from .vcp_abc import VCP as ABCVCP
 else:
     if sys.platform == "win32":
