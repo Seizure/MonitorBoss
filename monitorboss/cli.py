@@ -26,12 +26,12 @@ def __check_attr(attr: str) -> Attribute:
 
 def __check_mon(mon: str, cfg: Config) -> int:
     _log.debug(f"check monitor: {mon!r}")
-    mon = cfg.monitor_names.get(mon, mon)
+    mon = cfg.monitor_aliases.get(mon, mon)
     try:
         return int(mon)
     except ValueError as err:
         raise MonitorBossError(
-            f"{mon} is not a valid monitor.\nValid monitors are: {', '.join(cfg.monitor_names)}, or an ID number."
+            f"{mon} is not a valid monitor.\nValid monitors are: {', '.join(cfg.monitor_aliases)}, or an ID number."
         ) from err
 
 
@@ -134,8 +134,8 @@ def __list_mons(args, cfg: Config):
     _log.debug(f"list monitors: {args}")
     for index, monitor in enumerate(list_monitors()):
         print(f"monitor #{index}", end="")
-        if index in cfg.monitor_names.values():
-            print(f" ({', '.join([name for name, value in cfg.monitor_names.items() if index == value])})", end="")
+        if index in cfg.monitor_aliases.values():
+            print(f" ({', '.join([name for name, value in cfg.monitor_aliases.items() if index == value])})", end="")
         print()
 
 
@@ -150,7 +150,7 @@ def __get_caps(args, cfg: Config) -> str | dict:
     caps = parse_capabilities(caps)
     if args.summary:
         summary = f"monitor #{mon}"
-        if mon_names := [name for name, value in cfg.monitor_names.items() if value == mon]:
+        if mon_names := [name for name, value in cfg.monitor_aliases.items() if value == mon]:
             summary += f" ({', '.join(mon_names)}),"
         summary += ":"
         if caps["type"]:

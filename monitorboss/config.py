@@ -13,22 +13,23 @@ DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.toml"
 
 
 class TomlKeys(enum.Enum):
-    monitors = "monitor_names"
-    inputs = "input_names"
+    monitors = "monitor_aliases"
+    inputs = "input_aliases"
     settings = "settings"
     wait = "wait"
 
 
 @dataclass
 class Config:
-    monitor_names: dict[str, int] = field(default_factory=dict)
-    input_source_names: dict[str, int] = field(default_factory=dict)
+    monitor_aliases: dict[int, str] = field(default_factory=dict)
+    input_source_names: dict[int, str] = field(default_factory=dict)
+    command_aliases: dict[str, str] = field(default_factory=dict)
     wait_time: float = field(default_factory=float)
 
     def read(self, doc: TOMLDocument):
         _log.debug(f"read Config from TOML doc: {doc}")
         for key, value in doc[TomlKeys.monitors.value].items():
-            self.monitor_names[key] = value
+            self.monitor_aliases[key] = value
         for key, value in doc[TomlKeys.inputs.value].items():
             self.input_source_names[key] = value
         self.wait_time = doc[TomlKeys.settings.value][TomlKeys.wait.value]
@@ -42,11 +43,11 @@ class Config:
 def default_toml() -> TOMLDocument:
     _log.debug("define default TOML config")
     mon_names = table()
-    mon_names.add("main", 0)
+    mon_names.add("0", ["main"])
 
     input_names = table()
-    input_names.add("USBC", 27)
-    input_names["USBC"].comment('27 seems to be the "standard non-standard" ID for USB-C among manufacturers')
+    input_names.add("27", ["usb", "usbc", "usb-c"])
+    input_names["27"].comment('27 seems to be the "standard non-standard" ID for USB-C among manufacturers')
 
     settings = table()
     settings.add(TomlKeys.wait.value, 0.6)

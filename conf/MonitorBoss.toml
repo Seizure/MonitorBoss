@@ -1,8 +1,8 @@
-[monitor_names]
-main = 0
+[monitor_aliases]
+0 = ["main"]
 
-[input_names]
-USBC = 27 # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
+[input_aliases]
+27 = ["usb", "usbc", "usb-c"] # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
 
 [settings]
 wait = 0.6
