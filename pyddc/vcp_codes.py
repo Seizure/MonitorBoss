@@ -142,14 +142,3 @@ def get_vcp_com(key: str | int) -> VCPCommand | None:
         elif com.value == key:
             return com
     return None
-
-
-def create_vcp_com(name: str, desc: str, value: int, readable: bool, writeable: bool, discreet: bool, param_names: dict | None = None):
-    for com in __VCP_COMMANDS:
-        if name == com.name:
-            raise ValueError(f"VCP code with name {name} already exists")
-        if value == com.value:
-            raise ValueError(f"VCP code with value {value} already exists")
-    return VCPCommand(name, desc, value, readable, writeable, discreet, param_names)
-
-
