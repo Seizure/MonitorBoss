@@ -72,7 +72,9 @@ def get_attribute(mon: int, attr: Attribute) -> (int, int):
     _log.debug(f"get attribute: {attr} (for monitor #{mon})")
     with __get_monitor(mon) as monitor:
         try:
-            return monitor.get_vcp_feature(attr.value.com)
+            val = monitor.get_vcp_feature(attr.value.com)
+            _log.debug(f"get_vcp_feature for {attr} on monitor #{mon} returned {val}")
+            return val
         except VCPError as err:
             raise MonitorBossError(f"could not get {attr.value.short_desc} for monitor #{mon}.") from err
         except TypeError as err:
@@ -106,11 +108,12 @@ def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int) -> (int, i
 def signal_monitor(mon: int):
     _log.debug(f"signal monitor #{mon} (cycle its luminance)")
     cfg = get_config()
-    wait_time = cfg.wait_time
+    ddc_wait = cfg.wait_time
+    visible_wait = max(ddc_wait, cfg.wait_time)
     cur_lum, max_lum = get_attribute(mon, Attribute.lum)
-    sleep(wait_time)
+    sleep(ddc_wait)
     set_attribute(mon, Attribute.lum, max_lum)
-    sleep(wait_time)
+    sleep(visible_wait)
     set_attribute(mon, Attribute.lum, 0)
-    sleep(wait_time)
+    sleep(visible_wait)
     set_attribute(mon, Attribute.lum, cur_lum)

@@ -52,7 +52,7 @@ def default_toml() -> TOMLDocument:
     input_names["USBC"].comment('27 seems to be the "standard non-standard" ID for USB-C among manufacturers')
 
     settings = table()
-    settings.add(TomlKeys.wait.value, 2.0)
+    settings.add(TomlKeys.wait.value, 0.05)
 
     doc = document()
     doc.add(TomlKeys.monitors.value, mon_names)

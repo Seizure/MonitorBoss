@@ -3,6 +3,7 @@ from collections.abc import Sequence
 import json
 from logging import getLogger
 from pprint import PrettyPrinter
+from time import sleep
 
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
@@ -180,7 +181,11 @@ def __get_attr(args, cfg: Config) -> str:
     _log.debug(f"get attribute: {args}")
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
-    vals = [get_attribute(m, attr).value for m in mons]
+    vals = []
+    for i, m in enumerate(mons):
+        vals.append(get_attribute(m, attr).value)
+        if i+1 < len(mons):
+            sleep(cfg.wait_time)
     for mon, val in zip(args.mon, vals):
         print(f"{attr} for monitor #{mon} is {val}")
     return str(vals if len(vals) > 1 else vals[0])
@@ -191,6 +196,11 @@ def __set_attr(args, cfg: Config) -> str:
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
     val = __check_val(attr, args.val, cfg)
+    new_vals = []
+    for i, m in enumerate(mons):
+        new_vals.append(set_attribute(m, attr, val))
+        if i+1 < len(mons):
+            sleep(cfg.wait_time)
     new_vals = [set_attribute(m, attr, val) for m in mons]
     for mon, new_val in zip(args.mon, new_vals):
         print(f"set {attr} for monitor #{mon} to {new_val}")
@@ -204,9 +214,12 @@ def __tog_attr(args, cfg: Config) -> str:
     val1 = __check_val(attr, args.val1, cfg)
     val2 = __check_val(attr, args.val2, cfg)
     new_vals = []
-    for m in mons:
+    for i, m in enumerate(mons):
         new_vals.append(toggle_attribute(m, attr, val1, val2))
-
+        if i+1 < len(mons):
+            sleep(cfg.wait_time)
+    for mon, tog_val in zip(args.mon, new_vals):
+        print(f"Toggled {attr} for monitor #{mon} from {tog_val[0]} to {tog_val[1]}")
     return str(new_vals if len(new_vals) > 1 else new_vals[0])
 
 
