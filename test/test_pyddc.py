@@ -2,7 +2,6 @@ import os
 
 import pytest
 
-os.environ["PYDDC_SKIP_DRIVER"] = "true"
 from pyddc import get_vcp_com, parse_capabilities
 from .vcp_dummy import DummyVCP as VCP
 

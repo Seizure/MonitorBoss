@@ -4,7 +4,6 @@ import os
 from types import TracebackType
 from typing import List, Optional, Type
 
-os.environ["PYDDC_SKIP_DRIVER"] = "true"
 from pyddc import VCPCommand, VCPFeatureReturn, ABCVCP
 
 supported_codes = {
