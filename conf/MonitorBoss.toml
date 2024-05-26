@@ -1,13 +1,8 @@
 [monitor_names]
-# Seizure's configuration
-right = 2
-middle = 0
-left = 1
-# Sylvie's configuration
-external = 0
+main = 0
 
 [input_names]
 USBC = 27 # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
 
 [settings]
-wait = 2.0
+wait = 0.05
