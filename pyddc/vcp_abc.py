@@ -57,7 +57,7 @@ class VCP(abc.ABC):
             maximum = self.get_vcp_feature_max(code)
             if value > maximum:
                 raise ValueError(f"value of {value} exceeds code maximum of {maximum} for {code.name}")
-        self.logger.debug(f"SetVCPFeature(_, {code.name=}, {value=})")
+        self.logger.debug(f"SetVCPFeature(_, {code.__repr__()}, {value=})")
         self._set_vcp_feature(code, value)
 
     @abc.abstractmethod
@@ -68,7 +68,7 @@ class VCP(abc.ABC):
         assert self._in_ctx, "This function must be run within the context manager"
         if not code.readable:
             raise TypeError(f"cannot read write-only code: {code}")
-        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply(_, {code.name=}, None, _, _)")
+        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply(_, {code.__repr__()}, None, _, _)")
         ret = self._get_vcp_feature(code)
         if not code.discrete:
             self.code_maximum[code.value] = ret.max
