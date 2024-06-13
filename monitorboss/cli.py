@@ -225,6 +225,8 @@ def __tog_attr(args, cfg: Config) -> str:
 
 text = "Commands for manipulating and polling your monitors"
 parser = ArgumentParser(description="Boss your monitors around.")
+parser.add_argument("--config", type=str, help="the config file path to use")
+
 mon_subparsers = parser.add_subparsers(title="monitor commands", help=text, dest="subcommand", required=True)
 
 text = "List all available monitors"
@@ -287,7 +289,7 @@ def run(args: str | Sequence[str] | None = None):
         args = args.split()
     args = parser.parse_args(args)
     try:
-        cfg = get_config()
+        cfg = get_config(args.config)
         return args.func(args, cfg)
     except MonitorBossError as err:
         parser.error(str(err))

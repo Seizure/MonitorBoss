@@ -59,13 +59,13 @@ def default_toml() -> TOMLDocument:
     return doc
 
 
-def __read_toml(path: str | None = None) -> TOMLDocument:
+def __read_toml(path: str | None) -> TOMLDocument:
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"read TOML config from: {path}")
     if not Path(path).parent.exists():
         Path(path).parent.mkdir(parents=True)
     if not Path(path).exists():
-        reset_config()
+        reset_config(path)
     try:
         with open(path, "r", encoding="utf8") as file:
             content = file.read()
@@ -74,7 +74,7 @@ def __read_toml(path: str | None = None) -> TOMLDocument:
     return parse(content)
 
 
-def __write_toml(doc: TOMLDocument, path: str | None = None):
+def __write_toml(doc: TOMLDocument, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"write TOML config to: {path}")
     if not Path(path).parent.exists():
@@ -86,7 +86,7 @@ def __write_toml(doc: TOMLDocument, path: str | None = None):
         raise MonitorBossError(f"could not write config file: {path}") from err
 
 
-def get_config(path: str | None = None) -> Config:
+def get_config(path: str | None) -> Config:
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"get Config dataclass from: {path}")
     doc = __read_toml(path)
@@ -99,7 +99,7 @@ def get_config(path: str | None = None) -> Config:
     return cfg
 
 
-def set_monitor_alias(alias: str, mon_id: int, path: str | None = None):
+def set_monitor_alias(alias: str, mon_id: int, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"set monitor alias: {alias} = {mon_id} (in {path})")
     doc = __read_toml(path)
@@ -107,7 +107,7 @@ def set_monitor_alias(alias: str, mon_id: int, path: str | None = None):
     __write_toml(doc, path)
 
 
-def remove_monitor_alias(alias: str, path: str | None = None):
+def remove_monitor_alias(alias: str, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"remove monitor alias: {alias} (in {path})")
     doc = __read_toml(path)
@@ -115,7 +115,7 @@ def remove_monitor_alias(alias: str, path: str | None = None):
     __write_toml(doc, path)
 
 
-def set_input_alias(alias: str, input_id: int, path: str | None = None):
+def set_input_alias(alias: str, input_id: int, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"set input alias: {alias} = {input_id} (in {path})")
     doc = __read_toml(path)
@@ -123,7 +123,7 @@ def set_input_alias(alias: str, input_id: int, path: str | None = None):
     __write_toml(doc, path)
 
 
-def remove_input_alias(alias: str, path: str | None = None):
+def remove_input_alias(alias: str, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"remove input alias: {alias} (in {path})")
     doc = __read_toml(path)
@@ -131,7 +131,7 @@ def remove_input_alias(alias: str, path: str | None = None):
     __write_toml(doc, path)
 
 
-def set_wait_time(wait_time: float, path: str | None = None):
+def set_wait_time(wait_time: float, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"set wait time: {wait_time} (in {path})")
     if wait_time < 0:
@@ -141,7 +141,7 @@ def set_wait_time(wait_time: float, path: str | None = None):
     __write_toml(doc, path)
 
 
-def reset_config(path: str | None = None):
+def reset_config(path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"reset config to default: {path}")
     __write_toml(default_toml(), path)
