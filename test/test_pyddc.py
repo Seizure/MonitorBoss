@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from pyddc import get_vcp_com, parse_capabilities
