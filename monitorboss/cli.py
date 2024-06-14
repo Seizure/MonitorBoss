@@ -180,13 +180,16 @@ def __get_attr(args, cfg: Config):
     _log.debug(f"get attribute: {args}")
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
-    vals = []
+    cur_vals = []
+    max_vals = []
     for i, m in enumerate(mons):
-        vals.append(get_attribute(m, attr).value)
+        ret = get_attribute(m, attr)
+        cur_vals.append(ret.value)
+        max_vals.append(None if attr.value.com.discrete else ret.max)
         if i+1 < len(mons):
             sleep(cfg.wait_time)
-    for mon, val in zip(args.mon, vals):
-        print(f"{attr} for monitor #{mon} is {val}")
+    for mon, val, maximum in zip(args.mon, cur_vals, max_vals):
+        print(f"{attr} for monitor #{mon} is {val}" + (f" (Maximum: {maximum})" if maximum is not None else ""))
 
 
 def __set_attr(args, cfg: Config):
