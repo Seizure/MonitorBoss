@@ -174,24 +174,25 @@ def __get_caps(args, cfg: Config) -> str | dict:
     __translate_caps(caps)
     pprinter = PrettyPrinter(indent=4)
     pprinter.pprint(caps)
-    return caps
 
 
-def __get_attr(args, cfg: Config) -> str:
+def __get_attr(args, cfg: Config):
     _log.debug(f"get attribute: {args}")
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
-    vals = []
+    cur_vals = []
+    max_vals = []
     for i, m in enumerate(mons):
-        vals.append(get_attribute(m, attr).value)
+        ret = get_attribute(m, attr)
+        cur_vals.append(ret.value)
+        max_vals.append(None if attr.value.com.discrete else ret.max)
         if i+1 < len(mons):
             sleep(cfg.wait_time)
-    for mon, val in zip(args.mon, vals):
-        print(f"{attr} for monitor #{mon} is {val}")
-    return str(vals if len(vals) > 1 else vals[0])
+    for mon, val, maximum in zip(args.mon, cur_vals, max_vals):
+        print(f"{attr} for monitor #{mon} is {val}" + (f" (Maximum: {maximum})" if maximum is not None else ""))
 
 
-def __set_attr(args, cfg: Config) -> str:
+def __set_attr(args, cfg: Config):
     _log.debug(f"set attribute: {args}")
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
@@ -204,10 +205,9 @@ def __set_attr(args, cfg: Config) -> str:
     new_vals = [set_attribute(m, attr, val) for m in mons]
     for mon, new_val in zip(args.mon, new_vals):
         print(f"set {attr} for monitor #{mon} to {new_val}")
-    return str(new_vals if len(new_vals) > 1 else new_vals[0])
 
 
-def __tog_attr(args, cfg: Config) -> str:
+def __tog_attr(args, cfg: Config):
     _log.debug(f"toggle attribute: {args}")
     attr = __check_attr(args.attr)
     mons = [__check_mon(m, cfg) for m in args.mon]
@@ -220,7 +220,6 @@ def __tog_attr(args, cfg: Config) -> str:
             sleep(cfg.wait_time)
     for mon, tog_val in zip(args.mon, new_vals):
         print(f"Toggled {attr} for monitor #{mon} from {tog_val[0]} to {tog_val[1]}")
-    return str(new_vals if len(new_vals) > 1 else new_vals[0])
 
 
 text = "Commands for manipulating and polling your monitors"
@@ -290,6 +289,6 @@ def run(args: str | Sequence[str] | None = None):
     args = parser.parse_args(args)
     try:
         cfg = get_config(args.config)
-        return args.func(args, cfg)
+        args.func(args, cfg)
     except MonitorBossError as err:
         parser.error(str(err))
