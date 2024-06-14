@@ -45,8 +45,8 @@ def default_toml() -> TOMLDocument:
     mon_names.add("main", 0)
 
     input_names = table()
-    input_names.add("USBC", 27)
-    input_names["USBC"].comment('27 seems to be the "standard non-standard" ID for USB-C among manufacturers')
+    input_names.add("usbc", 27)
+    input_names["usbc"].comment('27 seems to be the "standard non-standard" ID for USB-C among manufacturers')
 
     settings = table()
     settings.add(TomlKeys.wait.value, 0.05)
