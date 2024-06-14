@@ -7,8 +7,9 @@ import pyddc
 
 pyddc.VCP = VCP
 
-from .test_utils import rm_toml, set_toml, TEST_CONFIG_LOCATION, TEST_TOML_CONTENTS
+from .test_utils import rm_toml, set_toml, TEST_CONFIG_LOCATION, TEST_TOML_CONTENTS, CaptureSTDOUT
 from monitorboss import config
+from monitorboss.cli import run
 
 
 class TestConfig:
@@ -39,4 +40,5 @@ class TestConfig:
 
 class TestCLIGet:
 
-    def test_get_discreet
+    def test_get_discreet_by_alias(self):
+        assert run("get src foo") == "src for monitor foo is 27 (USB-C)"
