@@ -5,4 +5,3 @@
 __pycache__/
 .venv/
 .idea/
-/test/test_config.toml

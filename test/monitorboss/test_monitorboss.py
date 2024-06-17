@@ -1,11 +1,8 @@
-import pytest
 pytest_plugins = "pytester"
-import io
-from contextlib import redirect_stdout, redirect_stderr
 
 import tomlkit
 
-from .vcp_dummy import DummyVCP as VCP
+from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
 from monitorboss import config
@@ -52,17 +49,20 @@ class TestConfig:
 class TestCLIGet:
     """
     Factors which will affect output:
-    - Whether the monitor was supplied as an ID or alias
     - Whether the attribute is continuous or discreet
+    - Whether the monitor was supplied as an ID or alias
+        - test single vs multiple monitors
     - Whether the returned value has a matching value in the code's param_names
-    - Whether the returned value has a matching value in the config file's aliases
+    - Whether the returned value has matching values in the config file's aliases
+        - test single vs multiple matching values
 
-    Total of 16 tests to cover all combinations
+    Total of 36 tests to cover all combinations
     """
+
     def test_get_discreet_by_alias(self, capsys, pytester):
         conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
         run(f"--config {conf.as_posix()} get src foo")
-        assert capsys.readouterr().out == "src for monitor foo is 27 (usbc)\n"
+        assert capsys.readouterr().out == "src for monitor \"foo\" is 27 (usbc)\n"
         assert capsys.readouterr().err == ""
 
     def test_get_discreet_by_id(self, capsys, pytester):
@@ -70,3 +70,23 @@ class TestCLIGet:
         run(f"--config {conf.as_posix()} get src 1")
         assert capsys.readouterr().out == "src for monitor #1 is 27 (usbc)\n"
         assert capsys.readouterr().err == ""
+
+feature = ["src", "cnt"] # discreet vs continous code
+# TODO: will need to change/add to this when we support all codes, and command by int/name
+match_param = [True, False]
+match_alias = ["none", "single", "multi"]
+
+def form_response(f, p, a):
+    quote = '"'
+    return f"{f} for monitor \"foo\" is "
+
+
+def test_get(capsys, pytester):
+    conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
+    for f in feature:
+        for p in match_param:
+            for a in match_alias:
+                expected_return = f"{f} for monitor"
+                run(f"--config {conf.as_posix()} get {f} foo 1")
+
+
