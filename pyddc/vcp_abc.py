@@ -157,7 +157,7 @@ def _parse_caps_hex_list(caps_str: str) -> list[Capability]:
             value = _parse_caps_hex_list(substr)
             if caps_data and caps_data[-1].values is None:
                 # Associate enumeration values with op-code
-                caps_data[-1].values = value
+                caps_data[-1].values = [cap.cap if cap.values is None else cap for cap in value]
             else:
                 # Enumeration values have no prior op-code; this should not strictly happen.
                 # Examples: "vcps((01 02) 03 04)", or "vcps(01(02 03) (04 05) 06)", or
@@ -178,7 +178,7 @@ def _parse_caps_hex_list(caps_str: str) -> list[Capability]:
     return caps_data
 
 
-Capabilities = int | str | list[Capability] | dict[str, 'Capabilities']
+Capabilities = int | str | list[Capability] | list[int] | dict[str, 'Capabilities']
 
 
 def _parse_caps_dict(caps_str: str) -> dict[str, Capabilities]:
