@@ -8,17 +8,7 @@ pyddc.VCP = VCP
 from monitorboss import config
 from monitorboss.cli import run
 
-TEST_TOML_CONTENTS = """
-[monitor_names]
-main = 0
-foo = 1
-bar = 2
-
-[input_names]
-usbc = 27 # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
-
-[settings]
-wait = 0.0""".strip()
+# import mb_test_resources as tr
 
 
 class TestConfig:
@@ -29,12 +19,12 @@ class TestConfig:
         assert confpath.exists()
 
     def test_config_reset(self, pytester):
-        conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
+        conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
         contents: str
 
         with open(conf, "r", encoding="utf8") as file:
             contents = file.read().strip()
-        assert contents == TEST_TOML_CONTENTS
+        assert contents == tr.TEST_TOML_CONTENTS
 
         config.reset_config(conf.as_posix())
         with open(conf, "r", encoding="utf8") as file:
@@ -60,13 +50,13 @@ class TestCLIGet:
     """
 
     def test_get_discreet_by_alias(self, capsys, pytester):
-        conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
+        conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
         run(f"--config {conf.as_posix()} get src foo")
         assert capsys.readouterr().out == "src for monitor \"foo\" is 27 (usbc)\n"
         assert capsys.readouterr().err == ""
 
     def test_get_discreet_by_id(self, capsys, pytester):
-        conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
+        conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
         run(f"--config {conf.as_posix()} get src 1")
         assert capsys.readouterr().out == "src for monitor #1 is 27 (usbc)\n"
         assert capsys.readouterr().err == ""
@@ -82,7 +72,7 @@ def form_response(f, p, a):
 
 
 def test_get(capsys, pytester):
-    conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
+    conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
     for f in feature:
         for p in match_param:
             for a in match_alias:
