@@ -108,8 +108,8 @@ def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int) -> (int, i
 def signal_monitor(mon: int):
     _log.debug(f"signal monitor #{mon} (cycle its luminance)")
     cfg = get_config()
-    ddc_wait = cfg.wait_time
-    visible_wait = max(ddc_wait, cfg.wait_time)
+    ddc_wait = cfg.wait_set_time
+    visible_wait = max(ddc_wait, 1.0)
     cur_lum, max_lum = get_attribute(mon, Attribute.lum)
     sleep(ddc_wait)
     set_attribute(mon, Attribute.lum, max_lum)

@@ -13,37 +13,43 @@ _log = getLogger(__name__)
 DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.toml"
 
 
-class TomlKeys(enum.Enum):
+class TomlCategories(enum.Enum):
     monitors = "monitor_names"
     inputs = "input_names"
     settings = "settings"
-    wait = "wait"
 
+class TomlSettingsKeys(enum.Enum):
+    wait_get = "wait_get"
+    wait_set = "wait_set"
 
 @dataclass
 class Config:
     monitor_names: dict[str, int] = field(default_factory=dict)
     input_source_names: dict[str, int] = field(default_factory=dict)
-    wait_time: float = field(default_factory=float)
+    wait_get_time: float = field(default_factory=float)
+    wait_set_time: float = field(default_factory=float)
 
     def read(self, doc: TOMLDocument):
         _log.debug(f"read Config from TOML doc: {doc}")
-        for val, aliases in doc[TomlKeys.monitors.value].items():
+        for val, aliases in doc[TomlCategories.monitors.value].items():
             if isinstance(aliases, String):
                 aliases = Array([aliases], Trivia())
             for alias in aliases:
                 self.monitor_names[alias] = int(val) if val.isdigit() else val
-        for val, aliases in doc[TomlKeys.inputs.value].items():
+        for val, aliases in doc[TomlCategories.inputs.value].items():
             if isinstance(aliases, String):
                 aliases = Array([aliases], Trivia())
             for alias in aliases:
                 self.input_source_names[alias] = int(val) if val.isdigit() else val
-        self.wait_time = doc[TomlKeys.settings.value][TomlKeys.wait.value]
+        self.wait_get_time = doc[TomlCategories.settings.value][TomlSettingsKeys.wait_get.value]
+        self.wait_set_time = doc[TomlCategories.settings.value][TomlSettingsKeys.wait_set.value]
 
     def validate(self):
-        _log.debug(f"validate Config")
-        if self.wait_time < 0:
-            raise MonitorBossError(f"invalid wait time: {self.wait_time}")
+        _log.debug(f"validate config")
+        if self.wait_get_time < 0:
+            raise MonitorBossError(f"invalid wait get time: {self.wait_get_time}")
+        if self.wait_set_time < 0:
+            raise MonitorBossError(f"invalid wait set time: {self.wait_set_time}")
 
 
 def default_toml() -> TOMLDocument:
@@ -56,12 +62,13 @@ def default_toml() -> TOMLDocument:
     input_names["usbc"].comment('27 seems to be the "standard non-standard" ID for USB-C among manufacturers')
 
     settings = table()
-    settings.add(TomlKeys.wait.value, 0.05)
+    settings.add(TomlCategories.wait_get.value, 0.05)
+    settings.add(TomlCategories.wait_set.value, 0.1)
 
     doc = document()
-    doc.add(TomlKeys.monitors.value, mon_names)
-    doc.add(TomlKeys.inputs.value, input_names)
-    doc.add(TomlKeys.settings.value, settings)
+    doc.add(TomlCategories.monitors.value, mon_names)
+    doc.add(TomlCategories.inputs.value, input_names)
+    doc.add(TomlCategories.settings.value, settings)
 
     return doc
 
@@ -110,7 +117,7 @@ def set_monitor_alias(alias: str, mon_id: int, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"set monitor alias: {alias} = {mon_id} (in {path})")
     doc = __read_toml(path)
-    doc[TomlKeys.monitors.value][alias] = mon_id
+    doc[TomlCategories.monitors.value][alias] = mon_id
     __write_toml(doc, path)
 
 
@@ -118,7 +125,7 @@ def remove_monitor_alias(alias: str, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"remove monitor alias: {alias} (in {path})")
     doc = __read_toml(path)
-    doc.remove(doc[TomlKeys.monitors.value][alias])
+    doc.remove(doc[TomlCategories.monitors.value][alias])
     __write_toml(doc, path)
 
 
@@ -126,7 +133,7 @@ def set_input_alias(alias: str, input_id: int, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"set input alias: {alias} = {input_id} (in {path})")
     doc = __read_toml(path)
-    doc[TomlKeys.inputs.value][alias] = input_id
+    doc[TomlCategories.inputs.value][alias] = input_id
     __write_toml(doc, path)
 
 
@@ -134,17 +141,27 @@ def remove_input_alias(alias: str, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"remove input alias: {alias} (in {path})")
     doc = __read_toml(path)
-    doc.remove(doc[TomlKeys.inputs.value][alias])
+    doc.remove(doc[TomlCategories.inputs.value][alias])
     __write_toml(doc, path)
 
 
-def set_wait_time(wait_time: float, path: str | None):
+def set_wait_get_time(wait_get_time: float, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"set wait time: {wait_time} (in {path})")
-    if wait_time < 0:
-        raise MonitorBossError(f"invalid wait time: {wait_time}")
+    _log.debug(f"set wait get time: {wait_get_time} (in {path})")
+    if wait_get_time < 0:
+        raise MonitorBossError(f"invalid wait get time: {wait_get_time}")
     doc = __read_toml(path)
-    doc[TomlKeys.settings.value][TomlKeys.wait.value] = wait_time
+    doc[TomlCategories.settings.value][TomlSettingsKeys.wait_get.value] = wait_get_time
+    __write_toml(doc, path)
+
+
+def set_wait_set_time(wait_set_time: float, path: str | None):
+    path = path if path is not None else DEFAULT_CONF_FILE_LOC
+    _log.debug(f"set wait set time: {wait_set_time} (in {path})")
+    if wait_set_time < 0:
+        raise MonitorBossError(f"invalid wait set time: {wait_set_time}")
+    doc = __read_toml(path)
+    doc[TomlCategories.settings.value][TomlSettingsKeys.wait_set.value] = wait_set_time
     __write_toml(doc, path)
 
 
