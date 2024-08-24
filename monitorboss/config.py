@@ -4,6 +4,7 @@ from pathlib import Path
 from dataclasses import dataclass, field
 
 from tomlkit import parse, dump, comment, document, table, TOMLDocument
+from tomlkit.items import Array, String, Trivia
 
 from monitorboss import MonitorBossError
 
@@ -27,10 +28,16 @@ class Config:
 
     def read(self, doc: TOMLDocument):
         _log.debug(f"read Config from TOML doc: {doc}")
-        for key, value in doc[TomlKeys.monitors.value].items():
-            self.monitor_names[key] = value
-        for key, value in doc[TomlKeys.inputs.value].items():
-            self.input_source_names[key] = value
+        for val, aliases in doc[TomlKeys.monitors.value].items():
+            if isinstance(aliases, String):
+                aliases = Array([aliases], Trivia())
+            for alias in aliases:
+                self.monitor_names[alias] = int(val) if val.isdigit() else val
+        for val, aliases in doc[TomlKeys.inputs.value].items():
+            if isinstance(aliases, String):
+                aliases = Array([aliases], Trivia())
+            for alias in aliases:
+                self.input_source_names[alias] = int(val) if val.isdigit() else val
         self.wait_time = doc[TomlKeys.settings.value][TomlKeys.wait.value]
 
     def validate(self):
