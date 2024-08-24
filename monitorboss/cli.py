@@ -189,7 +189,8 @@ def __get_attr(args, cfg: Config):
         if i+1 < len(mons):
             sleep(cfg.wait_time)
     for mon, val, maximum in zip(args.mon, cur_vals, max_vals):
-        print(f"{attr} for monitor #{mon} is {val}" + (f" (Maximum: {maximum})" if maximum is not None else ""))
+        mon_name = f'#{mon}' if str(mon).isdigit() else f"'{mon}'"
+        print(f"{attr} for monitor {mon_name} is {val}" + (f" (Maximum: {maximum})" if maximum is not None else ""))
 
 
 def __set_attr(args, cfg: Config):

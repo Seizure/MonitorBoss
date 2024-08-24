@@ -13,14 +13,22 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-      - name: Install PyInstaller
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PyInstaller and PyTest
         shell: pwsh
         run: |
-          pip install pyinstaller
+          pip install pyinstaller pytest
       - name: Build MonitorBoss
         shell: pwsh
         run: |
           ./build.ps1
+      - name: Test the release build
+        shell: pwsh
+        run: |
+          pytest
       - name: Advance release tag to master
         run: |
           git tag ${{ env.RELEASE_TAG }} -f

@@ -1,12 +1,8 @@
 [monitor_names]
-main = 0
-# Seizure's configuration
-right = 2
-middle = 0
-left = 1
+0 = "main"
 
 [input_names]
-USBC = 27 # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
+27 = ["USBC", "USB_C"] # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
 
 [settings]
 wait = 0.05
