@@ -1,12 +1,11 @@
 TEST_TOML_CONTENTS = """
 [monitor_names]
-main = 0
-foo = 1
-qux = 1
-bar = 2
+0 = "main"
+1 = ["foo", "qux"]
+2 = "bar"
 
 [input_names]
-usbc = 27 # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
+27 = "USBC" # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
 
 [settings]
 wait = 0.0""".strip()
