@@ -1,3 +1,7 @@
+import pytest
+
+from pyddc import get_vcp_com, VCPCommand
+
 pytest_plugins = "pytester"
 
 import tomlkit
@@ -8,7 +12,7 @@ pyddc.VCP = VCP
 from monitorboss import config
 from monitorboss.cli import run
 
-# import mb_test_resources as tr
+import test.monitorboss.mb_test_resources as tr
 
 
 class TestConfig:
@@ -46,7 +50,7 @@ class TestCLIGet:
     - Whether the returned value has matching values in the config file's aliases
         - test single vs multiple matching values
 
-    Total of 36 tests to cover all combinations
+    Total of 64 tests to cover all combinations
     """
 
     def test_get_discreet_by_alias(self, capsys, pytester):
@@ -61,22 +65,38 @@ class TestCLIGet:
         assert capsys.readouterr().out == "src for monitor #1 is 27 (usbc)\n"
         assert capsys.readouterr().err == ""
 
-feature = ["src", "cnt"] # discreet vs continous code
-# TODO: will need to change/add to this when we support all codes, and command by int/name
-match_param = [True, False]
-match_alias = ["none", "single", "multi"]
+    @pytest.mark.parameterize("feature_set", [get_vcp_com(96), get_vcp_com(18)]) # 96 is source, 18 is contrast
+    @pytest.mark.parameterize("monitor_set", ["foo", "1", "baz"])
+    @pytest.mark.parameterize("match_alias", ["none", "single", "multi"])
+    def test_get(self, feature_set: VCPCommand, monitor_set, match_alias, capsys, pytester):
+        conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
+        # mons = " ".join(monitor_set).strip()
 
-def form_response(f, p, a):
-    quote = '"'
-    return f"{f} for monitor \"foo\" is "
+        def generate_toml() -> str:
 
 
-def test_get(capsys, pytester):
-    conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
-    for f in feature:
-        for p in match_param:
-            for a in match_alias:
-                expected_return = f"{f} for monitor"
-                run(f"--config {conf.as_posix()} get {f} foo 1")
+
+        def generate_command(mons) -> str:
+            command = f"--config {conf.as_posix()} get "
+            command += feature_set["name"] + " "
+            command += mons
+
+            return command
+
+        def generate_output(mons):
+            output = ""
+            for m in mons.split(" "):
+                output += "src for monitor "
+                if m.isdigit():
+                    output += "#"
+                output += m + " "
+                output += "is 27 "
+                if p in feature_set.param_names:
+
+        for f in tr.feature_set:
+            for p in tr.match_param:
+                for a in tr.match_alias:
+                    expected_return = f"{f} for monitor"
+                    run(f"--config {conf.as_posix()} get {f} foo 1")
 
 
