@@ -1,0 +1,22 @@
+name: "Testing"
+on:
+  - push
+  - pull_request
+jobs:
+  test:
+    runs-on: windows-2022
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Pytest
+        shell: pwsh
+        run: |
+          pip install pytest
+      - name: Test MonitorBoss
+        shell: pwsh
+        run: |
+          pytest
