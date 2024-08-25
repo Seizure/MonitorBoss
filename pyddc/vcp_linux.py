@@ -32,7 +32,6 @@ class LinuxVCP(VCP):
     GET_VCP_CAPS_REPLY = 0xE3  # Capabilities Request reply
 
     # timeouts
-    GET_VCP_TIMEOUT = 0.04  # at least 40ms per the DDCCI specification
     CMD_RATE = 0.05  # at least 50ms between messages
 
     # addresses
@@ -93,7 +92,8 @@ class LinuxVCP(VCP):
         self.fd = None
         return super().__exit__(exception_type, exception_value, exception_traceback)
 
-    def _set_vcp_feature(self, code: VCPCommand, value: int):
+    def _set_vcp_feature(self, code: VCPCommand, value: int, timeout: float):
+        del timeout # unused
         self.rate_limit()
         # transmission data
         data = bytearray()
@@ -112,7 +112,7 @@ class LinuxVCP(VCP):
         # store time of last set VCP
         self.last_set = time.time()
 
-    def _get_vcp_feature(self, code: VCPCommand) -> (int, int):
+    def _get_vcp_feature(self, code: VCPCommand, timeout: float) -> (int, int):
         self.rate_limit()
         # transmission data
         data = bytearray()
@@ -126,7 +126,7 @@ class LinuxVCP(VCP):
         self.logger.debug("data=" + " ".join([f"{x:02X}" for x in data]))
         self.write_bytes(data)
         # wait
-        time.sleep(self.GET_VCP_TIMEOUT)
+        time.sleep(timeout)
         # read the data
         header = self.read_bytes(self.GET_VCP_HEADER_LENGTH)
         self.logger.debug("header=" + " ".join([f"{x:02X}" for x in header]))
@@ -166,7 +166,7 @@ class LinuxVCP(VCP):
 
         return VCPFeatureReturn(feature_current, feature_max)
 
-    def _get_vcp_capabilities_str(self) -> str:
+    def _get_vcp_capabilities_str(self, timeout: float) -> str:
         # Create an empty capabilities string to be filled with the data
         caps_str = ""
         self.rate_limit()
@@ -190,7 +190,7 @@ class LinuxVCP(VCP):
             # write data
             self.write_bytes(data)
             # wait
-            time.sleep(self.GET_VCP_TIMEOUT)
+            time.sleep(timeout)
             # read the data
             header = self.read_bytes(self.GET_VCP_HEADER_LENGTH)
             self.logger.debug("header=" + " ".join([f"{x:02X}" for x in header]))

@@ -69,24 +69,25 @@ def get_vcp_capabilities(mon: int) -> str:
             raise MonitorBossError(f"Could not list information for monitor {mon}") from err
 
 
-def get_attribute(mon: int, attr: Attribute) -> (int, int):
+def get_attribute(mon: int, attr: Attribute, timeout: float) -> (int, int):
     _log.debug(f"get attribute: {attr} (for monitor #{mon})")
     with __get_monitor(mon) as monitor:
         try:
-            val = monitor.get_vcp_feature(attr.value.com)
+            val = monitor.get_vcp_feature(attr.value.com, timeout)
             _log.debug(f"get_vcp_feature for {attr} on monitor #{mon} returned {val}")
             return val
         except VCPError as err:
             raise MonitorBossError(f"could not get {attr.value.short_desc} for monitor #{mon}.") from err
         except TypeError as err:
+            print(err)
             raise MonitorBossError(f"{attr} is not a readable feature.") from err
 
 
-def set_attribute(mon: int, attr: Attribute, val: int) -> int:
+def set_attribute(mon: int, attr: Attribute, val: int, timeout: float) -> int:
     _log.debug(f"set attribute: {attr} = {val} (for monitor #{mon})")
     with __get_monitor(mon) as monitor:
         try:
-            monitor.set_vcp_feature(attr.value.com, val)
+            monitor.set_vcp_feature(attr.value.com, val, timeout)
         except VCPError as err:
             raise MonitorBossError(f"could not set {attr.value.short_desc} for monitor #{mon} to {val}.") from err
         except TypeError as err:
@@ -97,11 +98,11 @@ def set_attribute(mon: int, attr: Attribute, val: int) -> int:
         return val
 
 
-def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int) -> (int, int):
+def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int, timeout: float) -> (int, int):
     _log.debug(f"toggle attribute: {attr} between {val1} and {val2} (for monitor #{mon})")
-    cur_val = get_attribute(mon, attr).value
+    cur_val = get_attribute(mon, attr, timeout).value
     new_val = val2 if cur_val == val1 else val1
-    set_attribute(mon, attr, new_val)
+    set_attribute(mon, attr, new_val, timeout)
     Vals = namedtuple("Vals", ["mon", "old", "new"])
     return Vals(mon, cur_val, new_val)
 
@@ -109,12 +110,13 @@ def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int) -> (int, i
 def signal_monitor(mon: int):
     _log.debug(f"signal monitor #{mon} (cycle its luminance)")
     cfg = get_config()
+    timeout = cfg.wait_internal_time
     ddc_wait = cfg.wait_set_time
     visible_wait = max(ddc_wait, 1.0)
-    cur_lum, max_lum = get_attribute(mon, Attribute.lum)
+    cur_lum, max_lum = get_attribute(mon, Attribute.lum, timeout)
     sleep(ddc_wait)
-    set_attribute(mon, Attribute.lum, max_lum)
+    set_attribute(mon, Attribute.lum, max_lum, timeout)
     sleep(visible_wait)
-    set_attribute(mon, Attribute.lum, 0)
+    set_attribute(mon, Attribute.lum, 0, timeout)
     sleep(visible_wait)
-    set_attribute(mon, Attribute.lum, cur_lum)
+    set_attribute(mon, Attribute.lum, cur_lum, timeout)

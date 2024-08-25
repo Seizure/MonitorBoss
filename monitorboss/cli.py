@@ -191,7 +191,7 @@ def __get_attr(args, cfg: Config):
     cur_vals = []
     max_vals = []
     for i, m in enumerate(mons):
-        ret = get_attribute(m, attr)
+        ret = get_attribute(m, attr, cfg.wait_internal_time)
         cur_vals.append(ret.value)
         max_vals.append(None if attr.value.com.discrete else ret.max)
         if i+1 < len(mons):
@@ -208,10 +208,10 @@ def __set_attr(args, cfg: Config):
     val = __check_val(attr, args.val, cfg)
     new_vals = []
     for i, m in enumerate(mons):
-        new_vals.append(set_attribute(m, attr, val))
-        if i+1 < len(mons):
+        new_vals.append(set_attribute(m, attr, val, cfg.wait_internal_time))
+        if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
-    new_vals = [set_attribute(m, attr, val) for m in mons]
+    new_vals = [set_attribute(m, attr, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(args.mon, new_vals):
         print(f"set {attr} for monitor #{mon} to {new_val}")
 
@@ -224,7 +224,7 @@ def __tog_attr(args, cfg: Config):
     val2 = __check_val(attr, args.val2, cfg)
     new_vals = []
     for i, m in enumerate(mons):
-        new_vals.append(toggle_attribute(m, attr, val1, val2))
+        new_vals.append(toggle_attribute(m, attr, val1, val2, cfg.wait_internal_time))
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     for mon, tog_val in zip(args.mon, new_vals):
