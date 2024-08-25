@@ -57,11 +57,11 @@ class Config:
 def default_toml() -> TOMLDocument:
     _log.debug("define default TOML config")
     mon_names = table()
-    mon_names.add(0, "main")
+    mon_names.add("0", "main")
 
     input_names = table()
-    input_names.add(27, ["usbc", "usb_c", "usbc"])
-    input_names[27].comment('27 seems to be the "standard non-standard" ID for USB-C among manufacturers')
+    input_names.add("27", ["usbc", "usb_c", "usbc"])
+    input_names["27"].comment('27 seems to be the "standard non-standard" ID for USB-C among manufacturers')
 
     settings = table()
     settings.add(TomlSettingsKeys.wait_get.value, 0.05)

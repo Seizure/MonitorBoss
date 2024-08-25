@@ -1,14 +1,9 @@
-TEST_TOML_CONTENTS = """
-[monitor_names]
-0 = "main"
-1 = ["foo", "qux"]
-2 = "bar"
+from monitorboss import config
+from tomlkit import dumps
 
-[input_names]
-27 = "USBC" # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
+doc = config.default_toml()
 
-[settings]
-wait = 0.0""".strip()
+TEST_TOML_CONTENTS = dumps(doc)
 
 
 # feature_set = [get_vcp, {"name": "cnt", "discrete": False, "match_param": False}]  # discrete vs continous code; also matching param_name vs not
