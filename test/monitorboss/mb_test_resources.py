@@ -3,7 +3,18 @@ from tomlkit import dumps
 
 doc = config.default_toml()
 
-TEST_TOML_CONTENTS = dumps(doc)
+TEST_TOML_CONTENTS = """
+[monitor_names]
+0 = "foo"
+1 = ["bar", "baz"]
+2 = "qux"
+
+[input_names]
+27 = ["usbc", "usb_c", "usb-c"] # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
+
+[settings]
+wait_get = 0
+wait_set = 0""".strip()
 
 
 # feature_set = [get_vcp, {"name": "cnt", "discrete": False, "match_param": False}]  # discrete vs continous code; also matching param_name vs not

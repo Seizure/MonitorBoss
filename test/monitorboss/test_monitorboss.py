@@ -26,7 +26,6 @@ class TestConfig:
 
     def test_config_reset(self, pytester):
         conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
-        contents: str
 
         with open(conf, "r", encoding="utf8") as file:
             contents = file.read().strip()
@@ -64,7 +63,7 @@ class TestCLIGet:
     def test_get_discreet_by_id(self, capsys, pytester):
         conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
         run(f"--config {conf.as_posix()} get src 1")
-        assert capsys.readouterr().out == "src for monitor #1 is 27 (usbc)\n"
+        assert capsys.readouterr().out == "src for monitor #1 is 27 (usbc, usb_c, usb-c)\n"
         assert capsys.readouterr().err == ""
 
     @pytest.mark.parametrize("feature_set", [INPUT_SOURCE, CONTRAST])
