@@ -8,7 +8,7 @@ from logging import getLogger
 from types import TracebackType
 from typing import Optional, Type, List, NamedTuple
 
-from .vcp_codes import VCPCommand
+from .vcp_codes import VCPCodes, VCPCommand
 
 
 class VCPError(Exception):
@@ -70,9 +70,7 @@ class VCP(abc.ABC):
             raise TypeError(f"cannot read write-only code: {code}")
         self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply(_, {code.__repr__()}, None, _, _)")
         ret = self._get_vcp_feature(code)
-        # Hack: this value is hard-coded in both the `__VCP_COMMANDS`` list and here.
-        # Find a better way to check that `code` is getting the input source.
-        if code.value == 96:
+        if code.value == VCPCodes.input_source:
             # The input source sometimes has a high byte that needs to be masked out.
             # Requires further research. Just copy monitorcontrol for now and ignore it.
             ret = VCPFeatureReturn(ret.value & 0xff, ret.max & 0xff)

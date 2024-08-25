@@ -1,11 +1,21 @@
-import enum
-
 from dataclasses import dataclass
-from enum import Enum, unique
+from enum import Enum, IntEnum, unique
 
 
-@enum.unique
-class InputSourceNames(enum.Enum):
+@unique
+class VCPCodes(IntEnum):
+	restore_factory_default = 4 # 0x04
+	image_luminance = 16 # 0x10
+	image_contrast = 18 # 0x12
+	image_color_preset = 20 # 0x14
+	active_control = 82 # 0x52
+	input_source = 96 # 0x60
+	image_orientation = 170 # 0xAA
+	display_power_mode = 214 # 0xD6
+
+
+@unique
+class InputSourceNames(Enum):
     off = 0x00
     analog1 = 0x01
     analog2 = 0x02
@@ -27,8 +37,8 @@ class InputSourceNames(enum.Enum):
     hdmi2 = 0x12
 
 
-@enum.unique
-class PowerModeNames(enum.Enum):
+@unique
+class PowerModeNames(Enum):
     on = 0x01
     standby = 0x02
     suspend = 0x03
@@ -36,8 +46,8 @@ class PowerModeNames(enum.Enum):
     off_hard = 0x05
 
 
-@enum.unique
-class ColorPresetNames(enum.Enum):
+@unique
+class ColorPresetNames(Enum):
     ct4000k = 0x03
     ct5000k = 0x04
     ct6500k = 0x05
@@ -69,7 +79,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="restore_factory_default",
         desc="restore factory default image",
-        value=4,  # 0x04
+        value=VCPCodes.restore_factory_default,
         readable=False,
         writeable=True,
         discrete=True,
@@ -77,7 +87,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="image_luminance",
         desc="image luminance",
-        value=16,  # 0x10
+        value=VCPCodes.image_luminance,
         readable=True,
         writeable=True,
         discrete=False,
@@ -85,7 +95,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="image_contrast",
         desc="image contrast",
-        value=18,  # 0x12
+        value=VCPCodes.image_contrast,
         readable=True,
         writeable=True,
         discrete=False,
@@ -93,7 +103,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="image_color_preset",
         desc="image color preset",
-        value=20,  # 0x14
+        value=VCPCodes.image_color_preset,
         readable=True,
         writeable=True,
         discrete=False,
@@ -101,7 +111,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="active_control",
         desc="active control",
-        value=82,  # 0x52
+        value=VCPCodes.active_control,
         readable=True,
         writeable=False,
         discrete=True,
@@ -109,7 +119,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="input_source",
         desc="input source",
-        value=96,  # 0x60
+        value=VCPCodes.input_source,
         readable=True,
         writeable=True,
         discrete=True,
@@ -117,7 +127,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="image_orientation",
         desc="image orientation",
-        value=170,  # 0xAA
+        value=VCPCodes.image_orientation,
         readable=True,
         writeable=False,
         discrete=True,
@@ -125,7 +135,7 @@ __VCP_COMMANDS = [
     VCPCommand(
         name="display_power_mode",
         desc="display power mode",
-        value=214,  # 0xD6
+        value=VCPCodes.display_power_mode,
         readable=True,
         writeable=False,
         discrete=True,

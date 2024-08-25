@@ -5,6 +5,7 @@ from logging import getLogger
 from time import sleep
 
 from pyddc import VCP, VCPCommand, get_vcp_com, VCPError
+from pyddc.vcp_codes import VCPCodes
 
 from monitorboss import MonitorBossError
 from monitorboss.config import get_config
@@ -21,19 +22,19 @@ class AttributeData:
 
 
 class Attribute(Enum):
-    src = AttributeData("input source", get_vcp_com(96),
+    src = AttributeData("input source", get_vcp_com(VCPCodes.input_source),
                         "(currently active) input source",
                         "Must be a valid source ID, or alias as defined by the application built-ins or config file additions")
-    cnt = AttributeData("contrast", get_vcp_com(18),
+    cnt = AttributeData("contrast", get_vcp_com(VCPCodes.image_contrast),
                         "contrast",
                         "Must be an integer, though valid values will be constrained between 0 - 100 on most monitors")
-    lum = AttributeData("luminance", get_vcp_com(16),
+    lum = AttributeData("luminance", get_vcp_com(VCPCodes.image_luminance),
                         "luminance/brightness",
                         "Must be an integer, though valid values will be constrained between 0 - 100 on most monitors")
-    pwr = AttributeData("power mode", get_vcp_com(214),
+    pwr = AttributeData("power mode", get_vcp_com(VCPCodes.display_power_mode),
                         "power mode/state",
                         "Must be a valid power state, as defined by built-in aliases")
-    clr = AttributeData("color preset", get_vcp_com(20),
+    clr = AttributeData("color preset", get_vcp_com(VCPCodes.image_color_preset),
                         "(currently active) color preset",
                         "Must be a valid color temperature preset, as defined by built-in aliases")
 
