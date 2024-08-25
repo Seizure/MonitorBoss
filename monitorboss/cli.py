@@ -187,7 +187,7 @@ def __get_attr(args, cfg: Config):
         cur_vals.append(ret.value)
         max_vals.append(None if attr.value.com.discrete else ret.max)
         if i+1 < len(mons):
-            sleep(cfg.wait_time)
+            sleep(cfg.wait_get_time)
     for mon, val, maximum in zip(args.mon, cur_vals, max_vals):
         mon_name = f'#{mon}' if str(mon).isdigit() else f"'{mon}'"
         print(f"{attr} for monitor {mon_name} is {val}" + (f" (Maximum: {maximum})" if maximum is not None else ""))
@@ -202,7 +202,7 @@ def __set_attr(args, cfg: Config):
     for i, m in enumerate(mons):
         new_vals.append(set_attribute(m, attr, val))
         if i+1 < len(mons):
-            sleep(cfg.wait_time)
+            sleep(cfg.wait_set_time)
     new_vals = [set_attribute(m, attr, val) for m in mons]
     for mon, new_val in zip(args.mon, new_vals):
         print(f"set {attr} for monitor #{mon} to {new_val}")
@@ -217,8 +217,8 @@ def __tog_attr(args, cfg: Config):
     new_vals = []
     for i, m in enumerate(mons):
         new_vals.append(toggle_attribute(m, attr, val1, val2))
-        if i+1 < len(mons):
-            sleep(cfg.wait_time)
+        if i + 1 < len(mons):
+            sleep(cfg.wait_set_time)
     for mon, tog_val in zip(args.mon, new_vals):
         print(f"Toggled {attr} for monitor #{mon} from {tog_val[0]} to {tog_val[1]}")
 

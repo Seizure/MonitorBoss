@@ -2,7 +2,8 @@
 0 = "main"
 
 [input_names]
-27 = ["USBC", "USB_C"] # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
+27 = ["usbc", "usb_c", "usb-c"] # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
 
 [settings]
-wait = 0.05
+wait_get = 0.05
+wait_set = 0.10
