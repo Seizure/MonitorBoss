@@ -18,9 +18,11 @@ class TomlCategories(enum.Enum):
     inputs = "input_names"
     settings = "settings"
 
+
 class TomlSettingsKeys(enum.Enum):
     wait_get = "wait_get"
     wait_set = "wait_set"
+
 
 @dataclass
 class Config:
@@ -55,15 +57,15 @@ class Config:
 def default_toml() -> TOMLDocument:
     _log.debug("define default TOML config")
     mon_names = table()
-    mon_names.add("main", 0)
+    mon_names.add(0, "main")
 
     input_names = table()
-    input_names.add("usbc", 27)
-    input_names["usbc"].comment('27 seems to be the "standard non-standard" ID for USB-C among manufacturers')
+    input_names.add(27, ["usbc", "usb_c", "usbc"])
+    input_names[27].comment('27 seems to be the "standard non-standard" ID for USB-C among manufacturers')
 
     settings = table()
-    settings.add(TomlCategories.wait_get.value, 0.05)
-    settings.add(TomlCategories.wait_set.value, 0.1)
+    settings.add(TomlSettingsKeys.wait_get.value, 0.05)
+    settings.add(TomlSettingsKeys.wait_set.value, 0.1)
 
     doc = document()
     doc.add(TomlCategories.monitors.value, mon_names)
