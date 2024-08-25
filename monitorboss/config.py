@@ -87,7 +87,14 @@ def __read_toml(path: str | None) -> TOMLDocument:
             content = file.read()
     except Exception as err:
         raise MonitorBossError(f"could not read config file: {path}") from err
-    return parse(content)
+    try:
+        return parse(content)
+    except Exception as err:
+        # TODO: add CLI options to manage the config
+        raise MonitorBossError(
+            f"could not parse config file: {path}: {err}\n"
+            "To reset the config file to its default content, delete the file."
+        ) from err
 
 
 def __write_toml(doc: TOMLDocument, path: str | None):
