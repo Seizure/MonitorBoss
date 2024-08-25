@@ -14,6 +14,8 @@ from monitorboss.cli import run
 
 import test.monitorboss.mb_test_resources as tr
 
+INPUT_SOURCE = get_vcp_com(96)
+CONTRAST = get_vcp_com(18)
 
 class TestConfig:
 
@@ -65,15 +67,17 @@ class TestCLIGet:
         assert capsys.readouterr().out == "src for monitor #1 is 27 (usbc)\n"
         assert capsys.readouterr().err == ""
 
-    @pytest.mark.parameterize("feature_set", [get_vcp_com(96), get_vcp_com(18)]) # 96 is source, 18 is contrast
-    @pytest.mark.parameterize("monitor_set", ["foo", "1", "baz"])
-    @pytest.mark.parameterize("match_alias", ["none", "single", "multi"])
-    def test_get(self, feature_set: VCPCommand, monitor_set, match_alias, capsys, pytester):
+    @pytest.mark.parametrize("feature_set", [INPUT_SOURCE, CONTRAST])
+    @pytest.mark.parametrize("monitor_set", ["foo", "foo 1"])
+    @pytest.mark.parametrize("match_param", [True, False])
+    @pytest.mark.parametrize("match_alias", ["none", "single", "multi"])
+    def test_get(self, feature_set: VCPCommand, monitor_set: str, match_param: bool, match_alias: str, capsys, pytester):
         conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
+        monitor_set = ["foo", "1", "baz"]
         # mons = " ".join(monitor_set).strip()
 
         def generate_toml() -> str:
-
+            pass
 
 
         def generate_command(mons) -> str:
@@ -91,12 +95,6 @@ class TestCLIGet:
                     output += "#"
                 output += m + " "
                 output += "is 27 "
-                if p in feature_set.param_names:
 
-        for f in tr.feature_set:
-            for p in tr.match_param:
-                for a in tr.match_alias:
-                    expected_return = f"{f} for monitor"
-                    run(f"--config {conf.as_posix()} get {f} foo 1")
 
 
