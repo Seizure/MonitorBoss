@@ -67,28 +67,25 @@ class TestCLIGet:
         assert capsys.readouterr().err == ""
 
     @pytest.mark.parametrize("feature_set", [INPUT_SOURCE, CONTRAST])
-    @pytest.mark.parametrize("monitor_set", ["foo", "foo 1"])
+    @pytest.mark.parametrize("monitor_set", ["foo", "baz 2", "2"])
     @pytest.mark.parametrize("match_param", [True, False])
     @pytest.mark.parametrize("match_alias", ["none", "single", "multi"])
     def test_get(self, feature_set: VCPCommand, monitor_set: str, match_param: bool, match_alias: str, capsys, pytester):
         conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
-        monitor_set = ["foo", "1", "baz"]
-        # mons = " ".join(monitor_set).strip()
 
         def generate_toml() -> str:
             pass
 
-
-        def generate_command(mons) -> str:
+        def generate_command() -> str:
             command = f"--config {conf.as_posix()} get "
-            command += feature_set["name"] + " "
-            command += mons
+            command += feature_set.name + " "
+            command += monitor_set
 
             return command
 
-        def generate_output(mons):
+        def generate_output() -> str:
             output = ""
-            for m in mons.split(" "):
+            for m in monitor_set.split(" "):
                 output += "src for monitor "
                 if m.isdigit():
                     output += "#"
