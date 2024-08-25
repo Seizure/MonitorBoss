@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from enum import Enum, IntEnum, unique
+from enum import IntEnum, unique
 
 
 @unique
@@ -15,7 +15,7 @@ class VCPCodes(IntEnum):
 
 
 @unique
-class InputSourceNames(Enum):
+class InputSourceNames(IntEnum):
     off = 0x00
     analog1 = 0x01
     analog2 = 0x02
@@ -38,7 +38,7 @@ class InputSourceNames(Enum):
 
 
 @unique
-class PowerModeNames(Enum):
+class PowerModeNames(IntEnum):
     on = 0x01
     standby = 0x02
     suspend = 0x03
@@ -47,7 +47,7 @@ class PowerModeNames(Enum):
 
 
 @unique
-class ColorPresetNames(Enum):
+class ColorPresetNames(IntEnum):
     ct4000k = 0x03
     ct5000k = 0x04
     ct6500k = 0x05

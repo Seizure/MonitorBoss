@@ -1,4 +1,4 @@
-import enum
+from enum import Enum # cannot use StrEnum, it's not in Python 3.10
 from logging import getLogger
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -13,13 +13,13 @@ _log = getLogger(__name__)
 DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.toml"
 
 
-class TomlCategories(enum.Enum):
+class TomlCategories(Enum):
     monitors = "monitor_names"
     inputs = "input_names"
     settings = "settings"
 
 
-class TomlSettingsKeys(enum.Enum):
+class TomlSettingsKeys(Enum):
     wait_get = "wait_get"
     wait_set = "wait_set"
 
