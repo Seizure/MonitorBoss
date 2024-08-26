@@ -10,6 +10,7 @@ from monitorboss.config import Config, get_config
 from monitorboss.impl import Attribute
 from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
 from pyddc import parse_capabilities, get_vcp_com, VCPIOError
+from pyddc.vcp_codes import VCPCodes
 from pyddc.vcp_abc import Capability, Capabilities
 
 _log = getLogger(__name__)
@@ -21,7 +22,8 @@ def __check_attr(attr: str) -> Attribute:
         return Attribute[attr]
     except KeyError as err:
         raise MonitorBossError(
-            f"{attr} is not a valid attribute.\nValid attributes are: {', '.join(Attribute.__members__)}."
+            f"{attr} is not a valid attribute.\n"
+            "Valid attributes are: {', '.join(Attribute.__members__)}."
         ) from err
 
 
@@ -32,7 +34,8 @@ def __check_mon(mon: str, cfg: Config) -> int:
         return int(mon)
     except ValueError as err:
         raise MonitorBossError(
-            f"{mon} is not a valid monitor.\nValid monitors are: {', '.join(cfg.monitor_names)}, or an ID number."
+            f"{mon} is not a valid monitor.\n"
+            "Valid monitors are: {', '.join(cfg.monitor_names)}, or an ID number."
         ) from err
 
 
@@ -48,10 +51,11 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
-                    f"""{val} is not a valid input source.\nValid input sources are: {
+                    f"{val} is not a valid input source.\n"
+                    f"""Valid input sources are: {
                         ', '.join(list(attr.value.com.param_names.keys()) + list(cfg.input_source_names))
-                    }, or a code number (non-negative integer)."""
-                    "\nNOTE: A particular monitor will probably support only some of these values."
+                    }, or a code number (non-negative integer).\n"""
+                    "NOTE: A particular monitor will probably support only some of these values. "
                     "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
@@ -60,7 +64,8 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
-                    f"{val} is not a valid contrast value.\nValid contrast values are non-negative integers."
+                    f"{val} is not a valid contrast value.\n"
+                    "Valid contrast values are non-negative integers."
                 ) from err
 
         case Attribute.lum:
@@ -68,7 +73,8 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
-                    f"{val} is not a valid luminance value.\nValid luminance values are non-negative integers"
+                    f"{val} is not a valid luminance value.\n"
+                    "Valid luminance values are non-negative integers"
                 ) from err
 
         case Attribute.pwr:
@@ -78,10 +84,11 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
-                    f"""{val} is not a valid power mode.\nValid power modes are: {
+                    f"{val} is not a valid power mode.\n"
+                    f"""Valid power modes are: {
                         ', '.join(list(attr.value.com.param_names.keys()))
-                    }, or a code number (non-negative integer)."""
-                    "\nNOTE: A particular monitor will probably support only some of these values."
+                    }, or a code number (non-negative integer).\n"""
+                    "NOTE: A particular monitor will probably support only some of these values. "
                     "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
@@ -92,10 +99,11 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
-                    f"""{val} is not a valid color preset.\nValid color presets are: {
-                    ', '.join(list(attr.value.com.param_names.keys()))
-                    }, or a code number (non-negative integer)."""
-                    "\nNOTE: A particular monitor will probably support only some of these values."
+                    f"{val} is not a valid color preset.\n"
+                    f"""Valid color presets are: {
+                        ', '.join(list(attr.value.com.param_names.keys()))
+                    }, or a code number (non-negative integer).\n"""
+                    "NOTE: A particular monitor will probably support only some of these values. "
                     "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
@@ -162,17 +170,17 @@ def __get_caps(args, cfg: Config) -> str | dict:
             summary += f" model {caps['model']}"
         summary += '\n'
         if caps["vcp"]:
-            for c in caps['vcp']:
-                if c.cap == 96 and c.values is not None:
+            for c in caps["vcp"]:
+                if c.cap == VCPCodes.input_source and c.values is not None:
                     c = __translate_vcp_entry(c)
                     summary += f"  - input sources: {', '.join(map(str, c.values))}\n"
-                elif c.cap == 20 and c.values is not None:
+                elif c.cap == VCPCodes.image_color_preset and c.values is not None:
                     c = __translate_vcp_entry(c)
                     summary += f"  - color presets: {', '.join(map(str, c.values))}\n"
         print(summary)
         return summary
     __translate_caps(caps)
-    pprinter = PrettyPrinter(indent=4)
+    pprinter = PrettyPrinter(indent=4, sort_dicts=True)
     pprinter.pprint(caps)
 
 
@@ -183,7 +191,7 @@ def __get_attr(args, cfg: Config):
     cur_vals = []
     max_vals = []
     for i, m in enumerate(mons):
-        ret = get_attribute(m, attr)
+        ret = get_attribute(m, attr, cfg.wait_internal_time)
         cur_vals.append(ret.value)
         max_vals.append(None if attr.value.com.discrete else ret.max)
         if i+1 < len(mons):
@@ -200,10 +208,10 @@ def __set_attr(args, cfg: Config):
     val = __check_val(attr, args.val, cfg)
     new_vals = []
     for i, m in enumerate(mons):
-        new_vals.append(set_attribute(m, attr, val))
-        if i+1 < len(mons):
+        new_vals.append(set_attribute(m, attr, val, cfg.wait_internal_time))
+        if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
-    new_vals = [set_attribute(m, attr, val) for m in mons]
+    new_vals = [set_attribute(m, attr, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(args.mon, new_vals):
         print(f"set {attr} for monitor #{mon} to {new_val}")
 
@@ -216,7 +224,7 @@ def __tog_attr(args, cfg: Config):
     val2 = __check_val(attr, args.val2, cfg)
     new_vals = []
     for i, m in enumerate(mons):
-        new_vals.append(toggle_attribute(m, attr, val1, val2))
+        new_vals.append(toggle_attribute(m, attr, val1, val2, cfg.wait_internal_time))
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     for mon, tog_val in zip(args.mon, new_vals):

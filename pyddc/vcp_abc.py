@@ -8,7 +8,7 @@ from logging import getLogger
 from types import TracebackType
 from typing import Optional, Type, List, NamedTuple
 
-from .vcp_codes import VCPCommand
+from .vcp_codes import VCPCodes, VCPCommand
 
 
 class VCPError(Exception):
@@ -24,6 +24,9 @@ class VCPPermissionError(VCPError):
 
 
 VCPFeatureReturn = namedtuple("VCPFeatureReturn", ["value", "max"])
+
+
+VCP_TIMEOUT = 0.04  # at least 40ms per the DDC-CI specification
 
 
 class VCP(abc.ABC):
@@ -49,30 +52,28 @@ class VCP(abc.ABC):
         self._in_ctx = False
         return False
 
-    def set_vcp_feature(self, code: VCPCommand, value: int):
+    def set_vcp_feature(self, code: VCPCommand, value: int, timeout: float = VCP_TIMEOUT):
         assert self._in_ctx, "This function must be run within the context manager"
         if not code.writeable:
             raise TypeError(f"cannot write read-only code: {code}")
         elif code.readable and not code.discrete:
-            maximum = self.get_vcp_feature_max(code)
+            maximum = self.get_vcp_feature_max(code, timeout)
             if value > maximum:
                 raise ValueError(f"value of {value} exceeds code maximum of {maximum} for {code.name}")
         self.logger.debug(f"SetVCPFeature(_, {code.__repr__()}, {value=})")
-        self._set_vcp_feature(code, value)
+        self._set_vcp_feature(code, value, timeout)
 
     @abc.abstractmethod
     def _set_vcp_feature(self, code: VCPCommand, value: int):
         pass
 
-    def get_vcp_feature(self, code: VCPCommand) -> (int, int):
+    def get_vcp_feature(self, code: VCPCommand, timeout: float = VCP_TIMEOUT) -> (int, int):
         assert self._in_ctx, "This function must be run within the context manager"
         if not code.readable:
             raise TypeError(f"cannot read write-only code: {code}")
         self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply(_, {code.__repr__()}, None, _, _)")
-        ret = self._get_vcp_feature(code)
-        # Hack: this value is hard-coded in both the `__VCP_COMMANDS`` list and here.
-        # Find a better way to check that `code` is getting the input source.
-        if code.value == 96:
+        ret = self._get_vcp_feature(code, timeout)
+        if code.value == VCPCodes.input_source:
             # The input source sometimes has a high byte that needs to be masked out.
             # Requires further research. Just copy monitorcontrol for now and ignore it.
             ret = VCPFeatureReturn(ret.value & 0xff, ret.max & 0xff)
@@ -81,25 +82,25 @@ class VCP(abc.ABC):
         return ret
 
     @abc.abstractmethod
-    def _get_vcp_feature(self, code: VCPCommand) -> (int, int):
+    def _get_vcp_feature(self, code: VCPCommand, timeout: float) -> (int, int):
         pass
 
-    def get_vcp_capabilities(self) -> str:
+    def get_vcp_capabilities(self, timeout: float = VCP_TIMEOUT) -> str:
         assert self._in_ctx, "This function must be run within the context manager"
-        return self._get_vcp_capabilities_str()
+        return self._get_vcp_capabilities_str(timeout)
 
     @abc.abstractmethod
-    def _get_vcp_capabilities_str(self) -> str:
+    def _get_vcp_capabilities_str(self, timeout: float) -> str:
         pass
 
-    def get_vcp_feature_max(self, code: VCPCommand) -> int:
+    def get_vcp_feature_max(self, code: VCPCommand, timeout: float = VCP_TIMEOUT) -> int:
         assert self._in_ctx, "This function must be run within the context manager"
         if not code.readable or code.discrete:
             raise TypeError(f"code must be readable and continuous: {code.name}")
         if code.value in self.code_maximum:
             return self.code_maximum[code.value]
         else:
-            _, maximum = self.get_vcp_feature(code)
+            _, maximum = self.get_vcp_feature(code, timeout)
             self.code_maximum[code.value] = maximum
             return maximum
 

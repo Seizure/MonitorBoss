@@ -1,12 +1,13 @@
 import pytest
 
 from pyddc import get_vcp_com, parse_capabilities
+from pyddc.vcp_codes import VCPCodes
 from .vcp_dummy import DummyVCP as VCP
 
-input_command = get_vcp_com(96)
-lum_command = get_vcp_com(16)
-reset_command = get_vcp_com(4)
-active_control = get_vcp_com(82)
+input_command = get_vcp_com(VCPCodes.input_source)
+lum_command = get_vcp_com(VCPCodes.image_luminance)
+reset_command = get_vcp_com(VCPCodes.restore_factory_default)
+active_control = get_vcp_com(VCPCodes.active_control)
 
 
 class TestGetFeature:

@@ -36,7 +36,8 @@ class DummyVCP(ABCVCP):
     ) -> Optional[bool]:
         return super().__exit__(exception_type, exception_value, exception_traceback)
 
-    def _set_vcp_feature(self, com: VCPCommand, value: int):
+    def _set_vcp_feature(self, com: VCPCommand, value: int, timeout: float):
+        del timeout # unused
         code = com.value
         if code not in supported_codes:
             # TODO: what should happen when an unsupported VCP command is sent?
@@ -53,7 +54,8 @@ class DummyVCP(ABCVCP):
                 # TODO: What happens if an unsupported value is sent? Presumably nothing but should check
                 pass
 
-    def _get_vcp_feature(self, com: VCPCommand) -> (int, int):
+    def _get_vcp_feature(self, com: VCPCommand, timeout: float) -> (int, int):
+        del timeout # unused
         code = com.value
         if code not in supported_codes:
             # TODO: what should happen when an unsupported VCP command is sent?
@@ -65,7 +67,8 @@ class DummyVCP(ABCVCP):
             # TODO: what gets sent back as max for discreet commands?
         return VCPFeatureReturn(current_values[code], maxv)
 
-    def _get_vcp_capabilities_str(self) -> str:
+    def _get_vcp_capabilities_str(self, timeout: float) -> str:
+        del timeout # unused
         return caps_str
 
     @staticmethod
