@@ -77,7 +77,7 @@ def default_toml() -> TOMLDocument:
 
 def __read_toml(path: str | None) -> TOMLDocument:
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"read TOML config from: {path}")
+    _log.debug(f"read TOML config from: {Path(path).absolute()}")
     if not Path(path).parent.exists():
         Path(path).parent.mkdir(parents=True)
     if not Path(path).exists():
@@ -86,38 +86,38 @@ def __read_toml(path: str | None) -> TOMLDocument:
         with open(path, "r", encoding="utf8") as file:
             content = file.read()
     except Exception as err:
-        raise MonitorBossError(f"could not read config file: {path}") from err
+        raise MonitorBossError(f"could not read config file: {Path(path).absolute()}") from err
     return parse(content)
 
 
 def __write_toml(doc: TOMLDocument, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"write TOML config to: {path}")
+    _log.debug(f"write TOML config to: {Path(path).absolute()}")
     if not Path(path).parent.exists():
         Path(path).parent.mkdir(parents=True)
     try:
         with open(path, "w", encoding="utf8") as file:
             dump(doc, file)
     except Exception as err:
-        raise MonitorBossError(f"could not write config file: {path}") from err
+        raise MonitorBossError(f"could not write config file: {Path(path).absolute()}") from err
 
 
 def get_config(path: str | None) -> Config:
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"get Config dataclass from: {path}")
+    _log.debug(f"get Config dataclass from: {Path(path).absolute()}")
     doc = __read_toml(path)
     cfg = Config()
     try:
         cfg.read(doc)
     except Exception as err:
-        raise MonitorBossError(f"could not parse config file: {path}: {err}") from err
+        raise MonitorBossError(f"could not parse config file: {Path(path).absolute()}: {err}") from err
     cfg.validate()
     return cfg
 
 
 def set_monitor_alias(alias: str, mon_id: int, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"set monitor alias: {alias} = {mon_id} (in {path})")
+    _log.debug(f"set monitor alias: {alias} = {mon_id} (in {Path(path).absolute()})")
     doc = __read_toml(path)
     doc[TomlCategories.monitors.value][alias] = mon_id
     __write_toml(doc, path)
@@ -125,7 +125,7 @@ def set_monitor_alias(alias: str, mon_id: int, path: str | None):
 
 def remove_monitor_alias(alias: str, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"remove monitor alias: {alias} (in {path})")
+    _log.debug(f"remove monitor alias: {alias} (in {Path(path).absolute()})")
     doc = __read_toml(path)
     doc.remove(doc[TomlCategories.monitors.value][alias])
     __write_toml(doc, path)
@@ -133,7 +133,7 @@ def remove_monitor_alias(alias: str, path: str | None):
 
 def set_input_alias(alias: str, input_id: int, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"set input alias: {alias} = {input_id} (in {path})")
+    _log.debug(f"set input alias: {alias} = {input_id} (in {Path(path).absolute()})")
     doc = __read_toml(path)
     doc[TomlCategories.inputs.value][alias] = input_id
     __write_toml(doc, path)
@@ -141,7 +141,7 @@ def set_input_alias(alias: str, input_id: int, path: str | None):
 
 def remove_input_alias(alias: str, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"remove input alias: {alias} (in {path})")
+    _log.debug(f"remove input alias: {alias} (in {Path(path).absolute()})")
     doc = __read_toml(path)
     doc.remove(doc[TomlCategories.inputs.value][alias])
     __write_toml(doc, path)
@@ -149,7 +149,7 @@ def remove_input_alias(alias: str, path: str | None):
 
 def set_wait_get_time(wait_get_time: float, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"set wait get time: {wait_get_time} (in {path})")
+    _log.debug(f"set wait get time: {wait_get_time} (in {Path(path).absolute()})")
     if wait_get_time < 0:
         raise MonitorBossError(f"invalid wait get time: {wait_get_time}")
     doc = __read_toml(path)
@@ -159,7 +159,7 @@ def set_wait_get_time(wait_get_time: float, path: str | None):
 
 def set_wait_set_time(wait_set_time: float, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"set wait set time: {wait_set_time} (in {path})")
+    _log.debug(f"set wait set time: {wait_set_time} (in {Path(path).absolute()})")
     if wait_set_time < 0:
         raise MonitorBossError(f"invalid wait set time: {wait_set_time}")
     doc = __read_toml(path)
@@ -169,5 +169,5 @@ def set_wait_set_time(wait_set_time: float, path: str | None):
 
 def reset_config(path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"reset config to default: {path}")
+    _log.debug(f"reset config to default: {Path(path).absolute()}")
     __write_toml(default_toml(), path)
