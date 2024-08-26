@@ -15,7 +15,7 @@ supported_codes = {
 }
 caps_str = "(prot(monitor)type(LCD)model(DUMM13)cmds(04)vcp(10 12 60(1B 0F 11 ) AA(01 02 04 ) )mccs_ver(2.1))"
 
-current_values = {16: 75, 96: 27, 170: 2}  # lum is 75, input is USBC(27), image orientation is 2 (whatever that means)
+current_values = {16: 75, 18: 75, 96: 27, 170: 2}  # lum is 75, input is USBC(27), image orientation is 2 (whatever that means)
 unknown_max_values = {16: 80, 18: 100}
 
 

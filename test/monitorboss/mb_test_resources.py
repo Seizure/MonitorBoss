@@ -1,7 +1,4 @@
 from monitorboss import config
-from tomlkit import dumps
-
-doc = config.default_toml()
 
 TEST_TOML_CONTENTS = """
 [monitor_names]
@@ -14,7 +11,8 @@ TEST_TOML_CONTENTS = """
 
 [settings]
 wait_get = 0
-wait_set = 0""".strip()
+wait_set = 0
+wait_internal = 0""".strip()
 
 
 # feature_set = [get_vcp, {"name": "cnt", "discrete": False, "match_param": False}]  # discrete vs continous code; also matching param_name vs not
