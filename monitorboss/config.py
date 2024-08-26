@@ -65,7 +65,7 @@ def default_toml() -> TOMLDocument:
     mon_names.add("0", "main")
 
     input_names = table()
-    input_names.add("27", ["usbc", "usb_c", "usbc"])
+    input_names.add("27", ["usbc", "usb_c", "usb-c"])
     input_names["27"].comment('27 seems to be the "standard non-standard" ID for USB-C among manufacturers')
 
     settings = table()
