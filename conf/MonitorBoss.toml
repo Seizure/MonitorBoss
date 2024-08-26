@@ -7,3 +7,4 @@
 [settings]
 wait_get = 0.05
 wait_set = 0.10
+wait_internal = 0.04 # 40ms is standard; configured value does not apply on Windows

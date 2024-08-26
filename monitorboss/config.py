@@ -1,4 +1,4 @@
-import enum
+from enum import Enum # cannot use StrEnum, it's not in Python 3.10
 from logging import getLogger
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -13,15 +13,16 @@ _log = getLogger(__name__)
 DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.toml"
 
 
-class TomlCategories(enum.Enum):
+class TomlCategories(Enum):
     monitors = "monitor_names"
     inputs = "input_names"
     settings = "settings"
 
 
-class TomlSettingsKeys(enum.Enum):
+class TomlSettingsKeys(Enum):
     wait_get = "wait_get"
     wait_set = "wait_set"
+    wait_internal = "wait_internal"
 
 
 @dataclass
@@ -30,6 +31,7 @@ class Config:
     input_source_names: dict[str, int] = field(default_factory=dict)
     wait_get_time: float = field(default_factory=float)
     wait_set_time: float = field(default_factory=float)
+    wait_internal_time: float = field(default_factory=float)
 
     def read(self, doc: TOMLDocument):
         _log.debug(f"read Config from TOML doc: {doc}")
@@ -45,6 +47,7 @@ class Config:
                 self.input_source_names[alias] = int(val) if val.isdigit() else val
         self.wait_get_time = doc[TomlCategories.settings.value][TomlSettingsKeys.wait_get.value]
         self.wait_set_time = doc[TomlCategories.settings.value][TomlSettingsKeys.wait_set.value]
+        self.wait_internal_time = doc[TomlCategories.settings.value][TomlSettingsKeys.wait_internal.value]
 
     def validate(self):
         _log.debug(f"validate config")
@@ -52,6 +55,8 @@ class Config:
             raise MonitorBossError(f"invalid wait get time: {self.wait_get_time}")
         if self.wait_set_time < 0:
             raise MonitorBossError(f"invalid wait set time: {self.wait_set_time}")
+        if self.wait_internal_time < 0:
+            raise MonitorBossError(f"invalid wait internal time: {self.wait_internal_time}")
 
 
 def default_toml() -> TOMLDocument:
@@ -66,6 +71,7 @@ def default_toml() -> TOMLDocument:
     settings = table()
     settings.add(TomlSettingsKeys.wait_get.value, 0.05)
     settings.add(TomlSettingsKeys.wait_set.value, 0.1)
+    settings.add(TomlSettingsKeys.wait_internal.value, 0.04)
 
     doc = document()
     doc.add(TomlCategories.monitors.value, mon_names)
@@ -87,7 +93,14 @@ def __read_toml(path: str | None) -> TOMLDocument:
             content = file.read()
     except Exception as err:
         raise MonitorBossError(f"could not read config file: {Path(path).absolute()}") from err
-    return parse(content)
+    try:
+        return parse(content)
+    except Exception as err:
+        # TODO: add CLI options to manage the config
+        raise MonitorBossError(
+            f"could not parse config file: {path}: {err}\n"
+            "To reset the config file to its default content, delete the file."
+        ) from err
 
 
 def __write_toml(doc: TOMLDocument, path: str | None):
@@ -164,6 +177,16 @@ def set_wait_set_time(wait_set_time: float, path: str | None):
         raise MonitorBossError(f"invalid wait set time: {wait_set_time}")
     doc = __read_toml(path)
     doc[TomlCategories.settings.value][TomlSettingsKeys.wait_set.value] = wait_set_time
+    __write_toml(doc, path)
+
+
+def set_wait_internal_time(wait_internal_time: float, path: str | None):
+    path = path if path is not None else DEFAULT_CONF_FILE_LOC
+    _log.debug(f"set wait internal time: {wait_internal_time} (in {Path(path).absolute()})")
+    if wait_internal_time < 0:
+        raise MonitorBossError(f"invalid wait internal time: {wait_internal_time}")
+    doc = __read_toml(path)
+    doc[TomlCategories.settings.value][TomlSettingsKeys.wait_internal.value] = wait_internal_time
     __write_toml(doc, path)
 
 
