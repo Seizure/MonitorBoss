@@ -10,7 +10,7 @@ from monitorboss.config import Config, get_config
 from monitorboss.impl import Attribute
 from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
 from pyddc import parse_capabilities, get_vcp_com, VCPIOError
-from pyddc.vcp_codes import VCPCodes
+from pyddc.vcp_codes import VCPCodes, VCPCommand
 from pyddc.vcp_abc import Capability, Capabilities
 
 _log = getLogger(__name__)
@@ -109,9 +109,8 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
 
 
 # Config is not currently used, but it will be when we allow feature aliases, so just including it
-def __feature_str(attr: Attribute, cfg: Config) -> str:
-    featstr = f"{attr.value.short_desc} ({attr.value.com.value})"
-    return featstr
+def __feature_str(com: VCPCommand, cfg: Config) -> str:
+    return f"{com.desc} ({com.value})"
 
 
 def __monitor_str(mon: int, cfg: Config) -> str:
@@ -182,6 +181,9 @@ def __translate_caps(caps: dict[str, Capabilities]):
             caps['vcp'][i] = c
 
 
+
+
+
 # TODO: waiting for VCP caps parsing to be fixed to use only ints; do proper alias parsing
 def __get_caps(args, cfg: Config) -> str | dict:
     _log.debug(f"get capabilities: {args}")
@@ -230,7 +232,7 @@ def __get_attr(args, cfg: Config):
         if i+1 < len(mons):
             sleep(cfg.wait_get_time)
     for mon, val, maximum in zip(mons, cur_vals, max_vals):
-        print(f"{__feature_str(attr, args)} for {__monitor_str(mon, cfg)} is {__value_str(attr, val, cfg)}" + (f" (Maximum: {__value_str(attr, maximum, cfg)})" if maximum is not None else ""))
+        print(f"{__feature_str(attr.value.com, args)} for {__monitor_str(mon, cfg)} is {__value_str(attr, val, cfg)}" + (f" (Maximum: {__value_str(attr, maximum, cfg)})" if maximum is not None else ""))
 
 
 def __set_attr(args, cfg: Config):
@@ -245,7 +247,7 @@ def __set_attr(args, cfg: Config):
             sleep(cfg.wait_set_time)
     new_vals = [set_attribute(m, attr, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(mons, new_vals):
-        print(f"set {attr} for {__monitor_str(mon, cfg)} to {__value_str(attr, new_val, cfg)}")
+        print(f"set {__feature_str(attr.value.com, args)} for {__monitor_str(mon, cfg)} to {__value_str(attr, new_val, cfg)}")
 
 
 def __tog_attr(args, cfg: Config):
@@ -260,7 +262,7 @@ def __tog_attr(args, cfg: Config):
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     for mon, tog_val in zip(mons, new_vals):
-        print(f"Toggled {attr} for {__monitor_str(mon, cfg)} from {__value_str(attr, tog_val.old, cfg)} to {__value_str(attr, tog_val.new, cfg)}")
+        print(f"Toggled {__feature_str(attr.value.com, args)} for {__monitor_str(mon, cfg)} from {__value_str(attr, tog_val.old, cfg)} to {__value_str(attr, tog_val.new, cfg)}")
 
 
 text = "Commands for manipulating and polling your monitors"

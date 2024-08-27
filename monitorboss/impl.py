@@ -21,6 +21,7 @@ class AttributeData:
     notes: str
 
 
+# TODO I'm not sure we need a short_desc var? Seems redundant to VCPCommand's "desc"
 class Attribute(Enum):
     src = AttributeData("input source", get_vcp_com(VCPCodes.input_source),
                         "(currently active) input source",
