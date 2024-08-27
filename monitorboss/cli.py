@@ -167,7 +167,7 @@ def __get_caps(args, cfg: Config) -> str | dict:
         return caps
     caps = parse_capabilities(caps)
     if args.summary:
-        summary = __monitor_str(args.mon, cfg)
+        summary = __monitor_str(mon, cfg)
         summary += ":"
         if caps["type"]:
             summary += f" {caps['type']}"
