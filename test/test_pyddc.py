@@ -36,7 +36,8 @@ class TestGetFeature:
 
     def test_supported_continuous_code(self):
         with self.vcp as vcp:
-            assert vcp.get_vcp_feature(lum_command) == (75, 80)
+            result = vcp.get_vcp_feature(lum_command)
+            assert (result.value, result.max) == (75, 80)
 
 
 class TestGetMax:

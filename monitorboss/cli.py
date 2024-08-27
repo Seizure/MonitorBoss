@@ -16,6 +16,10 @@ from pyddc.vcp_abc import Capability, Capabilities
 _log = getLogger(__name__)
 
 
+def __fmt_mon(mon: int | str) -> str:
+    return f'#{mon}' if str(mon).isdigit() else f"'{mon}'"
+
+
 def __check_attr(attr: str) -> Attribute:
     _log.debug(f"check attribute: {attr!r}")
     try:
@@ -197,8 +201,8 @@ def __get_attr(args, cfg: Config):
         if i+1 < len(mons):
             sleep(cfg.wait_get_time)
     for mon, val, maximum in zip(args.mon, cur_vals, max_vals):
-        mon_name = f'#{mon}' if str(mon).isdigit() else f"'{mon}'"
-        print(f"{attr} for monitor {mon_name} is {val}" + (f" (Maximum: {maximum})" if maximum is not None else ""))
+        print(f"{attr} for monitor {__fmt_mon(mon)} is {val}"
+              + (f" (maximum {maximum})" if maximum is not None else ""))
 
 
 def __set_attr(args, cfg: Config):
@@ -213,7 +217,7 @@ def __set_attr(args, cfg: Config):
             sleep(cfg.wait_set_time)
     new_vals = [set_attribute(m, attr, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(args.mon, new_vals):
-        print(f"set {attr} for monitor #{mon} to {new_val}")
+        print(f"set {attr} for monitor {__fmt_mon(mon)} to {new_val}")
 
 
 def __tog_attr(args, cfg: Config):
@@ -222,13 +226,13 @@ def __tog_attr(args, cfg: Config):
     mons = [__check_mon(m, cfg) for m in args.mon]
     val1 = __check_val(attr, args.val1, cfg)
     val2 = __check_val(attr, args.val2, cfg)
-    new_vals = []
+    results = []
     for i, m in enumerate(mons):
-        new_vals.append(toggle_attribute(m, attr, val1, val2, cfg.wait_internal_time))
+        results.append(toggle_attribute(m, attr, val1, val2, cfg.wait_internal_time))
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
-    for mon, tog_val in zip(args.mon, new_vals):
-        print(f"Toggled {attr} for monitor #{mon} from {tog_val[0]} to {tog_val[1]}")
+    for mon, result in zip(args.mon, results):
+        print(f"Toggled {attr} for monitor {__fmt_mon(mon)} from {result.old} to {result.new}")
 
 
 text = "Commands for manipulating and polling your monitors"

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from collections import namedtuple
-
 from .vcp_codes import VCPCommand
 from .vcp_abc import VCP, VCPIOError, VCPPermissionError, VCPFeatureReturn
 from types import TracebackType
@@ -112,7 +110,7 @@ class LinuxVCP(VCP):
         # store time of last set VCP
         self.last_set = time.time()
 
-    def _get_vcp_feature(self, code: VCPCommand, timeout: float) -> (int, int):
+    def _get_vcp_feature(self, code: VCPCommand, timeout: float) -> VCPFeatureReturn:
         self.rate_limit()
         # transmission data
         data = bytearray()
