@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import abc
-from collections import namedtuple
 from dataclasses import dataclass
 
 from logging import getLogger
 from types import TracebackType
-from typing import Optional, Type, List, NamedTuple
+from typing import Optional, Type, List
 
 from .vcp_codes import VCPCodes, VCPCommand
 
@@ -23,7 +22,10 @@ class VCPPermissionError(VCPError):
     pass
 
 
-VCPFeatureReturn = namedtuple("VCPFeatureReturn", ["value", "max"])
+@dataclass
+class VCPFeatureReturn:
+    value: int
+    max: int
 
 
 VCP_TIMEOUT = 0.04  # at least 40ms per the DDC-CI specification
@@ -67,7 +69,7 @@ class VCP(abc.ABC):
     def _set_vcp_feature(self, code: VCPCommand, value: int):
         pass
 
-    def get_vcp_feature(self, code: VCPCommand, timeout: float = VCP_TIMEOUT) -> (int, int):
+    def get_vcp_feature(self, code: VCPCommand, timeout: float = VCP_TIMEOUT) -> VCPFeatureReturn:
         assert self._in_ctx, "This function must be run within the context manager"
         if not code.readable:
             raise TypeError(f"cannot read write-only code: {code}")
@@ -82,7 +84,7 @@ class VCP(abc.ABC):
         return ret
 
     @abc.abstractmethod
-    def _get_vcp_feature(self, code: VCPCommand, timeout: float) -> (int, int):
+    def _get_vcp_feature(self, code: VCPCommand, timeout: float) -> VCPFeatureReturn:
         pass
 
     def get_vcp_capabilities(self, timeout: float = VCP_TIMEOUT) -> str:
@@ -100,7 +102,7 @@ class VCP(abc.ABC):
         if code.value in self.code_maximum:
             return self.code_maximum[code.value]
         else:
-            _, maximum = self.get_vcp_feature(code, timeout)
+            maximum = self.get_vcp_feature(code, timeout).max
             self.code_maximum[code.value] = maximum
             return maximum
 
