@@ -1,4 +1,3 @@
-from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from logging import getLogger
@@ -75,7 +74,7 @@ def get_attribute(mon: int, attr: Attribute, timeout: float) -> (int, int):
     with __get_monitor(mon) as monitor:
         try:
             val = monitor.get_vcp_feature(attr.value.com, timeout)
-            _log.debug(f"get_vcp_feature for {attr} on monitor #{mon} returned {val}")
+            _log.debug(f"get_vcp_feature for {attr} on monitor #{mon} returned {val.value} (max {val.max})")
             return val
         except VCPError as err:
             raise MonitorBossError(f"could not get {attr.value.short_desc} for monitor #{mon}.") from err
@@ -99,13 +98,18 @@ def set_attribute(mon: int, attr: Attribute, val: int, timeout: float) -> int:
         return val
 
 
-def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int, timeout: float) -> (int, int):
+@dataclass
+class ToggledAttribute:
+    old: int
+    new: int
+
+
+def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int, timeout: float) -> ToggledAttribute:
     _log.debug(f"toggle attribute: {attr} between {val1} and {val2} (for monitor #{mon})")
     cur_val = get_attribute(mon, attr, timeout).value
     new_val = val2 if cur_val == val1 else val1
     set_attribute(mon, attr, new_val, timeout)
-    Vals = namedtuple("Vals", ["old", "new"])
-    return Vals(cur_val, new_val)
+    return ToggledAttribute(cur_val, new_val)
 
 
 def signal_monitor(mon: int):
@@ -114,10 +118,10 @@ def signal_monitor(mon: int):
     timeout = cfg.wait_internal_time
     ddc_wait = cfg.wait_set_time
     visible_wait = max(ddc_wait, 1.0)
-    cur_lum, max_lum = get_attribute(mon, Attribute.lum, timeout)
+    lum = get_attribute(mon, Attribute.lum, timeout)
     sleep(ddc_wait)
-    set_attribute(mon, Attribute.lum, max_lum, timeout)
+    set_attribute(mon, Attribute.lum, lum.max, timeout)
     sleep(visible_wait)
     set_attribute(mon, Attribute.lum, 0, timeout)
     sleep(visible_wait)
-    set_attribute(mon, Attribute.lum, cur_lum, timeout)
+    set_attribute(mon, Attribute.lum, lum.value, timeout)

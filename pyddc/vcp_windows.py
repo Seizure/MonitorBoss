@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from collections import namedtuple
-
 from .vcp_codes import VCPCommand
 from .vcp_abc import VCP, VCPError, VCPFeatureReturn
 from types import TracebackType
@@ -85,7 +83,7 @@ class WindowsVCP(VCP):
         except OSError as err:
             raise VCPError("failed to close handle") from err
 
-    def _get_vcp_feature(self, code: VCPCommand, timeout: float) -> (int, int):
+    def _get_vcp_feature(self, code: VCPCommand, timeout: float) -> VCPFeatureReturn:
         del timeout # unused
         feature_current = DWORD()
         feature_max = DWORD()
