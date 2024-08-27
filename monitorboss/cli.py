@@ -108,6 +108,49 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
                 ) from err
 
 
+# Config is not currently used, but it will be when we allow feature aliases, so just including it
+def __feature_str(attr: Attribute, cfg: Config) -> str:
+    featstr = f"{attr.value.short_desc} ({attr.value.com.value})"
+    return featstr
+
+
+def __monitor_str(mon: int, cfg: Config) -> str:
+    monstr = f"monitor #{mon} "
+    aliases = ""
+    for v, k in cfg.monitor_names.items():
+        if mon == k:
+            aliases += v+", "
+    if aliases:
+        monstr += f"({aliases[:-2]})"
+
+    return monstr.strip()
+
+
+# TODO: this will need to radically change when we allow aliases for arbitrary/all features
+def __value_str(attr: Attribute, value: int, cfg: Config) -> str:
+    valstr = f"{value}"
+    param = ""
+    aliases = ""
+    for v, k in attr.value.com.param_names.items():
+        if value == k:
+            param = v
+    if attr is Attribute.src:
+        for v, k in cfg.input_source_names.items():
+            if value == k:
+                aliases += v+", "
+    if aliases:
+        aliases = aliases[:-2]
+    valstr += f" ({param + (' | ' if param and aliases else '') + aliases})" if param or aliases else ""
+    return valstr
+
+
+def __list_mons(args, cfg: Config):
+    _log.debug(f"list monitors: {args}")
+    for index, monitor in enumerate(list_monitors()):
+        print(f"{__monitor_str(index, cfg)}")
+
+
+# TODO: this is kind of broken (see IDE warnings) and will change when VCP caps parsing changes anyways
 def __translate_vcp_entry(cap: Capability) -> Capability:
     _log.debug(f"translate VCP entry: {cap}")
     com = get_vcp_com(cap.cap)
@@ -139,24 +182,7 @@ def __translate_caps(caps: dict[str, Capabilities]):
             caps['vcp'][i] = c
 
 
-def __monitor_str(mon: int, cfg: Config) -> str:
-    monstr = f"monitor #{mon} "
-    aliases = ""
-    for v, k in cfg.monitor_names.items():
-        if mon == k:
-            aliases += v+", "
-    if aliases:
-        monstr += f"<{aliases[:-2]}>"
-
-    return monstr.strip()
-
-
-def __list_mons(args, cfg: Config):
-    _log.debug(f"list monitors: {args}")
-    for index, monitor in enumerate(list_monitors()):
-        print(f"{__monitor_str(index, cfg)}")
-
-
+# TODO: waiting for VCP caps parsing to be fixed to use only ints; do proper alias parsing
 def __get_caps(args, cfg: Config) -> str | dict:
     _log.debug(f"get capabilities: {args}")
     mon = __check_mon(args.mon, cfg)
@@ -204,7 +230,7 @@ def __get_attr(args, cfg: Config):
         if i+1 < len(mons):
             sleep(cfg.wait_get_time)
     for mon, val, maximum in zip(mons, cur_vals, max_vals):
-        print(f"{attr} for {__monitor_str(mon, cfg)} is {val}" + (f" (Maximum: {maximum})" if maximum is not None else ""))
+        print(f"{__feature_str(attr, args)} for {__monitor_str(mon, cfg)} is {__value_str(attr, val, cfg)}" + (f" (Maximum: {__value_str(attr, maximum, cfg)})" if maximum is not None else ""))
 
 
 def __set_attr(args, cfg: Config):
@@ -219,7 +245,7 @@ def __set_attr(args, cfg: Config):
             sleep(cfg.wait_set_time)
     new_vals = [set_attribute(m, attr, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(mons, new_vals):
-        print(f"set {attr} for {__monitor_str(mon, cfg)} to {new_val}")
+        print(f"set {attr} for {__monitor_str(mon, cfg)} to {__value_str(attr, new_val, cfg)}")
 
 
 def __tog_attr(args, cfg: Config):
@@ -234,7 +260,7 @@ def __tog_attr(args, cfg: Config):
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     for mon, tog_val in zip(mons, new_vals):
-        print(f"Toggled {attr} for {__monitor_str(mon, cfg)} from {tog_val.old} to {tog_val.new}")
+        print(f"Toggled {attr} for {__monitor_str(mon, cfg)} from {__value_str(attr, tog_val.old, cfg)} to {__value_str(attr, tog_val.new, cfg)}")
 
 
 text = "Commands for manipulating and polling your monitors"
