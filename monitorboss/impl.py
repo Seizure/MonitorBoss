@@ -103,8 +103,8 @@ def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int, timeout: f
     cur_val = get_attribute(mon, attr, timeout).value
     new_val = val2 if cur_val == val1 else val1
     set_attribute(mon, attr, new_val, timeout)
-    Vals = namedtuple("Vals", ["mon", "old", "new"])
-    return Vals(mon, cur_val, new_val)
+    Vals = namedtuple("Vals", ["old", "new"])
+    return Vals(cur_val, new_val)
 
 
 def signal_monitor(mon: int):
