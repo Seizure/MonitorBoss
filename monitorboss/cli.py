@@ -109,8 +109,11 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
 
 
 # Config is not currently used, but it will be when we allow feature aliases, so just including it
-def __feature_str(com: VCPCommand, cfg: Config) -> str:
+def __feature_str(com: VCPCommand | int, cfg: Config) -> str:
+    if isinstance(com, int):
+        com = get_vcp_com(com) if get_vcp_com(com) is not None else com
     return f"{com.desc} ({com.value})"
+
 
 
 def __monitor_str(mon: int, cfg: Config) -> str:
@@ -126,14 +129,18 @@ def __monitor_str(mon: int, cfg: Config) -> str:
 
 
 # TODO: this will need to radically change when we allow aliases for arbitrary/all features
-def __value_str(attr: Attribute, value: int, cfg: Config) -> str:
+def __value_str(com: VCPCommand | int, value: int, cfg: Config) -> str:
     valstr = f"{value}"
     param = ""
     aliases = ""
-    for v, k in attr.value.com.param_names.items():
+    if isinstance(com, int):
+        com = get_vcp_com(com) if get_vcp_com(com) is not None else com
+    if not isinstance(com, VCPCommand):
+        return str(com)
+    for v, k in com.param_names.items():
         if value == k:
             param = v
-    if attr is Attribute.src:
+    if com.value == VCPCodes.input_source:
         for v, k in cfg.input_source_names.items():
             if value == k:
                 aliases += v+", "
@@ -149,74 +156,46 @@ def __list_mons(args, cfg: Config):
         print(f"{__monitor_str(index, cfg)}")
 
 
-# TODO: this is kind of broken (see IDE warnings) and will change when VCP caps parsing changes anyways
-def __translate_vcp_entry(cap: Capability) -> Capability:
-    _log.debug(f"translate VCP entry: {cap}")
-    com = get_vcp_com(cap.cap)
-    if com is None:
-        return cap
-    cap.cap = f"{com.name} ({com.value})"
-    if cap.values is not None:
-        def translate_vcp_value(value: int | str | Capability) -> int | str:
-            if isinstance(value, Capability):
-                if value.values is not None:
-                    return value
-                value = value.cap
-            for param_name in com.param_names:
-                if value == com.param_names[param_name].value:
-                    return f"{param_name}={value}"
-            return value
-        cap.values = [translate_vcp_value(value) for value in cap.values]
-    return cap
-
-
-def __translate_caps(caps: dict[str, Capabilities]):
-    _log.debug(f"translate capabilities: {caps}")
-    if 'cmds' in caps:
-        for i, c in enumerate(caps['cmds']):
-            caps['cmds'][i] = __translate_vcp_entry(c)
-    if 'vcp' in caps:
-        for i, c in enumerate(caps['vcp']):
-            c = __translate_vcp_entry(c)
-            caps['vcp'][i] = c
-
-
-
-
-
-# TODO: waiting for VCP caps parsing to be fixed to use only ints; do proper alias parsing
-def __get_caps(args, cfg: Config) -> str | dict:
+def __get_caps(args, cfg: Config):
     _log.debug(f"get capabilities: {args}")
     mon = __check_mon(args.mon, cfg)
-    caps = get_vcp_capabilities(mon)
+    caps_raw = get_vcp_capabilities(mon)
 
     if args.raw:
-        print(caps)
-        return caps
-    caps = parse_capabilities(caps)
+        print(caps_raw)
+
+    caps_dict = parse_capabilities(caps_raw)
+    for s in caps_dict:
+        if s.lower().startswith("cmd") or s.lower().startswith("vcp"):
+            for i, c in enumerate(caps_dict[s]):
+                cap = caps_dict[s][i]
+                com = get_vcp_com(int(cap.cap))
+                if com is not None:
+                    cap.cap = __feature_str(int(cap.cap), cfg)
+                    if cap.values is not None:
+                        for x, p in enumerate(cap.values):
+                            cap.values[x] = __value_str(com, p, cfg)
+
     if args.summary:
         summary = __monitor_str(mon, cfg)
         summary += ":"
-        if caps["type"]:
-            summary += f" {caps['type']}"
-        if caps["type"] and caps["model"]:
+        if caps_dict["type"]:
+            summary += f" {caps_dict['type']}"
+        if caps_dict["type"] and caps_dict["model"]:
             summary += ","
-        if caps["model"]:
-            summary += f" model {caps['model']}"
+        if caps_dict["model"]:
+            summary += f" model {caps_dict['model']}"
         summary += '\n'
-        if caps["vcp"]:
-            for c in caps["vcp"]:
-                if c.cap == VCPCodes.input_source and c.values is not None:
-                    c = __translate_vcp_entry(c)
-                    summary += f"  - input sources: {', '.join(map(str, c.values))}\n"
-                elif c.cap == VCPCodes.image_color_preset and c.values is not None:
-                    c = __translate_vcp_entry(c)
-                    summary += f"  - color presets: {', '.join(map(str, c.values))}\n"
+        for s in caps_dict:
+            if s.lower().startswith("vcp"):
+                for c in caps_dict[s]:
+                    if isinstance(c.cap, str) and (str(VCPCodes.input_source) in c.cap or str(VCPCodes.image_color_preset) in c.cap):
+                        summary += f"  - {c.cap}: {', '.join(map(str, c.values))}\n"
         print(summary)
-        return summary
-    __translate_caps(caps)
+        return
+
     pprinter = PrettyPrinter(indent=4, sort_dicts=True)
-    pprinter.pprint(caps)
+    pprinter.pprint(caps_dict)
 
 
 def __get_attr(args, cfg: Config):
@@ -232,7 +211,7 @@ def __get_attr(args, cfg: Config):
         if i+1 < len(mons):
             sleep(cfg.wait_get_time)
     for mon, val, maximum in zip(mons, cur_vals, max_vals):
-        print(f"{__feature_str(attr.value.com, args)} for {__monitor_str(mon, cfg)} is {__value_str(attr, val, cfg)}" + (f" (Maximum: {__value_str(attr, maximum, cfg)})" if maximum is not None else ""))
+        print(f"{__feature_str(attr.value.com, args)} for {__monitor_str(mon, cfg)} is {__value_str(attr.value.com, val, cfg)}" + (f" (Maximum: {__value_str(attr.value.com, maximum, cfg)})" if maximum is not None else ""))
 
 
 def __set_attr(args, cfg: Config):
@@ -247,7 +226,7 @@ def __set_attr(args, cfg: Config):
             sleep(cfg.wait_set_time)
     new_vals = [set_attribute(m, attr, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(mons, new_vals):
-        print(f"set {__feature_str(attr.value.com, args)} for {__monitor_str(mon, cfg)} to {__value_str(attr, new_val, cfg)}")
+        print(f"set {__feature_str(attr.value.com, args)} for {__monitor_str(mon, cfg)} to {__value_str(attr.value.com, new_val, cfg)}")
 
 
 def __tog_attr(args, cfg: Config):
@@ -262,7 +241,7 @@ def __tog_attr(args, cfg: Config):
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     for mon, tog_val in zip(mons, new_vals):
-        print(f"Toggled {__feature_str(attr.value.com, args)} for {__monitor_str(mon, cfg)} from {__value_str(attr, tog_val.old, cfg)} to {__value_str(attr, tog_val.new, cfg)}")
+        print(f"Toggled {__feature_str(attr.value.com, args)} for {__monitor_str(mon, cfg)} from {__value_str(attr.value.com, tog_val.old, cfg)} to {__value_str(attr.value.com, tog_val.new, cfg)}")
 
 
 text = "Commands for manipulating and polling your monitors"
