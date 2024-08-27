@@ -139,13 +139,22 @@ def __translate_caps(caps: dict[str, Capabilities]):
             caps['vcp'][i] = c
 
 
+def __monitor_str(mon: int, cfg: Config) -> str:
+    monstr = f"monitor #{mon} "
+    aliases = ""
+    for v, k in cfg.monitor_names.items():
+        if mon == k:
+            aliases += v+", "
+    if aliases:
+        monstr += f"<{aliases[:-2]}>"
+
+    return monstr.strip()
+
+
 def __list_mons(args, cfg: Config):
     _log.debug(f"list monitors: {args}")
     for index, monitor in enumerate(list_monitors()):
-        print(f"monitor #{index}", end="")
-        if index in cfg.monitor_names.values():
-            print(f" ({', '.join([name for name, value in cfg.monitor_names.items() if index == value])})", end="")
-        print()
+        print(f"{__monitor_str(index, cfg)}")
 
 
 def __get_caps(args, cfg: Config) -> str | dict:
@@ -158,9 +167,7 @@ def __get_caps(args, cfg: Config) -> str | dict:
         return caps
     caps = parse_capabilities(caps)
     if args.summary:
-        summary = f"monitor #{mon}"
-        if mon_names := [name for name, value in cfg.monitor_names.items() if value == mon]:
-            summary += f" ({', '.join(mon_names)}),"
+        summary = __monitor_str(args.mon, cfg)
         summary += ":"
         if caps["type"]:
             summary += f" {caps['type']}"
@@ -196,9 +203,8 @@ def __get_attr(args, cfg: Config):
         max_vals.append(None if attr.value.com.discrete else ret.max)
         if i+1 < len(mons):
             sleep(cfg.wait_get_time)
-    for mon, val, maximum in zip(args.mon, cur_vals, max_vals):
-        mon_name = f'#{mon}' if str(mon).isdigit() else f"'{mon}'"
-        print(f"{attr} for monitor {mon_name} is {val}" + (f" (Maximum: {maximum})" if maximum is not None else ""))
+    for mon, val, maximum in zip(mons, cur_vals, max_vals):
+        print(f"{attr} for {__monitor_str(mon, cfg)} is {val}" + (f" (Maximum: {maximum})" if maximum is not None else ""))
 
 
 def __set_attr(args, cfg: Config):
@@ -212,8 +218,8 @@ def __set_attr(args, cfg: Config):
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     new_vals = [set_attribute(m, attr, val, cfg.wait_internal_time) for m in mons]
-    for mon, new_val in zip(args.mon, new_vals):
-        print(f"set {attr} for monitor #{mon} to {new_val}")
+    for mon, new_val in zip(mons, new_vals):
+        print(f"set {attr} for {__monitor_str(mon, cfg)} to {new_val}")
 
 
 def __tog_attr(args, cfg: Config):
@@ -227,8 +233,8 @@ def __tog_attr(args, cfg: Config):
         new_vals.append(toggle_attribute(m, attr, val1, val2, cfg.wait_internal_time))
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
-    for mon, tog_val in zip(args.mon, new_vals):
-        print(f"Toggled {attr} for monitor #{mon} from {tog_val[0]} to {tog_val[1]}")
+    for mon, tog_val in zip(mons, new_vals):
+        print(f"Toggled {attr} for {__monitor_str(mon, cfg)} from {tog_val.old} to {tog_val.new}")
 
 
 text = "Commands for manipulating and polling your monitors"
