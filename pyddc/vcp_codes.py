@@ -4,14 +4,14 @@ from enum import IntEnum, unique
 
 @unique
 class VCPCodes(IntEnum):
-	restore_factory_default = 4 # 0x04
-	image_luminance = 16 # 0x10
-	image_contrast = 18 # 0x12
-	image_color_preset = 20 # 0x14
-	active_control = 82 # 0x52
-	input_source = 96 # 0x60
-	image_orientation = 170 # 0xAA
-	display_power_mode = 214 # 0xD6
+    restore_factory_default = 4  # 0x04
+    image_luminance = 16  # 0x10
+    image_contrast = 18  # 0x12
+    image_color_preset = 20  # 0x14
+    active_control = 82  # 0x52
+    input_source = 96  # 0x60
+    image_orientation = 170  # 0xAA
+    display_power_mode = 214  # 0xD6
 
 
 @unique
