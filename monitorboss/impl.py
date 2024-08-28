@@ -116,7 +116,7 @@ def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int, timeout: f
 
 def signal_monitor(mon: int):
     _log.debug(f"signal monitor #{mon} (cycle its luminance)")
-    cfg = get_config()
+    cfg = get_config(None)
     timeout = cfg.wait_internal_time
     ddc_wait = cfg.wait_set_time
     visible_wait = max(ddc_wait, 1.0)
