@@ -14,7 +14,7 @@ from pyddc.vcp_codes import VCPCodes, VCPCommand
 _log = getLogger(__name__)
 
 
-def __check_attr(attr: str) -> Attribute:
+def _check_attr(attr: str) -> Attribute:
     _log.debug(f"check attribute: {attr!r}")
     try:
         return Attribute[attr]
@@ -25,7 +25,7 @@ def __check_attr(attr: str) -> Attribute:
         ) from err
 
 
-def __check_mon(mon: str, cfg: Config) -> int:
+def _check_mon(mon: str, cfg: Config) -> int:
     _log.debug(f"check monitor: {mon!r}")
     mon = cfg.monitor_names.get(mon, mon)
     try:
@@ -37,7 +37,7 @@ def __check_mon(mon: str, cfg: Config) -> int:
         ) from err
 
 
-def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
+def _check_val(attr: Attribute, val: str, cfg: Config) -> int:
     _log.debug(f"check attribute value: attr {attr}, value {val}")
     match attr:
         case Attribute.src:
@@ -107,14 +107,13 @@ def __check_val(attr: Attribute, val: str, cfg: Config) -> int:
 
 
 # Config is not currently used, but it will be when we allow feature aliases, so just including it
-def __feature_str(com: VCPCommand | int, cfg: Config) -> str:
+def _feature_str(com: VCPCommand | int, cfg: Config) -> str:
     if isinstance(com, int):
         com = get_vcp_com(com) if get_vcp_com(com) is not None else com
     return f"{com.desc} ({com.value})"
 
 
-
-def __monitor_str(mon: int, cfg: Config) -> str:
+def _monitor_str(mon: int, cfg: Config) -> str:
     monstr = f"monitor #{mon} "
     aliases = ""
     for v, k in cfg.monitor_names.items():
@@ -127,7 +126,7 @@ def __monitor_str(mon: int, cfg: Config) -> str:
 
 
 # TODO: this will need to radically change when we allow aliases for arbitrary/all features
-def __value_str(com: VCPCommand | int, value: int, cfg: Config) -> str:
+def _value_str(com: VCPCommand | int, value: int, cfg: Config) -> str:
     valstr = f"{value}"
     param = ""
     aliases = ""
@@ -148,15 +147,15 @@ def __value_str(com: VCPCommand | int, value: int, cfg: Config) -> str:
     return valstr
 
 
-def __list_mons(args, cfg: Config):
+def _list_mons(args, cfg: Config):
     _log.debug(f"list monitors: {args}")
     for index, monitor in enumerate(list_monitors()):
-        print(f"{__monitor_str(index, cfg)}")
+        print(f"{_monitor_str(index, cfg)}")
 
 
-def __get_caps(args, cfg: Config):
+def _get_caps(args, cfg: Config):
     _log.debug(f"get capabilities: {args}")
-    mon = __check_mon(args.mon, cfg)
+    mon = _check_mon(args.mon, cfg)
     caps_raw = get_vcp_capabilities(mon)
 
     if args.raw:
@@ -169,13 +168,13 @@ def __get_caps(args, cfg: Config):
                 cap = caps_dict[s][i]
                 com = get_vcp_com(int(cap.cap))
                 if com is not None:
-                    cap.cap = __feature_str(int(cap.cap), cfg)
+                    cap.cap = _feature_str(int(cap.cap), cfg)
                     if cap.values is not None:
                         for x, p in enumerate(cap.values):
-                            cap.values[x] = __value_str(com, p, cfg)
+                            cap.values[x] = _value_str(com, p, cfg)
 
     if args.summary:
-        summary = __monitor_str(mon, cfg)
+        summary = _monitor_str(mon, cfg)
         summary += ":"
         if caps_dict["type"]:
             summary += f" {caps_dict['type']}"
@@ -196,10 +195,10 @@ def __get_caps(args, cfg: Config):
     pprinter.pprint(caps_dict)
 
 
-def __get_attr(args, cfg: Config):
+def _get_attr(args, cfg: Config):
     _log.debug(f"get attribute: {args}")
-    attr = __check_attr(args.attr)
-    mons = [__check_mon(m, cfg) for m in args.mon]
+    attr = _check_attr(args.attr)
+    mons = [_check_mon(m, cfg) for m in args.mon]
     cur_vals = []
     max_vals = []
     for i, m in enumerate(mons):
@@ -209,14 +208,14 @@ def __get_attr(args, cfg: Config):
         if i+1 < len(mons):
             sleep(cfg.wait_get_time)
     for mon, val, maximum in zip(mons, cur_vals, max_vals):
-        print(f"{__feature_str(attr.value.com, args)} for {__monitor_str(mon, cfg)} is {__value_str(attr.value.com, val, cfg)}" + (f" (Maximum: {__value_str(attr.value.com, maximum, cfg)})" if maximum is not None else ""))
+        print(f"{_feature_str(attr.value.com, args)} for {_monitor_str(mon, cfg)} is {_value_str(attr.value.com, val, cfg)}" + (f" (Maximum: {_value_str(attr.value.com, maximum, cfg)})" if maximum is not None else ""))
 
 
-def __set_attr(args, cfg: Config):
+def _set_attr(args, cfg: Config):
     _log.debug(f"set attribute: {args}")
-    attr = __check_attr(args.attr)
-    mons = [__check_mon(m, cfg) for m in args.mon]
-    val = __check_val(attr, args.val, cfg)
+    attr = _check_attr(args.attr)
+    mons = [_check_mon(m, cfg) for m in args.mon]
+    val = _check_val(attr, args.val, cfg)
     new_vals = []
     for i, m in enumerate(mons):
         new_vals.append(set_attribute(m, attr, val, cfg.wait_internal_time))
@@ -224,22 +223,22 @@ def __set_attr(args, cfg: Config):
             sleep(cfg.wait_set_time)
     new_vals = [set_attribute(m, attr, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(mons, new_vals):
-        print(f"set {__feature_str(attr.value.com, args)} for {__monitor_str(mon, cfg)} to {__value_str(attr.value.com, new_val, cfg)}")
+        print(f"set {_feature_str(attr.value.com, args)} for {_monitor_str(mon, cfg)} to {_value_str(attr.value.com, new_val, cfg)}")
 
 
-def __tog_attr(args, cfg: Config):
+def _tog_attr(args, cfg: Config):
     _log.debug(f"toggle attribute: {args}")
-    attr = __check_attr(args.attr)
-    mons = [__check_mon(m, cfg) for m in args.mon]
-    val1 = __check_val(attr, args.val1, cfg)
-    val2 = __check_val(attr, args.val2, cfg)
+    attr = _check_attr(args.attr)
+    mons = [_check_mon(m, cfg) for m in args.mon]
+    val1 = _check_val(attr, args.val1, cfg)
+    val2 = _check_val(attr, args.val2, cfg)
     new_vals = []
     for i, m in enumerate(mons):
         new_vals.append(toggle_attribute(m, attr, val1, val2, cfg.wait_internal_time))
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     for mon, tog_val in zip(mons, new_vals):
-        print(f"Toggled {__feature_str(attr.value.com, args)} for {__monitor_str(mon, cfg)} from {__value_str(attr.value.com, tog_val.old, cfg)} to {__value_str(attr.value.com, tog_val.new, cfg)}")
+        print(f"Toggled {_feature_str(attr.value.com, args)} for {_monitor_str(mon, cfg)} from {_value_str(attr.value.com, tog_val.old, cfg)} to {_value_str(attr.value.com, tog_val.new, cfg)}")
 
 
 text = "Commands for manipulating and polling your monitors"
@@ -250,7 +249,7 @@ mon_subparsers = parser.add_subparsers(title="monitor commands", help=text, dest
 
 text = "List all available monitors"
 list_parser = mon_subparsers.add_parser("list", help=text, description=text)
-list_parser.set_defaults(func=__list_mons)
+list_parser.set_defaults(func=_list_mons)
 
 text = "Get the capabilities dictionary of a monitor"
 description = ("Get the capabilities dictionary of a monitor. By default, this command parses the standard "
@@ -258,27 +257,27 @@ description = ("Get the capabilities dictionary of a monitor. By default, this c
                "for known VCP codes and their defined options. If the --raw option is used, all other arguments will "
                "be ignored. Otherwise, if the --summary argument is used, all other arguments will be ignored.")
 caps_parser = mon_subparsers.add_parser("caps", help=text, description=description)
-caps_parser.set_defaults(func=__get_caps)
+caps_parser.set_defaults(func=_get_caps)
 caps_parser.add_argument("mon", type=str, help="the monitor to retrieve capabilities from")
 caps_parser.add_argument("-r", "--raw", action='store_true', help="return the original, unparsed capabilities string")
 caps_parser.add_argument("-s", "--summary", action='store_true', help="return a highly formatted and abridged summary of the capabilities")
 
 text = "return the value of a given attribute"
 get_parser = mon_subparsers.add_parser("get", help=text, description=text)
-get_parser.set_defaults(func=__get_attr)
+get_parser.set_defaults(func=_get_attr)
 get_parser.add_argument("attr", type=str, help="the attribute to return")
 get_parser.add_argument("mon", type=str, nargs="+", help="the monitor to control")
 
 text = "sets a given attribute to a given value"
 set_parser = mon_subparsers.add_parser("set", help=text, description=text)
-set_parser.set_defaults(func=__set_attr)
+set_parser.set_defaults(func=_set_attr)
 set_parser.add_argument("attr", type=str, help="the attribute to set")
 set_parser.add_argument("val", type=str, help="the value to set the attribute to")
 set_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
 
 text = "toggles a given attribute between two given values"
 tog_parser = mon_subparsers.add_parser("tog", help=text, description=text)
-tog_parser.set_defaults(func=__tog_attr)
+tog_parser.set_defaults(func=_tog_attr)
 tog_parser.add_argument("attr", type=str, help="the attribute to toggle")
 tog_parser.add_argument("val1", type=str, help="the first value to toggle between")
 tog_parser.add_argument("val2", type=str, help="the second value to toggle between")
