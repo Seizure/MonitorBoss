@@ -143,6 +143,7 @@ _VCP_COMMANDS = [
 ]
 
 
+# TODO: should this just take a VCPCode, now that we're doing it that way?
 def get_vcp_com(key: str | int) -> VCPCommand | None:
     if not isinstance(key, (int, str)):
         raise TypeError(f"key must be string or int. Got {type(key)}.")
