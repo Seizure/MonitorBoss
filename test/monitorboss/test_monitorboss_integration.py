@@ -1,6 +1,12 @@
+from textwrap import dedent
+
 import pytest
 import tomlkit
 
+import test.pyddc
+from pyddc import get_vcp_com
+from pyddc.vcp_codes import VCPCodes
+from test.monitorboss import TEST_TOML_CONTENTS
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
@@ -8,50 +14,85 @@ from monitorboss import config, cli, MonitorBossError, impl
 
 pytest_plugins = "pytester"
 
-INPUT_SOURCE = pyddc.get_vcp_com(96)
-CONTRAST = pyddc.get_vcp_com(18)
+
+def test_list(pytester, capsys):
+    expected = dedent("""\
+    monitor #0 (foo)
+    monitor #1 (bar, baz)
+    monitor #2
+    """)
+    conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
+    cli.run(f"--config {conf.as_posix()} list")
+    output = capsys.readouterr()
+    assert output.out == expected
+    assert output.err == ""
 
 
-class TestConfig:
-
-    # TODO: test reading/parsing of config
-
-    def test_auto_create_config(self, pytester):
-        confpath = pytester.path.joinpath("test_config.toml")
-        config.get_config(confpath.as_posix())
-        assert confpath.exists()
-        with open(confpath, "r", encoding="utf8") as file:
-            contents = file.read()
-        assert contents == tomlkit.dumps(config.default_toml())
-
-    def test_config_reset(self, pytester):
-        conf = pytester.makefile(".toml", test_toml="trash")
-
-        # sanity checking
-        with open(conf, "r", encoding="utf8") as file:
-            contents = file.read()
-        assert contents == "trash"
-
-        config.reset_config(conf.as_posix())
-        with open(conf, "r", encoding="utf8") as file:
-            contents = file.read()
-        assert contents == tomlkit.dumps(config.default_toml())
-
-    # TODO: should probably eventually test more of the config functions,
-    #   but we're currently not even using them and they might change, so not bothering yet
-
-# TODO: will need to change/add the CLI test functions when we support all codes, and command by int/name/alias
+def test_caps_raw(pytester, capsys):
+    expected = test.pyddc.CAPS_STR + "\n"
+    conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
+    cli.run(f"--config {conf.as_posix()} caps --raw 0")
+    output = capsys.readouterr()
+    assert output.out == expected
+    assert output.err == ""
 
 
-class TestCLIcheckers:
+# TODO: this is going to be annoying, do it properly later
+def test_caps_dict(pytester, capsys):
+    conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
+    cli.run(f"--config {conf.as_posix()} caps 0")
+    output = capsys.readouterr()
+    assert output.out # TODO: actually test something meaningful
+    assert output.err == ""
 
-    def test_check_attr_valid(self):
-        assert cli._cli__check_attr("src") == impl.Attribute.src
 
-    def test_check_attr_invalid(self):
-        with pytest.raises(MonitorBossError):
-            cli.__check_attr("foo")
+# TODO: this is going to be annoying, do it properly later
+def test_caps_summary(pytester, capsys):
+    conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
+    cli.run(f"--config {conf.as_posix()} caps --summary 0")
+    output = capsys.readouterr()
+    assert output.out  # TODO: actually test something meaningful
+    assert output.err == ""
 
+
+def test_get_attr(pytester, capsys):
+    com = get_vcp_com(VCPCodes.input_source)
+    conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
+    cfg = config.get_config(conf.as_posix())
+    expected = f"{cli._feature_str(com, cfg)} for {cli._monitor_str(1, cfg)} is {cli._value_str(com, 27, cfg)}\n"
+    cli.run(f"--config {conf.as_posix()} get src 1")
+    output = capsys.readouterr()
+    assert output.out  == expected
+    assert output.err == ""
+
+
+def test_set_attr(pytester, capsys):
+    com = get_vcp_com(VCPCodes.image_luminance)
+    conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
+    cfg = config.get_config(conf.as_posix())
+    expected = f"set {cli._feature_str(com, cfg)} for {cli._monitor_str(1, cfg)} to {cli._value_str(com, 75, cfg)}\n"
+    # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
+    #   there should be a way to have separate "Sessions" for each test, should figure out later
+    cli.run(f"--config {conf.as_posix()} set lum 75 bar")
+    output = capsys.readouterr()
+    assert output.out  == expected
+    assert output.err == ""
+
+
+def test_tog_attr(pytester, capsys):
+    com = get_vcp_com(VCPCodes.image_luminance)
+    conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
+    cfg = config.get_config(conf.as_posix())
+    expected = f"toggled {cli._feature_str(com, cfg)} for {cli._monitor_str(1, cfg)} from {cli._value_str(com, 75, cfg)} to {cli._value_str(com, 75, cfg)}\n"
+    # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
+    #   there should be a way to have separate "Sessions" for each test, should figure out later
+    cli.run(f"--config {conf.as_posix()} tog lum 75 75 bar")
+    output = capsys.readouterr()
+    assert output.out  == expected
+    assert output.err == ""
+
+
+# # TODO: will need to change/add the CLI test functions when we support all codes, and command by int/name/alias
 # class TestCLIGet:
 #     """
 #     CLI variances:
@@ -124,13 +165,13 @@ class TestCLIcheckers:
 #
 #
 #     def test_get_discreet_by_alias(self, capsys, pytester):
-#         conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
+#         conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
 #         run(f"--config {conf.as_posix()} get src foo")
 #         assert capsys.readouterr().out == "src for monitor \"foo\" is 27 (usbc)\n"
 #         assert capsys.readouterr().err == ""
 #
 #     def test_get_discreet_by_id(self, capsys, pytester):
-#         conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
+#         conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
 #         run(f"--config {conf.as_posix()} get src 1")
 #         assert capsys.readouterr().out == "src for monitor #1 is 27 (usbc, usb_c, usb-c)\n"
 #         assert capsys.readouterr().err == ""
@@ -141,7 +182,7 @@ class TestCLIcheckers:
 #     @pytest.mark.parametrize("match_alias", ["none", "single", "multi"])
 #     def test_get(self, feature_set: pyddc.VCPCommand, monitor_set: str, match_param: bool, match_alias: str, capsys,
 #                  pytester):
-#         conf = pytester.makefile(".toml", test_toml=tr.TEST_TOML_CONTENTS)
+#         conf = pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS)
 #
 #         def generate_toml() -> str:
 #             pass
