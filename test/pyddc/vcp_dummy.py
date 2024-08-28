@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import os
 from types import TracebackType
 from typing import List, Optional, Type
 
-os.environ["PYDDC_SKIP_DRIVER"] = "true"
 from pyddc import VCPCommand, VCPFeatureReturn, ABCVCP
+from test.pyddc import CAPS_STR
 
 supported_codes = {
     4: [],  # factory reset code (WO) TODO: should find a better WO command (with actual values)
@@ -14,9 +13,8 @@ supported_codes = {
     96: [27, 15, 17],  # input source code (RW/discreet); with params for USBC, dp1, and hdm1
     170: [1, 2, 4]  # image orientation (RO/discreet); with params for who knows what
 }
-caps_str = "(prot(monitor)type(LCD)model(DUMM13)cmds(04)vcp(10 12 60(1B 0F 11 ) AA(01 02 04 ) )mccs_ver(2.1))"
 
-current_values = {16: 75, 96: 27, 170: 2}  # lum is 75, input is USBC(27), image orientation is 2 (whatever that means)
+current_values = {16: 75, 18: 75, 96: 27, 170: 2}  # lum is 75, input is USBC(27), image orientation is 2 (whatever that means)
 unknown_max_values = {16: 80, 18: 100}
 
 
@@ -70,7 +68,7 @@ class DummyVCP(ABCVCP):
 
     def _get_vcp_capabilities_str(self, timeout: float) -> str:
         del timeout # unused
-        return caps_str
+        return CAPS_STR
 
     @staticmethod
     def get_vcps() -> List[DummyVCP]:

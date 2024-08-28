@@ -89,16 +89,16 @@ class WindowsVCP(VCP):
         feature_max = DWORD()
         try:
             if not dxva2.GetVCPFeatureAndVCPFeatureReply(
-                    HANDLE(self.handle),
-                    BYTE(code.value),
-                    None,
-                    ctypes.byref(feature_current),
-                    ctypes.byref(feature_max),
+                HANDLE(self.handle),
+                BYTE(code.value),
+                None,
+                ctypes.byref(feature_current),
+                ctypes.byref(feature_max),
             ):
                 raise VCPError(f"failed to get VCP feature: {ctypes.FormatError()}")
         except OSError as err:
             raise VCPError("failed to get VCP feature") from err
-        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply -> ({feature_current.value}, {feature_max.value})")
+        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply -> (code: {code.value}) | (feature current/max: {feature_current.value} / {feature_max.value})")
         return VCPFeatureReturn(feature_current.value, feature_max.value)
 
     def _get_vcp_capabilities_str(self, timeout: float) -> str:

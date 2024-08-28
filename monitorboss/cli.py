@@ -25,6 +25,7 @@ def _check_attr(attr: str) -> Attribute:
         ) from err
 
 
+# TODO: should we also check if the ID is valid?
 def _check_mon(mon: str, cfg: Config) -> int:
     _log.debug(f"check monitor: {mon!r}")
     mon = cfg.monitor_names.get(mon, mon)
@@ -160,6 +161,7 @@ def _get_caps(args, cfg: Config):
 
     if args.raw:
         print(caps_raw)
+        return
 
     caps_dict = parse_capabilities(caps_raw)
     for s in caps_dict:
@@ -238,7 +240,7 @@ def _tog_attr(args, cfg: Config):
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     for mon, tog_val in zip(mons, new_vals):
-        print(f"Toggled {_feature_str(attr.value.com, args)} for {_monitor_str(mon, cfg)} from {_value_str(attr.value.com, tog_val.old, cfg)} to {_value_str(attr.value.com, tog_val.new, cfg)}")
+        print(f"toggled {_feature_str(attr.value.com, args)} for {_monitor_str(mon, cfg)} from {_value_str(attr.value.com, tog_val.old, cfg)} to {_value_str(attr.value.com, tog_val.new, cfg)}")
 
 
 text = "Commands for manipulating and polling your monitors"
