@@ -20,7 +20,9 @@ class AttributeData:
     notes: str
 
 
-# TODO I'm not sure we need a short_desc var? Seems redundant to VCPCommand's "desc"
+# TODO: I'm not sure we need a short_desc var? Seems redundant to VCPCommand's "desc". This is also going to become
+#  very cumbersome as we add the other commands. Perhaps instead of a hardcoded, required set of attributes to match
+#  with every command, we depend on VCPCommands from PYDDC and just maintain a list of elaboration data?
 class Attribute(Enum):
     src = AttributeData("input source", get_vcp_com(VCPCodes.input_source),
                         "(currently active) input source",
@@ -51,7 +53,7 @@ def list_monitors() -> list[VCP]:
         raise MonitorBossError(f"Failed to list VCPs.") from err
 
 
-def __get_monitor(mon: int) -> VCP:
+def _get_monitor(mon: int) -> VCP:
     _log.debug(f"get monitor: {mon}")
     monitors = list_monitors()
     try:
@@ -62,7 +64,7 @@ def __get_monitor(mon: int) -> VCP:
 
 def get_vcp_capabilities(mon: int) -> str:
     _log.debug(f"get VCP capabilities for monitor #{mon}")
-    with __get_monitor(mon) as monitor:
+    with _get_monitor(mon) as monitor:
         try:
             return monitor.get_vcp_capabilities()
         except VCPError as err:
@@ -71,7 +73,7 @@ def get_vcp_capabilities(mon: int) -> str:
 
 def get_attribute(mon: int, attr: Attribute, timeout: float) -> (int, int):
     _log.debug(f"get attribute: {attr} (for monitor #{mon})")
-    with __get_monitor(mon) as monitor:
+    with _get_monitor(mon) as monitor:
         try:
             val = monitor.get_vcp_feature(attr.value.com, timeout)
             _log.debug(f"get_vcp_feature for {attr} on monitor #{mon} returned {val.value} (max {val.max})")
@@ -85,7 +87,7 @@ def get_attribute(mon: int, attr: Attribute, timeout: float) -> (int, int):
 
 def set_attribute(mon: int, attr: Attribute, val: int, timeout: float) -> int:
     _log.debug(f"set attribute: {attr} = {val} (for monitor #{mon})")
-    with __get_monitor(mon) as monitor:
+    with _get_monitor(mon) as monitor:
         try:
             monitor.set_vcp_feature(attr.value.com, val, timeout)
         except VCPError as err:

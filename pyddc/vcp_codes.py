@@ -75,7 +75,7 @@ class VCPCommand:
         return f"VCPCommand: {self.name} ({self.value})"
 
 
-__VCP_COMMANDS = [
+_VCP_COMMANDS = [
     VCPCommand(
         name="restore_factory_default",
         desc="restore factory default image",
@@ -146,7 +146,7 @@ __VCP_COMMANDS = [
 def get_vcp_com(key: str | int) -> VCPCommand | None:
     if not isinstance(key, (int, str)):
         raise TypeError(f"key must be string or int. Got {type(key)}.")
-    for com in __VCP_COMMANDS:
+    for com in _VCP_COMMANDS:
         if isinstance(key, str) and com.name == key:
             return com
         elif com.value == key:
