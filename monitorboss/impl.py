@@ -85,7 +85,6 @@ def get_attribute(mon: int, attr: Feature, timeout: float) -> (int, int):
         except VCPError as err:
             raise MonitorBossError(f"could not get {attr.value.short_desc} for monitor #{mon}.") from err
         except TypeError as err:
-            print(err)
             raise MonitorBossError(f"{attr} is not a readable feature.") from err
 
 

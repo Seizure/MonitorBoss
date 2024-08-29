@@ -41,6 +41,19 @@ class TestConfig:
     #   but we're currently not even using them and they might change, so not bothering yet
 
 
+class TestImpl:
+    def test_impl_get_monitor_valid(self):
+        assert impl._get_monitor(1)
+
+
+    def test_impl_get_monitor_invalid(self):
+        # TODO: is it weird that we allow negative indices, per pythonic behavior?
+        # with pytest.raises(MonitorBossError):
+        #     impl._get_monitor(-1)
+        with pytest.raises(MonitorBossError):
+            impl._get_monitor(3)
+
+
 # TODO: there is definitely a way to not have to reuse the same conf code every function, but I'll figure it out later
 class TestCLIcheckers:
 
