@@ -6,7 +6,7 @@ from time import sleep
 
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
-from monitorboss.impl import Attribute
+from monitorboss.impl import Feature
 from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
@@ -14,18 +14,17 @@ from pyddc.vcp_codes import VCPCodes, VCPCommand
 _log = getLogger(__name__)
 
 
-def _check_attr(attr: str) -> Attribute:
-    _log.debug(f"check attribute: {attr!r}")
+def _check_feature(feature: str | int) -> Feature:
+    _log.debug(f"check attribute: {feature!r}")
     try:
-        return Attribute[attr]
+        return Feature[feature]
     except KeyError as err:
         raise MonitorBossError(
-            f"{attr} is not a valid attribute.\n"
-            f"Valid attributes are: {', '.join(Attribute.__members__)}."
+            f"{feature} is not a valid attribute.\n"
+            f"Valid attributes are: {', '.join(Feature.__members__)}."
         ) from err
 
 
-# TODO: should we also check if the ID is valid?
 def _check_mon(mon: str, cfg: Config) -> int:
     _log.debug(f"check monitor: {mon!r}")
     mon = cfg.monitor_names.get(mon, mon)
@@ -38,10 +37,10 @@ def _check_mon(mon: str, cfg: Config) -> int:
         ) from err
 
 
-def _check_val(attr: Attribute, val: str, cfg: Config) -> int:
+def _check_val(attr: Feature, val: str, cfg: Config) -> int:
     _log.debug(f"check attribute value: attr {attr}, value {val}")
     match attr:
-        case Attribute.src:
+        case Feature.src:
             if val in cfg.input_source_names:
                 return cfg.input_source_names[val]
             elif val in attr.value.com.param_names:
@@ -58,7 +57,7 @@ def _check_val(attr: Attribute, val: str, cfg: Config) -> int:
                     "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
-        case Attribute.cnt:
+        case Feature.cnt:
             try:
                 return int(val)
             except ValueError as err:
@@ -67,7 +66,7 @@ def _check_val(attr: Attribute, val: str, cfg: Config) -> int:
                     "Valid contrast values are non-negative integers."
                 ) from err
 
-        case Attribute.lum:
+        case Feature.lum:
             try:
                 return int(val)
             except ValueError as err:
@@ -76,7 +75,7 @@ def _check_val(attr: Attribute, val: str, cfg: Config) -> int:
                     "Valid luminance values are non-negative integers"
                 ) from err
 
-        case Attribute.pwr:
+        case Feature.pwr:
             if val in attr.value.com.param_names:
                 return attr.value.com.param_names[val]
             try:
@@ -91,7 +90,7 @@ def _check_val(attr: Attribute, val: str, cfg: Config) -> int:
                     "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
-        case Attribute.clr:
+        case Feature.clr:
             if val in attr.value.com.param_names:
                 return attr.value.com.param_names[val]
             try:
@@ -200,7 +199,7 @@ def _get_caps(args, cfg: Config):
 
 def _get_attr(args, cfg: Config):
     _log.debug(f"get attribute: {args}")
-    attr = _check_attr(args.attr)
+    attr = _check_feature(args.attr)
     mons = [_check_mon(m, cfg) for m in args.mon]
     cur_vals = []
     max_vals = []
@@ -216,7 +215,7 @@ def _get_attr(args, cfg: Config):
 
 def _set_attr(args, cfg: Config):
     _log.debug(f"set attribute: {args}")
-    attr = _check_attr(args.attr)
+    attr = _check_feature(args.attr)
     mons = [_check_mon(m, cfg) for m in args.mon]
     val = _check_val(attr, args.val, cfg)
     new_vals = []
@@ -231,7 +230,7 @@ def _set_attr(args, cfg: Config):
 
 def _tog_attr(args, cfg: Config):
     _log.debug(f"toggle attribute: {args}")
-    attr = _check_attr(args.attr)
+    attr = _check_feature(args.attr)
     mons = [_check_mon(m, cfg) for m in args.mon]
     val1 = _check_val(attr, args.val1, cfg)
     val2 = _check_val(attr, args.val2, cfg)

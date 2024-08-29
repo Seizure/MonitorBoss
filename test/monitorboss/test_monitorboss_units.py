@@ -45,11 +45,11 @@ class TestConfig:
 class TestCLIcheckers:
 
     def test_check_attr_valid(self):
-        assert cli._check_attr("src") == impl.Attribute.src
+        assert cli._check_feature("src") == impl.Feature.src
 
     def test_check_attr_invalid(self):
         with pytest.raises(MonitorBossError):
-            cli._check_attr("foo")
+            cli._check_feature("foo")
 
     def test_check_mon_str_valid(self, pytester):
         conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())

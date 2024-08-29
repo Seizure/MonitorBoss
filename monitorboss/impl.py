@@ -13,9 +13,8 @@ _log = getLogger(__name__)
 
 
 @dataclass
-class AttributeData:
+class FeatureData:
     short_desc: str
-    com: VCPCommand
     description: str
     notes: str
 
@@ -23,25 +22,30 @@ class AttributeData:
 # TODO: I'm not sure we need a short_desc var? Seems redundant to VCPCommand's "desc". This is also going to become
 #  very cumbersome as we add the other commands. Perhaps instead of a hardcoded, required set of attributes to match
 #  with every command, we depend on VCPCommands from PYDDC and just maintain a list of elaboration data?
-class Attribute(Enum):
-    src = AttributeData("input source", get_vcp_com(VCPCodes.input_source),
-                        "(currently active) input source",
-                        "Must be a valid source ID, or alias as defined by the application built-ins or config file additions")
-    cnt = AttributeData("contrast", get_vcp_com(VCPCodes.image_contrast),
-                        "contrast",
-                        "Must be an integer, though valid values will be constrained between 0 - 100 on most monitors")
-    lum = AttributeData("luminance", get_vcp_com(VCPCodes.image_luminance),
-                        "luminance/brightness",
-                        "Must be an integer, though valid values will be constrained between 0 - 100 on most monitors")
-    pwr = AttributeData("power mode", get_vcp_com(VCPCodes.display_power_mode),
-                        "power mode/state",
-                        "Must be a valid power state, as defined by built-in aliases")
-    clr = AttributeData("color preset", get_vcp_com(VCPCodes.image_color_preset),
-                        "(currently active) color preset",
-                        "Must be a valid color temperature preset, as defined by built-in aliases")
 
-    def __str__(self):
-        return self.name
+Feature = {
+    get_vcp_com(VCPCodes.image_luminance):
+        FeatureData("luminance",
+                    "luminance/brightness",
+                    "Must be an integer, though valid values will be constrained between 0 - 100 on most monitors"),
+    get_vcp_com(VCPCodes.image_contrast):
+        FeatureData("contrast",
+                    "contrast",
+                    "Must be an integer, though valid values will be constrained between 0 - 100 on most monitors"),
+    get_vcp_com(VCPCodes.image_color_preset):
+        FeatureData("color preset",
+                    "(currently active) color preset",
+                    "Must be a valid color temperature preset, as defined by built-in aliases"),
+    get_vcp_com(VCPCodes.display_power_mode):
+        FeatureData("power mode",
+                    "power mode/state",
+                    "Must be a valid power state, as defined by built-in aliases"),
+    get_vcp_com(VCPCodes.input_source):
+        FeatureData("input source",
+                    "(currently active) input source",
+                    "Must be a valid source ID, or alias as defined by the "
+                    "application built-ins or config file additions")
+}
 
 
 def list_monitors() -> list[VCP]:
@@ -71,7 +75,7 @@ def get_vcp_capabilities(mon: int) -> str:
             raise MonitorBossError(f"Could not list information for monitor {mon}") from err
 
 
-def get_attribute(mon: int, attr: Attribute, timeout: float) -> (int, int):
+def get_attribute(mon: int, attr: Feature, timeout: float) -> (int, int):
     _log.debug(f"get attribute: {attr} (for monitor #{mon})")
     with _get_monitor(mon) as monitor:
         try:
@@ -85,7 +89,7 @@ def get_attribute(mon: int, attr: Attribute, timeout: float) -> (int, int):
             raise MonitorBossError(f"{attr} is not a readable feature.") from err
 
 
-def set_attribute(mon: int, attr: Attribute, val: int, timeout: float) -> int:
+def set_attribute(mon: int, attr: Feature, val: int, timeout: float) -> int:
     _log.debug(f"set attribute: {attr} = {val} (for monitor #{mon})")
     with _get_monitor(mon) as monitor:
         try:
@@ -106,7 +110,7 @@ class ToggledAttribute:
     new: int
 
 
-def toggle_attribute(mon: int, attr: Attribute, val1: int, val2: int, timeout: float) -> ToggledAttribute:
+def toggle_attribute(mon: int, attr: Feature, val1: int, val2: int, timeout: float) -> ToggledAttribute:
     _log.debug(f"toggle attribute: {attr} between {val1} and {val2} (for monitor #{mon})")
     cur_val = get_attribute(mon, attr, timeout).value
     new_val = val2 if cur_val == val1 else val1
@@ -120,10 +124,10 @@ def signal_monitor(mon: int):
     timeout = cfg.wait_internal_time
     ddc_wait = cfg.wait_set_time
     visible_wait = max(ddc_wait, 1.0)
-    lum = get_attribute(mon, Attribute.lum, timeout)
+    lum = get_attribute(mon, Feature.lum, timeout)
     sleep(ddc_wait)
-    set_attribute(mon, Attribute.lum, lum.max, timeout)
+    set_attribute(mon, Feature.lum, lum.max, timeout)
     sleep(visible_wait)
-    set_attribute(mon, Attribute.lum, 0, timeout)
+    set_attribute(mon, Feature.lum, 0, timeout)
     sleep(visible_wait)
-    set_attribute(mon, Attribute.lum, lum.value, timeout)
+    set_attribute(mon, Feature.lum, lum.value, timeout)

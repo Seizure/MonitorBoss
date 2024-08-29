@@ -1,10 +1,22 @@
 [monitor_names]
-0 = "main"
+# My monitor configuration
+2 = "right"
+0 = ["middle", "main"]
+1 = "left"
+
+[feature_aliases]
+16 = ['lum', 'luminance', 'brightness']
+18 = ['cnt', 'contrast']
+20 = ['clr', 'color', 'clrpreset']
+96 = ['src', 'source', 'input']
+214 = ['pwr', 'power', 'powermode']
 
 [input_names]
 27 = ["usbc", "usb_c", "usb-c"] # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
+17 = "hdmi"
+15 = "dp"
 
 [settings]
 wait_get = 0.05
-wait_set = 0.10
-wait_internal = 0.04 # 40ms is standard; configured value does not apply on Windows
+wait_set = 0.1
+wait_internal = 0.04

@@ -1,5 +1,5 @@
 from monitorboss.cli import get_help_texts
-from monitorboss.impl import Attribute
+from monitorboss.impl import Feature
 import os
 
 
@@ -17,7 +17,7 @@ def compile_usage_md_text() -> str:
 """ for sub in help_texts if sub != '')}
 ## Available attributes
 {nl.join(f"""* {attr.name} - {attr.value.description}
-  * {attr.value.notes}""" for attr in Attribute)}
+  * {attr.value.notes}""" for attr in Feature)}
 '''.replace('./scratch.py',
             'monitorboss.py')
     # TODO: convert replace to regex so it doesnt matter where it's called from
