@@ -21,7 +21,7 @@ def _check_attr(attr: str) -> Attribute:
     except KeyError as err:
         raise MonitorBossError(
             f"{attr} is not a valid attribute.\n"
-            "Valid attributes are: {', '.join(Attribute.__members__)}."
+            f"Valid attributes are: {', '.join(Attribute.__members__)}."
         ) from err
 
 
@@ -178,6 +178,7 @@ def _get_caps(args, cfg: Config):
     if args.summary:
         summary = _monitor_str(mon, cfg)
         summary += ":"
+
         if caps_dict["type"]:
             summary += f" {caps_dict['type']}"
         if caps_dict["type"] and caps_dict["model"]:
