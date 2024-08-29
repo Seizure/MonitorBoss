@@ -25,7 +25,6 @@ def _check_attr(attr: str) -> Attribute:
         ) from err
 
 
-# TODO: should we also check if the ID is valid?
 def _check_mon(mon: str, cfg: Config) -> int:
     _log.debug(f"check monitor: {mon!r}")
     mon = cfg.monitor_names.get(mon, mon)
