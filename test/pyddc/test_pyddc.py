@@ -1,6 +1,6 @@
 import pytest
 
-from pyddc import get_vcp_com, parse_capabilities
+from pyddc import get_vcp_com, parse_capabilities, vcp_codes
 from pyddc.vcp_codes import VCPCodes
 from .vcp_dummy import DummyVCP as VCP
 
@@ -110,7 +110,11 @@ class TestCapabilitiesFunctions:
             assert caps.__str__() == "{'prot': 'monitor', 'type': 'LCD', 'model': 'DUMM13', 'cmds': [<4>], 'vcp': [<16>, <18>, <96 (27, 15, 17)>, <170 (1, 2, 4)>], 'mccs_ver': '2.1'}"
 
 
-class TestGetVCPCom:
+class TestVCPCommands:
+
+    # The number of items in VCPCodes(IntEnum) and _VCP_COMMANDS should always match
+    def test_codes_commandlist_parity(self):
+        assert len(vcp_codes._VCP_COMMANDS) == len(VCPCodes)
 
     def test_get_with_bad_type(self):
         with pytest.raises(TypeError):
