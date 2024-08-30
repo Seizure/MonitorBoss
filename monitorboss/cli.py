@@ -14,8 +14,11 @@ from pyddc.vcp_codes import VCPCodes, VCPCommand
 _log = getLogger(__name__)
 
 
-def _check_feature(feature: str | int) -> Feature:
+#TODO: This does not allow for custom/OEM codes as is (for when we add such)
+def _check_feature(feature: str) -> Feature:
     _log.debug(f"check attribute: {feature!r}")
+    if feature.isdigit():
+        pass
     try:
         return Feature[feature]
     except KeyError as err:

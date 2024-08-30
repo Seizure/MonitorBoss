@@ -14,7 +14,7 @@ pytest_plugins = "pytester"
 
 class TestConfig:
 
-    # TODO: test reading/parsing of config
+    # TODO: test reading, parsing, and validating of config
 
     def test_auto_create_config(self, pytester):
         confpath = pytester.path.joinpath("test_config.toml")

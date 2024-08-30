@@ -24,23 +24,23 @@ class FeatureData:
 #  with every command, we depend on VCPCommands from PYDDC and just maintain a list of elaboration data?
 
 Feature = {
-    get_vcp_com(VCPCodes.image_luminance):
+    VCPCodes.image_luminance:
         FeatureData("luminance",
                     "luminance/brightness",
                     "Must be an integer, though valid values will be constrained between 0 - 100 on most monitors"),
-    get_vcp_com(VCPCodes.image_contrast):
+    VCPCodes.image_contrast:
         FeatureData("contrast",
                     "contrast",
                     "Must be an integer, though valid values will be constrained between 0 - 100 on most monitors"),
-    get_vcp_com(VCPCodes.image_color_preset):
+    VCPCodes.image_color_preset:
         FeatureData("color preset",
                     "(currently active) color preset",
                     "Must be a valid color temperature preset, as defined by built-in aliases"),
-    get_vcp_com(VCPCodes.display_power_mode):
+    VCPCodes.display_power_mode:
         FeatureData("power mode",
                     "power mode/state",
                     "Must be a valid power state, as defined by built-in aliases"),
-    get_vcp_com(VCPCodes.input_source):
+    VCPCodes.input_source:
         FeatureData("input source",
                     "(currently active) input source",
                     "Must be a valid source ID, or alias as defined by the "
