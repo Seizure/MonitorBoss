@@ -65,7 +65,7 @@ class ColorPresetNames(IntEnum):
 class VCPCommand:
     name: str
     desc: str
-    value: int
+    value: VCPCodes
     readable: bool
     writeable: bool
     discrete: bool

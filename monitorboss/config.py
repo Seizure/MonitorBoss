@@ -60,7 +60,7 @@ class Config:
     def validate(self):
         _log.debug(f"validate config")
         # TODO: should check if referenced codes actually refer to a valid feature
-        for alias, code in self.feature_aliases:
+        for alias, code in self.feature_aliases.items():
             if alias.isdigit():
                 raise MonitorBossError(f"Feature aliases can not be numeric: {code} aliased to {alias}")
         if self.wait_get_time < 0:
@@ -76,6 +76,13 @@ def default_toml() -> TOMLDocument:
     mon_names = table()
     mon_names.add("0", "main")
 
+    feature_aliases = table()
+    feature_aliases.add("16", ['lum', 'luminance', 'brightness'])
+    feature_aliases.add("18", ['lum', 'luminance', 'brightness'])
+    feature_aliases.add("20", ['lum', 'luminance', 'brightness'])
+    feature_aliases.add("96", ['lum', 'luminance', 'brightness'])
+    feature_aliases.add("214", ['lum', 'luminance', 'brightness'])
+
     input_names = table()
     input_names.add("27", ["usbc", "usb_c", "usb-c"])
     input_names["27"].comment('27 seems to be the "standard non-standard" ID for USB-C among manufacturers')
@@ -87,6 +94,7 @@ def default_toml() -> TOMLDocument:
 
     doc = document()
     doc.add(TomlCategories.monitors.value, mon_names)
+    doc.add(TomlCategories.features.value, feature_aliases)
     doc.add(TomlCategories.inputs.value, input_names)
     doc.add(TomlCategories.settings.value, settings)
 

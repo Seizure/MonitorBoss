@@ -26,9 +26,9 @@ def _check_feature(feature: str, cfg: Config) -> VCPCommand:
             # TODO: should probably add a command for printing out valid codes, and refer to it here
         )
     else:
-        for alias, code in cfg.feature_aliases:
+        for alias, code in cfg.feature_aliases.items():
             if alias == feature:
-                return get_vcp_com(code.value)
+                return get_vcp_com(code)
         raise MonitorBossError(
             f"{feature} is not a valid feature alias."
             # TODO: should probably add a command for printing out valid aliases, and refer to it here
@@ -48,6 +48,8 @@ def _check_mon(mon: str, cfg: Config) -> int:
 
 
 # TODO: this will need to be modified a lot when we allow for value aliases, and all the commands
+# TODO: maybe this can already be simplified now that we use VCPCodes? Do we need separate cases for the checking?
+#   Or just for the error text? Maybe even that can go in feature data?
 def _check_val(vcpcode: VCPCodes, val: str, cfg: Config) -> int:
     _log.debug(f"check attribute value: attr {get_vcp_com(vcpcode.value).name}, value {val}")
     match vcpcode:
@@ -68,7 +70,7 @@ def _check_val(vcpcode: VCPCodes, val: str, cfg: Config) -> int:
                     "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
-        case VCPCodes.input_source:
+        case VCPCodes.image_contrast:
             try:
                 return int(val)
             except ValueError as err:
@@ -231,27 +233,27 @@ def _set_attr(args, cfg: Config):
     val = _check_val(vcpcom.value, args.val, cfg)
     new_vals = []
     for i, m in enumerate(mons):
-        new_vals.append(set_attribute(m, attr, val, cfg.wait_internal_time))
+        new_vals.append(set_attribute(m, vcpcom, val, cfg.wait_internal_time))
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
-    new_vals = [set_attribute(m, attr, val, cfg.wait_internal_time) for m in mons]
+    new_vals = [set_attribute(m, vcpcom, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(mons, new_vals):
-        print(f"set {_feature_str(attr.value.com, args)} for {_monitor_str(mon, cfg)} to {_value_str(attr.value.com, new_val, cfg)}")
+        print(f"set {_feature_str(vcpcom, args)} for {_monitor_str(mon, cfg)} to {_value_str(vcpcom, new_val, cfg)}")
 
 
 def _tog_attr(args, cfg: Config):
     _log.debug(f"toggle attribute: {args}")
-    attr = _check_feature(args.attr)
+    vcpcom = _check_feature(args.attr, cfg)
     mons = [_check_mon(m, cfg) for m in args.mon]
-    val1 = _check_val(attr, args.val1, cfg)
-    val2 = _check_val(attr, args.val2, cfg)
+    val1 = _check_val(vcpcom.value, args.val1, cfg)
+    val2 = _check_val(vcpcom.value, args.val2, cfg)
     new_vals = []
     for i, m in enumerate(mons):
-        new_vals.append(toggle_attribute(m, attr, val1, val2, cfg.wait_internal_time))
+        new_vals.append(toggle_attribute(m, vcpcom, val1, val2, cfg.wait_internal_time))
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     for mon, tog_val in zip(mons, new_vals):
-        print(f"toggled {_feature_str(attr.value.com, args)} for {_monitor_str(mon, cfg)} from {_value_str(attr.value.com, tog_val.old, cfg)} to {_value_str(attr.value.com, tog_val.new, cfg)}")
+        print(f"toggled {_feature_str(vcpcom, args)} for {_monitor_str(mon, cfg)} from {_value_str(vcpcom, tog_val.old, cfg)} to {_value_str(vcpcom, tog_val.new, cfg)}")
 
 
 text = "Commands for manipulating and polling your monitors"
