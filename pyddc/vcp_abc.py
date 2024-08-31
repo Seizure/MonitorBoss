@@ -66,7 +66,7 @@ class VCP(abc.ABC):
         self._set_vcp_feature(code, value, timeout)
 
     @abc.abstractmethod
-    def _set_vcp_feature(self, code: VCPCommand, value: int):
+    def _set_vcp_feature(self, code: VCPCommand, value: int, timeout: float):
         pass
 
     def get_vcp_feature(self, code: VCPCommand, timeout: float = VCP_TIMEOUT) -> VCPFeatureReturn:
