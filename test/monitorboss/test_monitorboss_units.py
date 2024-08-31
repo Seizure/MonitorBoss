@@ -81,6 +81,7 @@ class TestCLIcheckers:
 
     # TODO: I skipped testing __check_val because there's a chance it will be changing radically as we
     #  implement all the other commands, and command aliases (see notes over impl.Attribute)
+    #  remember to write a separate test/case for each type of check, if we still have multiple!
 
 
 class TestCLIStrGens:
