@@ -75,30 +75,30 @@ def get_vcp_capabilities(mon: int) -> str:
             raise MonitorBossError(f"Could not list information for monitor {mon}") from err
 
 
-def get_attribute(mon: int, attr: Feature, timeout: float) -> (int, int):
-    _log.debug(f"get attribute: {attr} (for monitor #{mon})")
+def get_attribute(mon: int, feature: VCPCommand, timeout: float) -> (int, int):
+    _log.debug(f"get attribute: {feature.name} (for monitor #{mon})")
     with _get_monitor(mon) as monitor:
         try:
-            val = monitor.get_vcp_feature(attr.value.com, timeout)
-            _log.debug(f"get_vcp_feature for {attr} on monitor #{mon} returned {val.value} (max {val.max})")
+            val = monitor.get_vcp_feature(feature, timeout)
+            _log.debug(f"get_vcp_feature for {feature.name} on monitor #{mon} returned {val.value} (max {val.max})")
             return val
         except VCPError as err:
-            raise MonitorBossError(f"could not get {attr.value.short_desc} for monitor #{mon}.") from err
+            raise MonitorBossError(f"could not get {feature.name} for monitor #{mon}.") from err
         except TypeError as err:
-            raise MonitorBossError(f"{attr} is not a readable feature.") from err
+            raise MonitorBossError(f"{feature.name} is not a readable feature.") from err
 
 
-def set_attribute(mon: int, attr: Feature, val: int, timeout: float) -> int:
-    _log.debug(f"set attribute: {attr} = {val} (for monitor #{mon})")
+def set_attribute(mon: int, feature: VCPCommand, val: int, timeout: float) -> int:
+    _log.debug(f"set attribute: {feature.name} = {val} (for monitor #{mon})")
     with _get_monitor(mon) as monitor:
         try:
-            monitor.set_vcp_feature(attr.value.com, val, timeout)
+            monitor.set_vcp_feature(feature, val, timeout)
         except VCPError as err:
-            raise MonitorBossError(f"could not set {attr.value.short_desc} for monitor #{mon} to {val}.") from err
+            raise MonitorBossError(f"could not set {feature.name} for monitor #{mon} to {val}.") from err
         except TypeError as err:
-            raise MonitorBossError(f"{attr} is not a writeable feature.") from err
+            raise MonitorBossError(f"{feature.name} is not a writeable feature.") from err
         except ValueError as err:
-            raise MonitorBossError(f"Provided value ({val}) is above the max for this feature ({attr})") from err
+            raise MonitorBossError(f"Provided value ({val}) is above the max for this feature ({feature.name})") from err
         # TODO: make this return val from a getter, it didn't work when we first tried this
         return val
 
@@ -109,11 +109,11 @@ class ToggledAttribute:
     new: int
 
 
-def toggle_attribute(mon: int, attr: Feature, val1: int, val2: int, timeout: float) -> ToggledAttribute:
-    _log.debug(f"toggle attribute: {attr} between {val1} and {val2} (for monitor #{mon})")
-    cur_val = get_attribute(mon, attr, timeout).value
+def toggle_attribute(mon: int, feature: VCPCommand, val1: int, val2: int, timeout: float) -> ToggledAttribute:
+    _log.debug(f"toggle attribute: {feature.name} between {val1} and {val2} (for monitor #{mon})")
+    cur_val = get_attribute(mon, feature, timeout).value
     new_val = val2 if cur_val == val1 else val1
-    set_attribute(mon, attr, new_val, timeout)
+    set_attribute(mon, feature, new_val, timeout)
     return ToggledAttribute(cur_val, new_val)
 
 
@@ -123,10 +123,10 @@ def signal_monitor(mon: int):
     timeout = cfg.wait_internal_time
     ddc_wait = cfg.wait_set_time
     visible_wait = max(ddc_wait, 1.0)
-    lum = get_attribute(mon, Feature.lum, timeout)
+    lum = get_attribute(mon, get_vcp_com(VCPCodes.image_luminance), timeout)
     sleep(ddc_wait)
-    set_attribute(mon, Feature.lum, lum.max, timeout)
+    set_attribute(mon, get_vcp_com(VCPCodes.image_luminance), lum.max, timeout)
     sleep(visible_wait)
-    set_attribute(mon, Feature.lum, 0, timeout)
+    set_attribute(mon, get_vcp_com(VCPCodes.image_luminance), 0, timeout)
     sleep(visible_wait)
-    set_attribute(mon, Feature.lum, lum.value, timeout)
+    set_attribute(mon, get_vcp_com(VCPCodes.image_luminance), lum.value, timeout)

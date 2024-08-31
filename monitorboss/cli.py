@@ -6,7 +6,7 @@ from time import sleep
 
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
-from monitorboss.impl import Feature
+from monitorboss.impl import Feature, FeatureData
 from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
@@ -15,17 +15,24 @@ _log = getLogger(__name__)
 
 
 #TODO: This does not allow for custom/OEM codes as is (for when we add such)
-def _check_feature(feature: str) -> Feature:
+def _check_feature(feature: str, cfg: Config) -> VCPCommand:
     _log.debug(f"check attribute: {feature!r}")
     if feature.isdigit():
-        pass
-    try:
-        return Feature[feature]
-    except KeyError as err:
+        for code in VCPCodes:
+            if int(feature) == code.value:
+                return get_vcp_com(code.value)
         raise MonitorBossError(
-            f"{feature} is not a valid attribute.\n"
-            f"Valid attributes are: {', '.join(Feature.__members__)}."
-        ) from err
+            f"{feature} is not a valid feature code."
+            # TODO: should probably add a command for printing out valid codes, and refer to it here
+        )
+    else:
+        for alias, code in cfg.feature_aliases:
+            if alias == feature:
+                return get_vcp_com(code.value)
+        raise MonitorBossError(
+            f"{feature} is not a valid feature alias."
+            # TODO: should probably add a command for printing out valid aliases, and refer to it here
+        )
 
 
 def _check_mon(mon: str, cfg: Config) -> int:
@@ -40,27 +47,28 @@ def _check_mon(mon: str, cfg: Config) -> int:
         ) from err
 
 
-def _check_val(attr: Feature, val: str, cfg: Config) -> int:
-    _log.debug(f"check attribute value: attr {attr}, value {val}")
-    match attr:
-        case Feature.src:
+# TODO: this will need to be modified a lot when we allow for value aliases, and all the commands
+def _check_val(vcpcode: VCPCodes, val: str, cfg: Config) -> int:
+    _log.debug(f"check attribute value: attr {get_vcp_com(vcpcode.value).name}, value {val}")
+    match vcpcode:
+        case VCPCodes.input_source:
             if val in cfg.input_source_names:
                 return cfg.input_source_names[val]
-            elif val in attr.value.com.param_names:
-                return attr.value.com.param_names[val]
+            elif val in get_vcp_com(vcpcode.value).param_names:
+                return get_vcp_com(vcpcode.value).param_names[val]
             try:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
                     f"{val} is not a valid input source.\n"
                     f"""Valid input sources are: {
-                        ', '.join(list(attr.value.com.param_names.keys()) + list(cfg.input_source_names))
+                        ', '.join(list(get_vcp_com(vcpcode.value).param_names.keys()) + list(cfg.input_source_names))
                     }, or a code number (non-negative integer).\n"""
                     "NOTE: A particular monitor will probably support only some of these values. "
                     "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
-        case Feature.cnt:
+        case VCPCodes.input_source:
             try:
                 return int(val)
             except ValueError as err:
@@ -69,7 +77,7 @@ def _check_val(attr: Feature, val: str, cfg: Config) -> int:
                     "Valid contrast values are non-negative integers."
                 ) from err
 
-        case Feature.lum:
+        case VCPCodes.image_luminance:
             try:
                 return int(val)
             except ValueError as err:
@@ -78,31 +86,31 @@ def _check_val(attr: Feature, val: str, cfg: Config) -> int:
                     "Valid luminance values are non-negative integers"
                 ) from err
 
-        case Feature.pwr:
-            if val in attr.value.com.param_names:
-                return attr.value.com.param_names[val]
+        case VCPCodes.display_power_mode:
+            if val in get_vcp_com(vcpcode.value).param_names:
+                return get_vcp_com(vcpcode.value).param_names[val]
             try:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
                     f"{val} is not a valid power mode.\n"
                     f"""Valid power modes are: {
-                        ', '.join(list(attr.value.com.param_names.keys()))
+                        ', '.join(list(get_vcp_com(vcpcode.value).param_names.keys()))
                     }, or a code number (non-negative integer).\n"""
                     "NOTE: A particular monitor will probably support only some of these values. "
                     "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
-        case Feature.clr:
-            if val in attr.value.com.param_names:
-                return attr.value.com.param_names[val]
+        case VCPCodes.image_color_preset:
+            if val in get_vcp_com(vcpcode.value).param_names:
+                return get_vcp_com(vcpcode.value).param_names[val]
             try:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
                     f"{val} is not a valid color preset.\n"
                     f"""Valid color presets are: {
-                        ', '.join(list(attr.value.com.param_names.keys()))
+                        ', '.join(list(get_vcp_com(vcpcode.value).param_names.keys()))
                     }, or a code number (non-negative integer).\n"""
                     "NOTE: A particular monitor will probably support only some of these values. "
                     "Check your monitor's specs for the inputs it accepts."
@@ -202,25 +210,25 @@ def _get_caps(args, cfg: Config):
 
 def _get_attr(args, cfg: Config):
     _log.debug(f"get attribute: {args}")
-    attr = _check_feature(args.attr)
+    vcpcom = _check_feature(args.attr, cfg)
     mons = [_check_mon(m, cfg) for m in args.mon]
     cur_vals = []
     max_vals = []
     for i, m in enumerate(mons):
-        ret = get_attribute(m, attr, cfg.wait_internal_time)
+        ret = get_attribute(m, vcpcom, cfg.wait_internal_time)
         cur_vals.append(ret.value)
-        max_vals.append(None if attr.value.com.discrete else ret.max)
+        max_vals.append(None if vcpcom.discrete else ret.max)
         if i+1 < len(mons):
             sleep(cfg.wait_get_time)
     for mon, val, maximum in zip(mons, cur_vals, max_vals):
-        print(f"{_feature_str(attr.value.com, args)} for {_monitor_str(mon, cfg)} is {_value_str(attr.value.com, val, cfg)}" + (f" (Maximum: {_value_str(attr.value.com, maximum, cfg)})" if maximum is not None else ""))
+        print(f"{_feature_str(vcpcom, args)} for {_monitor_str(mon, cfg)} is {_value_str(vcpcom, val, cfg)}" + (f" (Maximum: {_value_str(vcpcom, maximum, cfg)})" if maximum is not None else ""))
 
 
 def _set_attr(args, cfg: Config):
     _log.debug(f"set attribute: {args}")
-    attr = _check_feature(args.attr)
+    vcpcom = _check_feature(args.attr, cfg)
     mons = [_check_mon(m, cfg) for m in args.mon]
-    val = _check_val(attr, args.val, cfg)
+    val = _check_val(vcpcom.value, args.val, cfg)
     new_vals = []
     for i, m in enumerate(mons):
         new_vals.append(set_attribute(m, attr, val, cfg.wait_internal_time))

@@ -59,6 +59,7 @@ class Config:
 
     def validate(self):
         _log.debug(f"validate config")
+        # TODO: should check if referenced codes actually refer to a valid feature
         for alias, code in self.feature_aliases:
             if alias.isdigit():
                 raise MonitorBossError(f"Feature aliases can not be numeric: {code} aliased to {alias}")

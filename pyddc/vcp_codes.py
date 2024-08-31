@@ -143,7 +143,8 @@ _VCP_COMMANDS = [
 ]
 
 
-# TODO: should this just take a VCPCode, now that we're doing it that way?
+# TODO: should this just take a VCPCode, now that we're doing it that way? There are some places this
+#   would make more awkward (see cli._check_feature) but maybe there's a clever way?
 def get_vcp_com(key: str | int) -> VCPCommand | None:
     if not isinstance(key, (int, str)):
         raise TypeError(f"key must be string or int. Got {type(key)}.")
