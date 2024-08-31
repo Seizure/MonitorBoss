@@ -91,7 +91,7 @@ class TestCLIStrGens:
     def test_monitor_str_onealias(self, test_cfg):
         assert cli._monitor_str(0, test_cfg) == "monitor #0 (foo)"
 
-    def test_monitor_str_multialias(selfself, test_cfg):
+    def test_monitor_str_multialias(self, test_cfg):
         assert cli._monitor_str(1, test_cfg) == "monitor #1 (bar, baz)"
 
     def test_value_str_com_noparam_noalias(self, test_cfg):
