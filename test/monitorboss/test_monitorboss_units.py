@@ -54,14 +54,12 @@ class TestImpl:
 # TODO: there is definitely a way to not have to reuse the same conf code every function, but I'll figure it out later
 class TestCLIcheckers:
 
-    def test_check_attr_valid(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
-        assert cli._check_feature("src", conf) == get_vcp_com(VCPCodes.input_source.value)
+    def test_check_attr_valid(self, test_cfg):
+        assert cli._check_feature("src", test_cfg) == get_vcp_com(VCPCodes.input_source.value)
 
-    def test_check_attr_invalid(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
+    def test_check_attr_invalid(self, test_cfg):
         with pytest.raises(MonitorBossError):
-            cli._check_feature("foo", conf)
+            cli._check_feature("foo", test_cfg)
 
     def test_check_mon_str_valid(self, test_cfg):
         assert cli._check_mon("baz", test_cfg) == 1
