@@ -3,13 +3,10 @@ import tomlkit
 
 from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes
-from test.monitorboss import TEST_TOML_CONTENTS
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
 from monitorboss import config, cli, MonitorBossError, impl
-
-pytest_plugins = "pytester"
 
 
 class TestConfig:
@@ -42,9 +39,9 @@ class TestConfig:
 
 
 class TestImpl:
+
     def test_impl_get_monitor_valid(self):
         assert impl._get_monitor(1)
-
 
     def test_impl_get_monitor_invalid(self):
         # TODO: is it weird that we allow negative indices, per pythonic behavior?
@@ -64,18 +61,15 @@ class TestCLIcheckers:
         with pytest.raises(MonitorBossError):
             cli._check_attr("foo")
 
-    def test_check_mon_str_valid(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
-        assert cli._check_mon("baz", conf) == 1
+    def test_check_mon_str_valid(self, test_cfg):
+        assert cli._check_mon("baz", test_cfg) == 1
 
-    def test_check_mon_str_invalid(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
+    def test_check_mon_str_invalid(self, test_cfg):
         with pytest.raises(MonitorBossError):
-            cli._check_mon("lol", conf)
+            cli._check_mon("lol", test_cfg)
 
-    def test_check_mon_id(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
-        assert cli._check_mon("8", conf) == 8
+    def test_check_mon_id(self, test_cfg):
+        assert cli._check_mon("8", test_cfg) == 8
 
     # TODO: I skipped testing __check_val because there's a chance it will be changing radically as we
     #  implement all the other commands, and command aliases (see notes over impl.Attribute)
@@ -83,52 +77,43 @@ class TestCLIcheckers:
 
 class TestCLIStrGens:
 
-    def test_feature_str_com(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
+    def test_feature_str_com(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
-        assert cli._feature_str(com, conf) == f"{com.desc} ({com.value})"
+        assert cli._feature_str(com, test_cfg) == f"{com.desc} ({com.value})"
 
-    def test_feature_str_int(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
+    def test_feature_str_int(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
-        assert cli._feature_str(VCPCodes.input_source, conf) == f"{com.desc} ({com.value})"
+        assert cli._feature_str(VCPCodes.input_source, test_cfg) == f"{com.desc} ({com.value})"
 
-    def test_monitor_str_noalias(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
-        assert cli._monitor_str(2, conf) == "monitor #2"
+    def test_monitor_str_noalias(self, test_cfg):
+        assert cli._monitor_str(2, test_cfg) == "monitor #2"
 
-    def test_monitor_str_onealias(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
-        assert cli._monitor_str(0, conf) == "monitor #0 (foo)"
+    def test_monitor_str_onealias(self, test_cfg):
+        assert cli._monitor_str(0, test_cfg) == "monitor #0 (foo)"
 
-    def test_monitor_str_multialias(selfself, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
-        assert cli._monitor_str(1, conf) == "monitor #1 (bar, baz)"
+    def test_monitor_str_multialias(selfself, test_cfg):
+        assert cli._monitor_str(1, test_cfg) == "monitor #1 (bar, baz)"
 
-    def test_value_str_com_noparam_noalias(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
+    def test_value_str_com_noparam_noalias(self, test_cfg):
         com = get_vcp_com(VCPCodes.image_luminance)
-        assert cli._value_str(com, 80, conf) == f"80"
+        assert cli._value_str(com, 80, test_cfg) == f"80"
 
-    def test_value_str_int_yesparam_noalias(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
+    def test_value_str_int_yesparam_noalias(self, test_cfg):
         com = get_vcp_com(VCPCodes.display_power_mode)
-        assert cli._value_str(com.value, 1, conf) == "1 (on)"
+        assert cli._value_str(com.value, 1, test_cfg) == "1 (on)"
 
-    def test_value_str_int_yesparam_onealias(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
+    def test_value_str_int_yesparam_onealias(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
-        assert cli._value_str(com, 17, conf) == "17 (hdmi1 | hdmi)"
+        assert cli._value_str(com, 17, test_cfg) == "17 (hdmi1 | hdmi)"
 
-    def test_value_int_com_yesparam_multialias(self, pytester):
-        conf = config.get_config(pytester.makefile(".toml", test_toml=TEST_TOML_CONTENTS).as_posix())
+    def test_value_int_com_yesparam_multialias(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
-        assert cli._value_str(com.value, 17, conf) == "17 (hdmi1 | hdmi)"
+        assert cli._value_str(com.value, 17, test_cfg) == "17 (hdmi1 | hdmi)"
 
-    def test_value_str_com_noparam_onealias(self, pytester):
+    def test_value_str_com_noparam_onealias(self, test_cfg):
         # TODO: this will become relevant when more alias features are added
         pass
 
-    def test_value_str_com_noparam_multialias(self, pytester):
+    def test_value_str_com_noparam_multialias(self, test_cfg):
         # TODO: this will become relevant when more alias features are added
         pass
