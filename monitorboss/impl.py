@@ -72,8 +72,8 @@ def get_vcp_capabilities(mon: int) -> str:
             raise MonitorBossError(f"Could not list information for monitor {mon}") from err
 
 
-def get_attribute(mon: int, feature: VCPCommand, timeout: float) -> (int, int):
-    _log.debug(f"get attribute: {feature.name} (for monitor #{mon})")
+def get_feature(mon: int, feature: VCPCommand, timeout: float) -> (int, int):
+    _log.debug(f"get feature: {feature.name} (for monitor #{mon})")
     with _get_monitor(mon) as monitor:
         try:
             val = monitor.get_vcp_feature(feature, timeout)
@@ -85,8 +85,8 @@ def get_attribute(mon: int, feature: VCPCommand, timeout: float) -> (int, int):
             raise MonitorBossError(f"{feature.name} is not a readable feature.") from err
 
 
-def set_attribute(mon: int, feature: VCPCommand, val: int, timeout: float) -> int:
-    _log.debug(f"set attribute: {feature.name} = {val} (for monitor #{mon})")
+def set_feature(mon: int, feature: VCPCommand, val: int, timeout: float) -> int:
+    _log.debug(f"set feature: {feature.name} = {val} (for monitor #{mon})")
     with _get_monitor(mon) as monitor:
         try:
             monitor.set_vcp_feature(feature, val, timeout)
@@ -101,17 +101,17 @@ def set_attribute(mon: int, feature: VCPCommand, val: int, timeout: float) -> in
 
 
 @dataclass
-class ToggledAttribute:
+class ToggledFeature:
     old: int
     new: int
 
 
-def toggle_attribute(mon: int, feature: VCPCommand, val1: int, val2: int, timeout: float) -> ToggledAttribute:
-    _log.debug(f"toggle attribute: {feature.name} between {val1} and {val2} (for monitor #{mon})")
-    cur_val = get_attribute(mon, feature, timeout).value
+def toggle_feature(mon: int, feature: VCPCommand, val1: int, val2: int, timeout: float) -> ToggledFeature:
+    _log.debug(f"toggle feature: {feature.name} between {val1} and {val2} (for monitor #{mon})")
+    cur_val = get_feature(mon, feature, timeout).value
     new_val = val2 if cur_val == val1 else val1
-    set_attribute(mon, feature, new_val, timeout)
-    return ToggledAttribute(cur_val, new_val)
+    set_feature(mon, feature, new_val, timeout)
+    return ToggledFeature(cur_val, new_val)
 
 
 def signal_monitor(mon: int):
@@ -120,10 +120,10 @@ def signal_monitor(mon: int):
     timeout = cfg.wait_internal_time
     ddc_wait = cfg.wait_set_time
     visible_wait = max(ddc_wait, 1.0)
-    lum = get_attribute(mon, get_vcp_com(VCPCodes.image_luminance), timeout)
+    lum = get_feature(mon, get_vcp_com(VCPCodes.image_luminance), timeout)
     sleep(ddc_wait)
-    set_attribute(mon, get_vcp_com(VCPCodes.image_luminance), lum.max, timeout)
+    set_feature(mon, get_vcp_com(VCPCodes.image_luminance), lum.max, timeout)
     sleep(visible_wait)
-    set_attribute(mon, get_vcp_com(VCPCodes.image_luminance), 0, timeout)
+    set_feature(mon, get_vcp_com(VCPCodes.image_luminance), 0, timeout)
     sleep(visible_wait)
-    set_attribute(mon, get_vcp_com(VCPCodes.image_luminance), lum.value, timeout)
+    set_feature(mon, get_vcp_com(VCPCodes.image_luminance), lum.value, timeout)

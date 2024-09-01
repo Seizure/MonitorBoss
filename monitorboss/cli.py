@@ -7,7 +7,7 @@ from time import sleep
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
 from monitorboss.impl import Feature, FeatureData
-from monitorboss.impl import list_monitors, get_attribute, set_attribute, toggle_attribute, get_vcp_capabilities
+from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -16,7 +16,7 @@ _log = getLogger(__name__)
 
 # TODO: This does not allow for custom/OEM codes as is (for when we add such)
 def _check_feature(feature: str, cfg: Config) -> VCPCommand:
-    _log.debug(f"check attribute: {feature!r}")
+    _log.debug(f"check feature: {feature!r}")
     if feature.isdigit():
         for code in VCPCodes:
             if int(feature) == code.value:
@@ -51,7 +51,7 @@ def _check_mon(mon: str, cfg: Config) -> int:
 
 # TODO: As we allow for a larger (all) set of commands, this will become unwieldy. How can we simplify/scale?
 def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
-    _log.debug(f"check attribute value: attr {com.name}, value {val}")
+    _log.debug(f"check feature value: ftr {com.name}, value {val}")
     match com.value:
         case VCPCodes.input_source:
             if val in cfg.input_source_names:
@@ -204,14 +204,14 @@ def _get_caps(args, cfg: Config):
     pprinter.pprint(caps_dict)
 
 
-def _get_attr(args, cfg: Config):
-    _log.debug(f"get attribute: {args}")
-    vcpcom = _check_feature(args.attr, cfg)
+def _get_feature(args, cfg: Config):
+    _log.debug(f"get feature: {args}")
+    vcpcom = _check_feature(args.feature, cfg)
     mons = [_check_mon(m, cfg) for m in args.mon]
     cur_vals = []
     max_vals = []
     for i, m in enumerate(mons):
-        ret = get_attribute(m, vcpcom, cfg.wait_internal_time)
+        ret = get_feature(m, vcpcom, cfg.wait_internal_time)
         cur_vals.append(ret.value)
         max_vals.append(None if vcpcom.discrete else ret.max)
         if i+1 < len(mons):
@@ -220,30 +220,30 @@ def _get_attr(args, cfg: Config):
         print(f"{_feature_str(vcpcom, args)} for {_monitor_str(mon, cfg)} is {_value_str(vcpcom, val, cfg)}" + (f" (Maximum: {_value_str(vcpcom, maximum, cfg)})" if maximum is not None else ""))
 
 
-def _set_attr(args, cfg: Config):
-    _log.debug(f"set attribute: {args}")
-    vcpcom = _check_feature(args.attr, cfg)
+def _set_feature(args, cfg: Config):
+    _log.debug(f"set feature: {args}")
+    vcpcom = _check_feature(args.feature, cfg)
     mons = [_check_mon(m, cfg) for m in args.mon]
     val = _check_val(vcpcom, args.val, cfg)
     new_vals = []
     for i, m in enumerate(mons):
-        new_vals.append(set_attribute(m, vcpcom, val, cfg.wait_internal_time))
+        new_vals.append(set_feature(m, vcpcom, val, cfg.wait_internal_time))
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
-    new_vals = [set_attribute(m, vcpcom, val, cfg.wait_internal_time) for m in mons]
+    new_vals = [set_feature(m, vcpcom, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(mons, new_vals):
         print(f"set {_feature_str(vcpcom, args)} for {_monitor_str(mon, cfg)} to {_value_str(vcpcom, new_val, cfg)}")
 
 
-def _tog_attr(args, cfg: Config):
-    _log.debug(f"toggle attribute: {args}")
-    vcpcom = _check_feature(args.attr, cfg)
+def _tog_feature(args, cfg: Config):
+    _log.debug(f"toggle feature: {args}")
+    vcpcom = _check_feature(args.feature, cfg)
     mons = [_check_mon(m, cfg) for m in args.mon]
     val1 = _check_val(vcpcom, args.val1, cfg)
     val2 = _check_val(vcpcom, args.val2, cfg)
     new_vals = []
     for i, m in enumerate(mons):
-        new_vals.append(toggle_attribute(m, vcpcom, val1, val2, cfg.wait_internal_time))
+        new_vals.append(toggle_feature(m, vcpcom, val1, val2, cfg.wait_internal_time))
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     for mon, tog_val in zip(mons, new_vals):
@@ -271,23 +271,23 @@ caps_parser.add_argument("mon", type=str, help="the monitor to retrieve capabili
 caps_parser.add_argument("-r", "--raw", action='store_true', help="return the original, unparsed capabilities string")
 caps_parser.add_argument("-s", "--summary", action='store_true', help="return a highly formatted and abridged summary of the capabilities")
 
-text = "return the value of a given attribute"
+text = "return the value of a given feature"
 get_parser = mon_subparsers.add_parser("get", help=text, description=text)
-get_parser.set_defaults(func=_get_attr)
-get_parser.add_argument("attr", type=str, help="the attribute to return")
+get_parser.set_defaults(func=_get_feature)
+get_parser.add_argument("feature", type=str, help="the feature to return")
 get_parser.add_argument("mon", type=str, nargs="+", help="the monitor to control")
 
-text = "sets a given attribute to a given value"
+text = "sets a given feature to a given value"
 set_parser = mon_subparsers.add_parser("set", help=text, description=text)
-set_parser.set_defaults(func=_set_attr)
-set_parser.add_argument("attr", type=str, help="the attribute to set")
-set_parser.add_argument("val", type=str, help="the value to set the attribute to")
+set_parser.set_defaults(func=_set_feature)
+set_parser.add_argument("feature", type=str, help="the feature to set")
+set_parser.add_argument("val", type=str, help="the value to set the feature to")
 set_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
 
-text = "toggles a given attribute between two given values"
+text = "toggles a given feature between two given values"
 tog_parser = mon_subparsers.add_parser("tog", help=text, description=text)
-tog_parser.set_defaults(func=_tog_attr)
-tog_parser.add_argument("attr", type=str, help="the attribute to toggle")
+tog_parser.set_defaults(func=_tog_feature)
+tog_parser.add_argument("feature", type=str, help="the feature to toggle")
 tog_parser.add_argument("val1", type=str, help="the first value to toggle between")
 tog_parser.add_argument("val2", type=str, help="the second value to toggle between")
 tog_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
