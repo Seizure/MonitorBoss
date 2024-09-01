@@ -56,15 +56,15 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
         case VCPCodes.input_source:
             if val in cfg.input_source_names:
                 return cfg.input_source_names[val]
-            elif val in get_vcp_com(com.value).param_names:
-                return get_vcp_com(com.value).param_names[val]
+            elif val in com.param_names:
+                return com.param_names[val]
             try:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
                     f"{val} is not a valid input source.\n"
                     f"""Valid input sources are: {
-                        ', '.join(list(get_vcp_com(com.value).param_names.keys()) + list(cfg.input_source_names))
+                        ', '.join(list(com.param_names.keys()) + list(cfg.input_source_names))
                     }, or a code number (non-negative integer).\n"""
                     "NOTE: A particular monitor will probably support only some of these values. "
                     "Check your monitor's specs for the inputs it accepts."
@@ -89,30 +89,30 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
                 ) from err
 
         case VCPCodes.display_power_mode:
-            if val in get_vcp_com(com.value).param_names:
-                return get_vcp_com(com.value).param_names[val]
+            if val in com.param_names:
+                return com.param_names[val]
             try:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
                     f"{val} is not a valid power mode.\n"
                     f"""Valid power modes are: {
-                        ', '.join(list(get_vcp_com(com.value).param_names.keys()))
+                        ', '.join(list(com.param_names.keys()))
                     }, or a code number (non-negative integer).\n"""
                     "NOTE: A particular monitor will probably support only some of these values. "
                     "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
         case VCPCodes.image_color_preset:
-            if val in get_vcp_com(com.value).param_names:
-                return get_vcp_com(com.value).param_names[val]
+            if val in com.param_names:
+                return com.param_names[val]
             try:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
                     f"{val} is not a valid color preset.\n"
                     f"""Valid color presets are: {
-                        ', '.join(list(get_vcp_com(com.value).param_names.keys()))
+                        ', '.join(list(com.param_names.keys()))
                     }, or a code number (non-negative integer).\n"""
                     "NOTE: A particular monitor will probably support only some of these values. "
                     "Check your monitor's specs for the inputs it accepts."
@@ -136,7 +136,7 @@ def _monitor_str(mon: int, cfg: Config) -> str:
     return monstr.strip()
 
 
-# TODO: this will need to radically change when we allow aliases for arbitrary/all features
+# TODO: this will need to change when we allow aliases for arbitrary/all features
 def _value_str(com: VCPCommand, value: int, cfg: Config) -> str:
     valstr = f"{value}"
     param = ""
