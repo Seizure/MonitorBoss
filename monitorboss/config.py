@@ -7,6 +7,7 @@ from tomlkit import parse, dump, comment, document, table, TOMLDocument
 from tomlkit.items import Array, String, Trivia
 
 from monitorboss import MonitorBossError
+from pyddc import get_vcp_com
 
 _log = getLogger(__name__)
 
@@ -59,10 +60,11 @@ class Config:
 
     def validate(self):
         _log.debug(f"validate config")
-        # TODO: should check if referenced codes actually refer to a valid feature
         for alias, code in self.feature_aliases.items():
             if alias.isdigit():
-                raise MonitorBossError(f"Feature aliases can not be numeric: {code} aliased to {alias}")
+                raise MonitorBossError(f"Feature aliases can not be numeric: {alias}")
+            if get_vcp_com(code) is None:
+                raise MonitorBossError(f"Feature code {code} does not correspond to a valid command, can not be aliased")
         if self.wait_get_time < 0:
             raise MonitorBossError(f"invalid wait get time: {self.wait_get_time}")
         if self.wait_set_time < 0:
