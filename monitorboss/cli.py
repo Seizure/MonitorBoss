@@ -64,6 +64,7 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
             # TODO: This will need to be generalized when we allow for arbitrary value aliases
             if val in cfg.input_source_names:
                 return cfg.input_source_names[val]
+
     # If we got here, an invalid value was provided
     error_text = f"{val} is not a valid value for feature \"{com.name}\".\nValid values are:\n"
     if com.param_names:
@@ -73,9 +74,8 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
         error_text += f"\t- [CONFIG ALIASES]: {', '.join(list(cfg.input_source_names))}\n"
     error_text += """\t- a code number (non-negative integer).\n
     NOTE: A particular monitor may only support some of these values. Check your monitor's specs for the inputs it accepts."""
-    raise MonitorBossError(
-        error_text
-    )
+
+    raise MonitorBossError(error_text)
 
 
 # TODO: originally included cfg in expectation of including feature aliases, but now I'm not sure we should?
