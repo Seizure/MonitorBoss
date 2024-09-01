@@ -14,7 +14,7 @@ from pyddc.vcp_codes import VCPCodes, VCPCommand
 _log = getLogger(__name__)
 
 
-#TODO: This does not allow for custom/OEM codes as is (for when we add such)
+# TODO: This does not allow for custom/OEM codes as is (for when we add such)
 def _check_feature(feature: str, cfg: Config) -> VCPCommand:
     _log.debug(f"check attribute: {feature!r}")
     if feature.isdigit():
@@ -29,6 +29,10 @@ def _check_feature(feature: str, cfg: Config) -> VCPCommand:
         for alias, code in cfg.feature_aliases.items():
             if alias == feature:
                 return get_vcp_com(code)
+        for code in VCPCodes:
+            com = get_vcp_com(code.value)
+            if com.name == feature:
+                return com
         raise MonitorBossError(
             f"{feature} is not a valid feature alias."
             # TODO: should probably add a command for printing out valid aliases, and refer to it here
@@ -47,9 +51,7 @@ def _check_mon(mon: str, cfg: Config) -> int:
         ) from err
 
 
-# TODO: this will need to be modified a lot when we allow for value aliases, and all the commands
-# TODO: maybe this can already be simplified now that we use VCPCodes? Do we need separate cases for the checking?
-#   Or just for the error text? Maybe even that can go in feature data?
+# TODO: As we allow for a larger (all) set of commands, this will become unwieldy. How can we simplify/scale?
 def _check_val(vcpcode: VCPCodes, val: str, cfg: Config) -> int:
     _log.debug(f"check attribute value: attr {get_vcp_com(vcpcode.value).name}, value {val}")
     match vcpcode:
@@ -120,10 +122,8 @@ def _check_val(vcpcode: VCPCodes, val: str, cfg: Config) -> int:
 
 
 # Config is not currently used, but it will be when we allow feature aliases, so just including it
-def _feature_str(com: VCPCommand | int, cfg: Config) -> str:
-    if isinstance(com, int):
-        com = get_vcp_com(com) if get_vcp_com(com) is not None else com
-    return f"{com.desc} ({com.value})"
+def _feature_str(com: VCPCommand, cfg: Config) -> str:
+    return f"{com.name} ({com.value})"
 
 
 def _monitor_str(mon: int, cfg: Config) -> str:
@@ -139,14 +139,10 @@ def _monitor_str(mon: int, cfg: Config) -> str:
 
 
 # TODO: this will need to radically change when we allow aliases for arbitrary/all features
-def _value_str(com: VCPCommand | int, value: int, cfg: Config) -> str:
+def _value_str(com: VCPCommand, value: int, cfg: Config) -> str:
     valstr = f"{value}"
     param = ""
     aliases = ""
-    if isinstance(com, int):
-        com = get_vcp_com(com) if get_vcp_com(com) is not None else com
-    if not isinstance(com, VCPCommand):
-        return str(com)
     for v, k in com.param_names.items():
         if value == k:
             param = v
@@ -182,7 +178,7 @@ def _get_caps(args, cfg: Config):
                 cap = caps_dict[s][i]
                 com = get_vcp_com(int(cap.cap))
                 if com is not None:
-                    cap.cap = _feature_str(int(cap.cap), cfg)
+                    cap.cap = _feature_str(com, cfg)
                     if cap.values is not None:
                         for x, p in enumerate(cap.values):
                             cap.values[x] = _value_str(com, p, cfg)
