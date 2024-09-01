@@ -23,7 +23,6 @@ def _check_feature(feature: str, cfg: Config) -> VCPCommand:
                 return get_vcp_com(code.value)
         raise MonitorBossError(
             f"{feature} is not a valid feature code."
-            # TODO: should probably add a command for printing out valid codes, and refer to it here
         )
     else:
         for alias, code in cfg.feature_aliases.items():
@@ -35,7 +34,6 @@ def _check_feature(feature: str, cfg: Config) -> VCPCommand:
                 return com
         raise MonitorBossError(
             f"{feature} is not a valid feature alias."
-            # TODO: should probably add a command for printing out valid aliases, and refer to it here
         )
 
 

@@ -19,10 +19,7 @@ class FeatureData:
     notes: str
 
 
-# TODO: I'm not sure we need a short_desc var? Seems redundant to VCPCommand's "desc". This is also going to become
-#  very cumbersome as we add the other commands. Perhaps instead of a hardcoded, required set of attributes to match
-#  with every command, we depend on VCPCommands from PYDDC and just maintain a list of elaboration data?
-
+# TODO: I'm not sure we need a short_desc var? Seems redundant to VCPCommand's "desc".
 Feature = {
     VCPCodes.image_luminance:
         FeatureData("luminance",
