@@ -51,15 +51,24 @@ class TestImpl:
             impl._get_monitor(3)
 
 
-# TODO: there is definitely a way to not have to reuse the same conf code every function, but I'll figure it out later
 class TestCLIcheckers:
 
-    def test_check_attr_valid(self, test_cfg):
+    def test_check_attr_alias_valid(self, test_cfg):
         assert cli._check_feature("src", test_cfg) == get_vcp_com(VCPCodes.input_source.value)
 
-    def test_check_attr_invalid(self, test_cfg):
+    def test_check_attr_name_valid(self, test_cfg):
+        assert cli._check_feature("input_source", test_cfg) == get_vcp_com(VCPCodes.input_source.value)
+
+    def test_check_attr_int_valid(self, test_cfg):
+        assert cli._check_feature(f"{VCPCodes.input_source.value}", test_cfg) == get_vcp_com(VCPCodes.input_source.value)
+
+    def test_check_attr_namealias_invalid(self, test_cfg):
         with pytest.raises(MonitorBossError):
             cli._check_feature("foo", test_cfg)
+
+    def test_check_attr_code_invalid(self, test_cfg):
+        with pytest.raises(MonitorBossError):
+            cli._check_feature("1568", test_cfg)
 
     def test_check_mon_str_valid(self, test_cfg):
         assert cli._check_mon("baz", test_cfg) == 1
@@ -68,23 +77,23 @@ class TestCLIcheckers:
         with pytest.raises(MonitorBossError):
             cli._check_mon("lol", test_cfg)
 
+    # No need to test for invalid IDs here, as _check_mon has no concept of such.
+    # That is handled by impl._get_monitor
     def test_check_mon_id(self, test_cfg):
         assert cli._check_mon("8", test_cfg) == 8
 
-    # TODO: I skipped testing __check_val because there's a chance it will be changing radically as we
-    #  implement all the other commands, and command aliases (see notes over impl.Attribute)
-    #  remember to write a separate test/case for each type of check, if we still have multiple!
+    # TODO: I skipped testing _check_val because because it needs to radically change for scaling to more commands
 
 
 class TestCLIStrGens:
 
     def test_feature_str_com(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
-        assert cli._feature_str(com, test_cfg) == f"{com.desc} ({com.value})"
+        assert cli._feature_str(com, test_cfg) == f"{com.name} ({com.value})"
 
     def test_feature_str_int(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
-        assert cli._feature_str(VCPCodes.input_source, test_cfg) == f"{com.desc} ({com.value})"
+        assert cli._feature_str(VCPCodes.input_source, test_cfg) == f"{com.name} ({com.value})"
 
     def test_monitor_str_noalias(self, test_cfg):
         assert cli._monitor_str(2, test_cfg) == "monitor #2"
@@ -95,26 +104,22 @@ class TestCLIStrGens:
     def test_monitor_str_multialias(self, test_cfg):
         assert cli._monitor_str(1, test_cfg) == "monitor #1 (bar, baz)"
 
-    def test_value_str_com_noparam_noalias(self, test_cfg):
+    def test_value_noparam_noalias(self, test_cfg):
         com = get_vcp_com(VCPCodes.image_luminance)
         assert cli._value_str(com, 80, test_cfg) == f"80"
 
-    def test_value_str_int_yesparam_noalias(self, test_cfg):
+    def test_value_yesparam_noalias(self, test_cfg):
         com = get_vcp_com(VCPCodes.display_power_mode)
-        assert cli._value_str(com.value, 1, test_cfg) == "1 (on)"
+        assert cli._value_str(com, 1, test_cfg) == "1 (on)"
 
     def test_value_str_int_yesparam_onealias(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
         assert cli._value_str(com, 17, test_cfg) == "17 (hdmi1 | hdmi)"
 
-    def test_value_int_com_yesparam_multialias(self, test_cfg):
-        com = get_vcp_com(VCPCodes.input_source)
-        assert cli._value_str(com.value, 17, test_cfg) == "17 (hdmi1 | hdmi)"
-
     def test_value_str_com_noparam_onealias(self, test_cfg):
-        # TODO: this will become relevant when more alias features are added
+        # TODO: this will become relevant when we allow for aliases on all coms
         pass
 
     def test_value_str_com_noparam_multialias(self, test_cfg):
-        # TODO: this will become relevant when more alias features are added
+        # TODO: this will become relevant when we allow for aliases on all coms
         pass
