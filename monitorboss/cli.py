@@ -49,77 +49,40 @@ def _check_mon(mon: str, cfg: Config) -> int:
         ) from err
 
 
-# TODO: As we allow for a larger (all) set of commands, this will become unwieldy. How can we simplify/scale?
 def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
     _log.debug(f"check feature value: ftr {com.name}, value {val}")
-    match com.value:
-        case VCPCodes.input_source:
+    # Check if input is a positive integer, and if so, just return it.
+    if val.isdigit():
+        return int(val)
+    # if not, we need to check for valid params and aliases...
+    else:
+        # ...so first check if there is a param name...
+        if val in com.param_names:
+            return com.param_names[val]
+        # ... and if not, check if the command is input_source, and if so, check the aliases
+        if com.value == VCPCodes.input_source:
+            # TODO: This will need to be generalized when we allow for arbitrary value aliases
             if val in cfg.input_source_names:
                 return cfg.input_source_names[val]
-            elif val in com.param_names:
-                return com.param_names[val]
-            try:
-                return int(val)
-            except ValueError as err:
-                raise MonitorBossError(
-                    f"{val} is not a valid input source.\n"
-                    f"""Valid input sources are: {
-                        ', '.join(list(com.param_names.keys()) + list(cfg.input_source_names))
-                    }, or a code number (non-negative integer).\n"""
-                    "NOTE: A particular monitor will probably support only some of these values. "
-                    "Check your monitor's specs for the inputs it accepts."
-                ) from err
-
-        case VCPCodes.image_contrast:
-            try:
-                return int(val)
-            except ValueError as err:
-                raise MonitorBossError(
-                    f"{val} is not a valid contrast value.\n"
-                    "Valid contrast values are non-negative integers."
-                ) from err
-
-        case VCPCodes.image_luminance:
-            try:
-                return int(val)
-            except ValueError as err:
-                raise MonitorBossError(
-                    f"{val} is not a valid luminance value.\n"
-                    "Valid luminance values are non-negative integers"
-                ) from err
-
-        case VCPCodes.display_power_mode:
-            if val in com.param_names:
-                return com.param_names[val]
-            try:
-                return int(val)
-            except ValueError as err:
-                raise MonitorBossError(
-                    f"{val} is not a valid power mode.\n"
-                    f"""Valid power modes are: {
-                        ', '.join(list(com.param_names.keys()))
-                    }, or a code number (non-negative integer).\n"""
-                    "NOTE: A particular monitor will probably support only some of these values. "
-                    "Check your monitor's specs for the inputs it accepts."
-                ) from err
-
-        case VCPCodes.image_color_preset:
-            if val in com.param_names:
-                return com.param_names[val]
-            try:
-                return int(val)
-            except ValueError as err:
-                raise MonitorBossError(
-                    f"{val} is not a valid color preset.\n"
-                    f"""Valid color presets are: {
-                        ', '.join(list(com.param_names.keys()))
-                    }, or a code number (non-negative integer).\n"""
-                    "NOTE: A particular monitor will probably support only some of these values. "
-                    "Check your monitor's specs for the inputs it accepts."
-                ) from err
+    # If we got here, an invalid value was provided
+    error_text = f"{val} is not a valid value for feature \"{com.name}\".\nValid values are:\n"
+    if com.param_names:
+        error_text += f"\t- [PARAM NAMES]: {', '.join(list(com.param_names.keys()))}\n"
+    # TODO: This will need to be generalized when we allow for arbitrary value aliases
+    if com.value == VCPCodes.input_source and cfg.input_source_names:
+        error_text += f"\t- [CONFIG ALIASES]: {', '.join(list(cfg.input_source_names))}\n"
+    error_text += """\t- a code number (non-negative integer).\n
+    NOTE: A particular monitor may only support some of these values. Check your monitor's specs for the inputs it accepts."""
+    raise MonitorBossError(
+        error_text
+    )
 
 
-# Config is not currently used, but it will be when we allow feature aliases, so just including it
+# TODO: originally included cfg in expectation of including feature aliases, but now I'm not sure we should?
+#   maybe this should return a tuple of strings with varying degrees of extra information,
+#   and you can determine how much of said information to use depending on verbosity?
+#   Alternatively, might be time to entirely change the general formatting of the return texts to be multiline
+#   so that including all the aliases won't be cumbersome to visually parse by a human
 def _feature_str(com: VCPCommand, cfg: Config) -> str:
     return f"{com.name} ({com.value})"
 
@@ -136,7 +99,6 @@ def _monitor_str(mon: int, cfg: Config) -> str:
     return monstr.strip()
 
 
-# TODO: this will need to change when we allow aliases for arbitrary/all features
 def _value_str(com: VCPCommand, value: int, cfg: Config) -> str:
     valstr = f"{value}"
     param = ""
@@ -144,6 +106,7 @@ def _value_str(com: VCPCommand, value: int, cfg: Config) -> str:
     for v, k in com.param_names.items():
         if value == k:
             param = v
+    # TODO: This will need to be generalized when we allow for arbitrary value aliases
     if com.value == VCPCodes.input_source:
         for v, k in cfg.input_source_names.items():
             if value == k:
