@@ -50,21 +50,21 @@ def _check_mon(mon: str, cfg: Config) -> int:
 
 
 # TODO: As we allow for a larger (all) set of commands, this will become unwieldy. How can we simplify/scale?
-def _check_val(vcpcode: VCPCodes, val: str, cfg: Config) -> int:
-    _log.debug(f"check attribute value: attr {get_vcp_com(vcpcode.value).name}, value {val}")
-    match vcpcode:
+def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
+    _log.debug(f"check attribute value: attr {com.name}, value {val}")
+    match com.value:
         case VCPCodes.input_source:
             if val in cfg.input_source_names:
                 return cfg.input_source_names[val]
-            elif val in get_vcp_com(vcpcode.value).param_names:
-                return get_vcp_com(vcpcode.value).param_names[val]
+            elif val in get_vcp_com(com.value).param_names:
+                return get_vcp_com(com.value).param_names[val]
             try:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
                     f"{val} is not a valid input source.\n"
                     f"""Valid input sources are: {
-                        ', '.join(list(get_vcp_com(vcpcode.value).param_names.keys()) + list(cfg.input_source_names))
+                        ', '.join(list(get_vcp_com(com.value).param_names.keys()) + list(cfg.input_source_names))
                     }, or a code number (non-negative integer).\n"""
                     "NOTE: A particular monitor will probably support only some of these values. "
                     "Check your monitor's specs for the inputs it accepts."
@@ -89,30 +89,30 @@ def _check_val(vcpcode: VCPCodes, val: str, cfg: Config) -> int:
                 ) from err
 
         case VCPCodes.display_power_mode:
-            if val in get_vcp_com(vcpcode.value).param_names:
-                return get_vcp_com(vcpcode.value).param_names[val]
+            if val in get_vcp_com(com.value).param_names:
+                return get_vcp_com(com.value).param_names[val]
             try:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
                     f"{val} is not a valid power mode.\n"
                     f"""Valid power modes are: {
-                        ', '.join(list(get_vcp_com(vcpcode.value).param_names.keys()))
+                        ', '.join(list(get_vcp_com(com.value).param_names.keys()))
                     }, or a code number (non-negative integer).\n"""
                     "NOTE: A particular monitor will probably support only some of these values. "
                     "Check your monitor's specs for the inputs it accepts."
                 ) from err
 
         case VCPCodes.image_color_preset:
-            if val in get_vcp_com(vcpcode.value).param_names:
-                return get_vcp_com(vcpcode.value).param_names[val]
+            if val in get_vcp_com(com.value).param_names:
+                return get_vcp_com(com.value).param_names[val]
             try:
                 return int(val)
             except ValueError as err:
                 raise MonitorBossError(
                     f"{val} is not a valid color preset.\n"
                     f"""Valid color presets are: {
-                        ', '.join(list(get_vcp_com(vcpcode.value).param_names.keys()))
+                        ', '.join(list(get_vcp_com(com.value).param_names.keys()))
                     }, or a code number (non-negative integer).\n"""
                     "NOTE: A particular monitor will probably support only some of these values. "
                     "Check your monitor's specs for the inputs it accepts."
@@ -224,7 +224,7 @@ def _set_attr(args, cfg: Config):
     _log.debug(f"set attribute: {args}")
     vcpcom = _check_feature(args.attr, cfg)
     mons = [_check_mon(m, cfg) for m in args.mon]
-    val = _check_val(vcpcom.value, args.val, cfg)
+    val = _check_val(vcpcom, args.val, cfg)
     new_vals = []
     for i, m in enumerate(mons):
         new_vals.append(set_attribute(m, vcpcom, val, cfg.wait_internal_time))
@@ -239,8 +239,8 @@ def _tog_attr(args, cfg: Config):
     _log.debug(f"toggle attribute: {args}")
     vcpcom = _check_feature(args.attr, cfg)
     mons = [_check_mon(m, cfg) for m in args.mon]
-    val1 = _check_val(vcpcom.value, args.val1, cfg)
-    val2 = _check_val(vcpcom.value, args.val2, cfg)
+    val1 = _check_val(vcpcom, args.val1, cfg)
+    val2 = _check_val(vcpcom, args.val2, cfg)
     new_vals = []
     for i, m in enumerate(mons):
         new_vals.append(toggle_attribute(m, vcpcom, val1, val2, cfg.wait_internal_time))
