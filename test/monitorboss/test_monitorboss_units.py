@@ -82,7 +82,42 @@ class TestCLIcheckers:
     def test_check_mon_id(self, test_cfg):
         assert cli._check_mon("8", test_cfg) == 8
 
-    # TODO: I skipped testing _check_val because because it needs to radically change for scaling to more commands
+    def test_check_val_digits(self, test_cfg):
+        assert cli._check_val(get_vcp_com(VCPCodes.input_source), "5", test_cfg) == 5
+
+    def test_check_val_text_param(self, test_cfg):
+        assert cli._check_val(get_vcp_com(VCPCodes.input_source), "dp1", test_cfg) == 15
+
+    def test_check_val_text_alias(self, test_cfg):
+        assert cli._check_val(get_vcp_com(VCPCodes.input_source), "usb-c", test_cfg) == 27
+
+    def test_check_val_text_invalid_yesparam_yesalias(self, capsys, test_cfg):
+        with pytest.raises(MonitorBossError):
+            cli._check_val(get_vcp_com(VCPCodes.input_source), "foo", test_cfg)
+            output = capsys.readouterr()
+            assert output.out == ""
+            assert "PARAM NAMES" in output.err
+            assert "CONFIG ALIASES" in output.err
+
+    def test_check_val_text_invalid_yesparam_noalias(self, capsys, test_cfg):
+        with pytest.raises(MonitorBossError):
+            cli._check_val(get_vcp_com(VCPCodes.image_luminance), "foo", test_cfg)
+            output = capsys.readouterr()
+            assert output.out == ""
+            assert "PARAM NAMES" in output.err
+            assert "CONFIG ALIASES" not in output.err
+
+    def test_check_val_text_invalid_noparam_yesalias(self, capsys, test_cfg):
+        # TODO: this will become relevant when we allow for aliases on all coms
+        pass
+
+    def test_check_val_text_invalid_noparam_noalias(self, capsys, test_cfg):
+        with pytest.raises(MonitorBossError):
+            cli._check_val(get_vcp_com(VCPCodes.image_luminance), "foo", test_cfg)
+            output = capsys.readouterr()
+            assert output.out == ""
+            assert "PARAM NAMES" not in output.err
+            assert "CONFIG ALIASES" not in output.err
 
 
 class TestCLIStrGens:
