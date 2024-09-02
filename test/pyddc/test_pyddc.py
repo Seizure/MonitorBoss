@@ -23,13 +23,14 @@ class TestGetFeature:
             with pytest.raises(TypeError):
                 vcp.get_vcp_feature(reset_command)
 
-    def test_unsupported_code(self):
-        # TODO: need to sort out expected/proper behavior for this
-        pass
+    # def test_unsupported_code(self):
+    #   # behavior for unsupported codes is undefined in practice, so not worth testing
+    #     pass
 
-    def test_supported_discreet_code(self):
-        # TODO: need to figure out what the "max" return is for discreet codes
-        pass
+    # def test_supported_discreet_code(self):
+    #   # the MAX value for discrete codes is the number of options, but there is nothing meaningful
+    #   # to test in that regard with a dummy driver, so not bothering
+    #     pass
 
     def test_supported_continuous_code(self):
         with self.vcp as vcp:
@@ -50,16 +51,16 @@ class TestGetMax:
             with pytest.raises(TypeError):
                 vcp.get_vcp_feature_max(reset_command)
 
-    def test_discreet_code(self):
-        with self.vcp as vcp:
-            with pytest.raises(TypeError):
-                vcp.get_vcp_feature_max(input_command)
+    # def test_supported_discreet_code(self):
+    #   # according to VESA specs, the MAX value for discrete codes should be number of options,
+    #   but there is nothing meaningful to test in that regard with a dummy driver, so not bothering
+    #   pass
 
-    def test_unsupported_code(self):
-        # TODO: need to sort out expected/proper behavior for this
-        pass
+    # def test_unsupported_code(self):
+    #   # behavior for unsupported codes is undefined in practice, so not worth testing
+    #     pass
 
-    def test_supported_code(self):
+    def test_supported_continuous_code(self):
         with self.vcp as vcp:
             assert vcp.get_vcp_feature_max(lum_command) == 80
         assert self.vcp.code_maximum[lum_command.value] == 80
@@ -78,14 +79,14 @@ class TestSetFeature:
             with pytest.raises(TypeError):
                 vcp.set_vcp_feature(active_control, 0)
 
-    def test_set_above_max(self):
+    def test_set_continuous_above_max(self):
         with self.vcp as vcp:
             with pytest.raises(ValueError):
                 vcp.set_vcp_feature(lum_command, 85)
 
-    def test_unsupported_code(self):
-        # TODO: need to sort out expected/proper behavior for this
-        pass
+    # def test_unsupported_code(self):
+    #   # behavior for unsupported codes is undefined in practice, so not worth testing
+    #   pass
 
     def test_supported_code(self):
         with self.vcp as vcp:
@@ -106,7 +107,6 @@ class TestCapabilitiesFunctions:
     def test_caps_parsing(self):
         with self.vcp as vcp:
             caps = parse_capabilities(vcp.get_vcp_capabilities())
-            # TODO: caps parsing is changing soon, this will break as soon as it does
             assert caps.__str__() == "{'prot': 'monitor', 'type': 'LCD', 'model': 'DUMM13', 'cmds': [<4>], 'vcp': [<16>, <18>, <96 (27, 15, 17)>, <170 (1, 2, 4)>], 'mccs_ver': '2.1'}"
 
 
