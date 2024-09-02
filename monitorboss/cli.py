@@ -113,7 +113,6 @@ def _value_str(com: VCPCommand, value: int, cfg: Config) -> str:
                 aliases += v+", "
     if aliases:
         aliases = aliases[:-2]
-    # TODO: might want to clarify what's params and what is
     if param or aliases:
         valstr += " ("
         valstr += f"{'PARAM: ' + param if param else ''}"
