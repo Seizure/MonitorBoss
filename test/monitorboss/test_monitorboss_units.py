@@ -145,11 +145,11 @@ class TestCLIStrGens:
 
     def test_value_yesparam_noalias(self, test_cfg):
         com = get_vcp_com(VCPCodes.display_power_mode)
-        assert cli._value_str(com, 1, test_cfg) == "1 (on)"
+        assert cli._value_str(com, 1, test_cfg) == "1 (PARAM: on)"
 
     def test_value_str_int_yesparam_onealias(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
-        assert cli._value_str(com, 17, test_cfg) == "17 (hdmi1 | hdmi)"
+        assert cli._value_str(com, 17, test_cfg) == "17 (PARAM: hdmi1 | ALIASES: hdmi)"
 
     def test_value_str_com_noparam_onealias(self, test_cfg):
         # TODO: this will become relevant when we allow for aliases on all coms

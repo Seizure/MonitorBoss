@@ -113,7 +113,13 @@ def _value_str(com: VCPCommand, value: int, cfg: Config) -> str:
                 aliases += v+", "
     if aliases:
         aliases = aliases[:-2]
-    valstr += f" ({param + (' | ' if param and aliases else '') + aliases})" if param or aliases else ""
+    # TODO: might want to clarify what's params and what is
+    if param or aliases:
+        valstr += " ("
+        valstr += f"{'PARAM: ' + param if param else ''}"
+        valstr += f"{' | ' if param and aliases else ''}"
+        valstr += f"{('ALIASES: ' + aliases) if aliases else ''}"
+        valstr += ")"
     return valstr
 
 
@@ -224,10 +230,9 @@ list_parser = mon_subparsers.add_parser("list", help=text, description=text)
 list_parser.set_defaults(func=_list_mons)
 
 text = "Get the capabilities dictionary of a monitor"
-description = ("Get the capabilities dictionary of a monitor. By default, this command parses the standard "
-               "capabilities string into a structured and readable format, as well as provides human-readable names"
-               "for known VCP codes and their defined options. If the --raw option is used, all other arguments will "
-               "be ignored. Otherwise, if the --summary argument is used, all other arguments will be ignored.")
+description = ("Get the capabilities of a monitor. By default, this command parses the capabilities string into a "
+               "structured format and provides human-readable names for known VCP codes and their defined options. "
+               "If the --raw option is used, all other arguments will be ignored.")
 caps_parser = mon_subparsers.add_parser("caps", help=text, description=description)
 caps_parser.set_defaults(func=_get_caps)
 caps_parser.add_argument("mon", type=str, help="the monitor to retrieve capabilities from")
@@ -238,7 +243,7 @@ text = "return the value of a given feature"
 get_parser = mon_subparsers.add_parser("get", help=text, description=text)
 get_parser.set_defaults(func=_get_feature)
 get_parser.add_argument("feature", type=str, help="the feature to return")
-get_parser.add_argument("mon", type=str, nargs="+", help="the monitor to control")
+get_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
 
 text = "sets a given feature to a given value"
 set_parser = mon_subparsers.add_parser("set", help=text, description=text)
