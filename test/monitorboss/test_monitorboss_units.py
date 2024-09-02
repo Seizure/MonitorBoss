@@ -41,14 +41,14 @@ class TestConfig:
 class TestImpl:
 
     def test_impl_get_monitor_valid(self):
-        assert impl._get_monitor(1)
+        assert impl.get_monitor(1)
 
     def test_impl_get_monitor_invalid(self):
         # TODO: is it weird that we allow negative indices, per pythonic behavior?
         # with pytest.raises(MonitorBossError):
         #     impl._get_monitor(-1)
         with pytest.raises(MonitorBossError):
-            impl._get_monitor(3)
+            impl.get_monitor(3)
 
 
 class TestCLIcheckers:

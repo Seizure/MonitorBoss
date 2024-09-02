@@ -19,7 +19,7 @@ class FeatureData:
     notes: str
 
 
-# TODO: I'm not sure we need a short_desc var? Seems redundant to VCPCommand's "desc".
+# TODO: I'm not sure we need a short_desc var? Seems redundant to VCPCommand's "desc" or "name".
 Feature = {
     VCPCodes.image_luminance:
         FeatureData("luminance",
@@ -54,7 +54,7 @@ def list_monitors() -> list[VCP]:
         raise MonitorBossError(f"Failed to list VCPs.") from err
 
 
-def _get_monitor(mon: int) -> VCP:
+def get_monitor(mon: int) -> VCP:
     _log.debug(f"get monitor: {mon}")
     monitors = list_monitors()
     try:
@@ -65,7 +65,7 @@ def _get_monitor(mon: int) -> VCP:
 
 def get_vcp_capabilities(mon: int) -> str:
     _log.debug(f"get VCP capabilities for monitor #{mon}")
-    with _get_monitor(mon) as monitor:
+    with get_monitor(mon) as monitor:
         try:
             return monitor.get_vcp_capabilities()
         except VCPError as err:
@@ -74,7 +74,7 @@ def get_vcp_capabilities(mon: int) -> str:
 
 def get_feature(mon: int, feature: VCPCommand, timeout: float) -> (int, int):
     _log.debug(f"get feature: {feature.name} (for monitor #{mon})")
-    with _get_monitor(mon) as monitor:
+    with get_monitor(mon) as monitor:
         try:
             val = monitor.get_vcp_feature(feature, timeout)
             _log.debug(f"get_vcp_feature for {feature.name} on monitor #{mon} returned {val.value} (max {val.max})")
@@ -87,7 +87,7 @@ def get_feature(mon: int, feature: VCPCommand, timeout: float) -> (int, int):
 
 def set_feature(mon: int, feature: VCPCommand, val: int, timeout: float) -> int:
     _log.debug(f"set feature: {feature.name} = {val} (for monitor #{mon})")
-    with _get_monitor(mon) as monitor:
+    with get_monitor(mon) as monitor:
         try:
             monitor.set_vcp_feature(feature, val, timeout)
         except VCPError as err:
