@@ -49,7 +49,7 @@ def test_get_attr(test_conf_file, capsys):
     com = get_vcp_com(VCPCodes.input_source)
     cfg = config.get_config(test_conf_file.as_posix())
     expected = f"{cli._feature_str(com, cfg)} for {cli._monitor_str(1, cfg)} is {cli._value_str(com, 27, cfg)}\n"
-    cli.run(f"--config {test_conf_file.as_posix()} get src 1")
+    cli.run(f"--config {test_conf_file.as_posix()} get 1 src")
     output = capsys.readouterr()
     assert output.out == expected
     assert output.err == ""
@@ -61,7 +61,7 @@ def test_set_attr(test_conf_file, capsys):
     expected = f"set {cli._feature_str(com, cfg)} for {cli._monitor_str(1, cfg)} to {cli._value_str(com, 75, cfg)}\n"
     # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
     #   there should be a way to have separate "Sessions" for each test, should figure out later
-    cli.run(f"--config {test_conf_file.as_posix()} set lum 75 bar")
+    cli.run(f"--config {test_conf_file.as_posix()} set bar lum 75")
     output = capsys.readouterr()
     assert output.out == expected
     assert output.err == ""
@@ -73,7 +73,7 @@ def test_tog_attr(test_conf_file, capsys):
     expected = f"toggled {cli._feature_str(com, cfg)} for {cli._monitor_str(1, cfg)} from {cli._value_str(com, 75, cfg)} to {cli._value_str(com, 75, cfg)}\n"
     # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
     #   there should be a way to have separate "Sessions" for each test, should figure out later
-    cli.run(f"--config {test_conf_file.as_posix()} tog lum 75 75 bar")
+    cli.run(f"--config {test_conf_file.as_posix()} tog bar lum 75 75")
     output = capsys.readouterr()
     assert output.out == expected
     assert output.err == ""

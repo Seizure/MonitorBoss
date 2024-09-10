@@ -241,23 +241,24 @@ caps_parser.add_argument("-s", "--summary", action='store_true', help="return a 
 text = "return the value of a given feature"
 get_parser = mon_subparsers.add_parser("get", help=text, description=text)
 get_parser.set_defaults(func=_get_feature)
-get_parser.add_argument("feature", type=str, help="the feature to return")
 get_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
+get_parser.add_argument("feature", type=str, help="the feature to return")
 
 text = "sets a given feature to a given value"
 set_parser = mon_subparsers.add_parser("set", help=text, description=text)
 set_parser.set_defaults(func=_set_feature)
+set_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
 set_parser.add_argument("feature", type=str, help="the feature to set")
 set_parser.add_argument("val", type=str, help="the value to set the feature to")
-set_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
+
 
 text = "toggles a given feature between two given values"
 tog_parser = mon_subparsers.add_parser("tog", help=text, description=text)
 tog_parser.set_defaults(func=_tog_feature)
+tog_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
 tog_parser.add_argument("feature", type=str, help="the feature to toggle")
 tog_parser.add_argument("val1", type=str, help="the first value to toggle between")
 tog_parser.add_argument("val2", type=str, help="the second value to toggle between")
-tog_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
 
 # conf set {mon_alias, input_alias} alias id<int> [-f]
 # conf set wait time<float>
