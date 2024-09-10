@@ -1,5 +1,6 @@
 from textwrap import dedent
 
+import monitorboss.info
 import test.pyddc
 from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes
@@ -48,7 +49,7 @@ def test_caps_summary(test_conf_file, capsys):
 def test_get_attr(test_conf_file, capsys):
     com = get_vcp_com(VCPCodes.input_source)
     cfg = config.get_config(test_conf_file.as_posix())
-    expected = f"{cli._feature_str(com, cfg)} for {cli._monitor_str(1, cfg)} is {cli._value_str(com, 27, cfg)}\n"
+    expected = f"{monitorboss.info.feature_str(com, cfg)} for {monitorboss.info.monitor_str(1, cfg)} is {monitorboss.info.value_str(com, 27, cfg)}\n"
     cli.run(f"--config {test_conf_file.as_posix()} get 1 src")
     output = capsys.readouterr()
     assert output.out == expected
@@ -58,7 +59,7 @@ def test_get_attr(test_conf_file, capsys):
 def test_set_attr(test_conf_file, capsys):
     com = get_vcp_com(VCPCodes.image_luminance)
     cfg = config.get_config(test_conf_file.as_posix())
-    expected = f"set {cli._feature_str(com, cfg)} for {cli._monitor_str(1, cfg)} to {cli._value_str(com, 75, cfg)}\n"
+    expected = f"set {monitorboss.info.feature_str(com, cfg)} for {monitorboss.info.monitor_str(1, cfg)} to {monitorboss.info.value_str(com, 75, cfg)}\n"
     # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
     #   there should be a way to have separate "Sessions" for each test, should figure out later
     cli.run(f"--config {test_conf_file.as_posix()} set bar lum 75")
@@ -70,7 +71,7 @@ def test_set_attr(test_conf_file, capsys):
 def test_tog_attr(test_conf_file, capsys):
     com = get_vcp_com(VCPCodes.image_luminance)
     cfg = config.get_config(test_conf_file.as_posix())
-    expected = f"toggled {cli._feature_str(com, cfg)} for {cli._monitor_str(1, cfg)} from {cli._value_str(com, 75, cfg)} to {cli._value_str(com, 75, cfg)}\n"
+    expected = f"toggled {monitorboss.info.feature_str(com, cfg)} for {monitorboss.info.monitor_str(1, cfg)} from {monitorboss.info.value_str(com, 75, cfg)} to {monitorboss.info.value_str(com, 75, cfg)}\n"
     # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
     #   there should be a way to have separate "Sessions" for each test, should figure out later
     cli.run(f"--config {test_conf_file.as_posix()} tog bar lum 75 75")

@@ -1,6 +1,7 @@
 import pytest
 import tomlkit
 
+import monitorboss.info
 from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes
 from test.pyddc.vcp_dummy import DummyVCP as VCP
@@ -120,36 +121,36 @@ class TestCLIcheckers:
             assert "CONFIG ALIASES" not in output.err
 
 
-class TestCLIStrGens:
+class TestInfo:
 
     def test_feature_str_com(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
-        assert cli._feature_str(com, test_cfg) == f"{com.name} ({com.value})"
+        assert monitorboss.info.feature_str(com, test_cfg) == f"{com.name} ({com.value})"
 
     def test_feature_str_int(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
-        assert cli._feature_str(VCPCodes.input_source, test_cfg) == f"{com.name} ({com.value})"
+        assert monitorboss.info.feature_str(VCPCodes.input_source, test_cfg) == f"{com.name} ({com.value})"
 
     def test_monitor_str_noalias(self, test_cfg):
-        assert cli._monitor_str(2, test_cfg) == "monitor #2"
+        assert monitorboss.info.monitor_str(2, test_cfg) == "monitor #2"
 
     def test_monitor_str_onealias(self, test_cfg):
-        assert cli._monitor_str(0, test_cfg) == "monitor #0 (foo)"
+        assert monitorboss.info.monitor_str(0, test_cfg) == "monitor #0 (foo)"
 
     def test_monitor_str_multialias(self, test_cfg):
-        assert cli._monitor_str(1, test_cfg) == "monitor #1 (bar, baz)"
+        assert monitorboss.info.monitor_str(1, test_cfg) == "monitor #1 (bar, baz)"
 
     def test_value_noparam_noalias(self, test_cfg):
         com = get_vcp_com(VCPCodes.image_luminance)
-        assert cli._value_str(com, 80, test_cfg) == f"80"
+        assert monitorboss.info.value_str(com, 80, test_cfg) == f"80"
 
     def test_value_yesparam_noalias(self, test_cfg):
         com = get_vcp_com(VCPCodes.display_power_mode)
-        assert cli._value_str(com, 1, test_cfg) == "1 (PARAM: on)"
+        assert monitorboss.info.value_str(com, 1, test_cfg) == "1 (PARAM: on)"
 
     def test_value_str_int_yesparam_onealias(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
-        assert cli._value_str(com, 17, test_cfg) == "17 (PARAM: hdmi1 | ALIASES: hdmi)"
+        assert monitorboss.info.value_str(com, 17, test_cfg) == "17 (PARAM: hdmi1 | ALIASES: hdmi)"
 
     def test_value_str_com_noparam_onealias(self, test_cfg):
         # TODO: this will become relevant when we allow for aliases on all coms

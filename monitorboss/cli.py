@@ -6,8 +6,8 @@ from time import sleep
 
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
-from monitorboss.impl import Feature, FeatureData
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
+from monitorboss.info import feature_str, monitor_str, value_str
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -78,54 +78,10 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
     raise MonitorBossError(error_text)
 
 
-# TODO: originally included cfg in expectation of including feature aliases, but now I'm not sure we should?
-#   maybe this should return a tuple of strings with varying degrees of extra information,
-#   and you can determine how much of said information to use depending on verbosity?
-#   Alternatively, might be time to entirely change the general formatting of the return texts to be multiline
-#   so that including all the aliases won't be cumbersome to visually parse by a human
-def _feature_str(com: VCPCommand, cfg: Config) -> str:
-    return f"{com.name} ({com.value})"
-
-
-def _monitor_str(mon: int, cfg: Config) -> str:
-    monstr = f"monitor #{mon} "
-    aliases = ""
-    for v, k in cfg.monitor_names.items():
-        if mon == k:
-            aliases += v+", "
-    if aliases:
-        monstr += f"({aliases[:-2]})"
-
-    return monstr.strip()
-
-
-def _value_str(com: VCPCommand, value: int, cfg: Config) -> str:
-    valstr = f"{value}"
-    param = ""
-    aliases = ""
-    for v, k in com.param_names.items():
-        if value == k:
-            param = v
-    # TODO: This will need to be generalized when we allow for arbitrary value aliases
-    if com.value == VCPCodes.input_source:
-        for v, k in cfg.input_source_names.items():
-            if value == k:
-                aliases += v+", "
-    if aliases:
-        aliases = aliases[:-2]
-    if param or aliases:
-        valstr += " ("
-        valstr += f"{'PARAM: ' + param if param else ''}"
-        valstr += f"{' | ' if param and aliases else ''}"
-        valstr += f"{('ALIASES: ' + aliases) if aliases else ''}"
-        valstr += ")"
-    return valstr
-
-
 def _list_mons(args, cfg: Config):
     _log.debug(f"list monitors: {args}")
     for index, monitor in enumerate(list_monitors()):
-        print(f"{_monitor_str(index, cfg)}")
+        print(f"{monitor_str(index, cfg)}")
 
 
 def _get_caps(args, cfg: Config):
@@ -144,13 +100,13 @@ def _get_caps(args, cfg: Config):
                 cap = caps_dict[s][i]
                 com = get_vcp_com(int(cap.cap))
                 if com is not None:
-                    cap.cap = _feature_str(com, cfg)
+                    cap.cap = feature_str(com, cfg)
                     if cap.values is not None:
                         for x, p in enumerate(cap.values):
-                            cap.values[x] = _value_str(com, p, cfg)
+                            cap.values[x] = value_str(com, p, cfg)
 
     if args.summary:
-        summary = _monitor_str(mon, cfg)
+        summary = monitor_str(mon, cfg)
         summary += ":"
 
         if caps_dict["type"]:
@@ -185,7 +141,7 @@ def _get_feature(args, cfg: Config):
         if i+1 < len(mons):
             sleep(cfg.wait_get_time)
     for mon, val, maximum in zip(mons, cur_vals, max_vals):
-        print(f"{_feature_str(vcpcom, args)} for {_monitor_str(mon, cfg)} is {_value_str(vcpcom, val, cfg)}" + (f" (Maximum: {_value_str(vcpcom, maximum, cfg)})" if maximum is not None else ""))
+        print(f"{feature_str(vcpcom, args)} for {monitor_str(mon, cfg)} is {value_str(vcpcom, val, cfg)}" + (f" (Maximum: {value_str(vcpcom, maximum, cfg)})" if maximum is not None else ""))
 
 
 def _set_feature(args, cfg: Config):
@@ -200,7 +156,7 @@ def _set_feature(args, cfg: Config):
             sleep(cfg.wait_set_time)
     new_vals = [set_feature(m, vcpcom, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(mons, new_vals):
-        print(f"set {_feature_str(vcpcom, args)} for {_monitor_str(mon, cfg)} to {_value_str(vcpcom, new_val, cfg)}")
+        print(f"set {feature_str(vcpcom, args)} for {monitor_str(mon, cfg)} to {value_str(vcpcom, new_val, cfg)}")
 
 
 def _tog_feature(args, cfg: Config):
@@ -215,7 +171,7 @@ def _tog_feature(args, cfg: Config):
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     for mon, tog_val in zip(mons, new_vals):
-        print(f"toggled {_feature_str(vcpcom, args)} for {_monitor_str(mon, cfg)} from {_value_str(vcpcom, tog_val.old, cfg)} to {_value_str(vcpcom, tog_val.new, cfg)}")
+        print(f"toggled {feature_str(vcpcom, args)} for {monitor_str(mon, cfg)} from {value_str(vcpcom, tog_val.old, cfg)} to {value_str(vcpcom, tog_val.new, cfg)}")
 
 
 text = "Commands for manipulating and polling your monitors"
