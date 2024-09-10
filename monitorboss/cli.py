@@ -45,7 +45,7 @@ def _check_mon(mon: str, cfg: Config) -> int:
     except ValueError as err:
         raise MonitorBossError(
             f"{mon} is not a valid monitor.\n"
-            "Valid monitors are: {', '.join(cfg.monitor_names)}, or an ID number."
+            f"Valid monitors are: {', '.join(cfg.monitor_names)}, or an ID number."
         ) from err
 
 
@@ -250,7 +250,6 @@ set_parser.set_defaults(func=_set_feature)
 set_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
 set_parser.add_argument("feature", type=str, help="the feature to set")
 set_parser.add_argument("val", type=str, help="the value to set the feature to")
-
 
 text = "toggles a given feature between two given values"
 tog_parser = mon_subparsers.add_parser("tog", help=text, description=text)
