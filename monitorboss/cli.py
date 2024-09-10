@@ -229,14 +229,14 @@ list_parser = mon_subparsers.add_parser("list", help=text, description=text)
 list_parser.set_defaults(func=_list_mons)
 
 text = "Get the capabilities dictionary of a monitor"
-description = ("Get the capabilities of a monitor. By default, this command parses the capabilities string into a "
-               "structured format and provides human-readable names for known VCP codes and their defined options. "
-               "If the --raw option is used, all other arguments will be ignored.")
+description = ("Get the capabilities of a monitor. If no flags are used, the entire capabilities string is parsed into "
+               "a structured format with human-readable names provided for known VCP codes and their defined options.")
 caps_parser = mon_subparsers.add_parser("caps", help=text, description=description)
 caps_parser.set_defaults(func=_get_caps)
 caps_parser.add_argument("mon", type=str, help="the monitor to retrieve capabilities from")
-caps_parser.add_argument("-r", "--raw", action='store_true', help="return the original, unparsed capabilities string")
-caps_parser.add_argument("-s", "--summary", action='store_true', help="return a highly formatted and abridged summary of the capabilities")
+caps_exclusive_flags = caps_parser.add_mutually_exclusive_group()
+caps_exclusive_flags.add_argument("-r", "--raw", action='store_true', help="return the original, unparsed capabilities string")
+caps_exclusive_flags.add_argument("-s", "--summary", action='store_true', help="return a highly formatted and abridged summary of the capabilities")
 
 text = "return the value of a given feature"
 get_parser = mon_subparsers.add_parser("get", help=text, description=text)
