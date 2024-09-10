@@ -221,6 +221,7 @@ def _tog_feature(args, cfg: Config):
 text = "Commands for manipulating and polling your monitors"
 parser = ArgumentParser(description="Boss your monitors around.")
 parser.add_argument("--config", type=str, help="the config file path to use")
+parser.add_argument("--json", action='store_true', help="return output in json format")
 
 mon_subparsers = parser.add_subparsers(title="monitor commands", help=text, dest="subcommand", required=True)
 
