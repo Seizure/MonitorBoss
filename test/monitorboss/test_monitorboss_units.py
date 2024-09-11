@@ -13,7 +13,7 @@ class TestConfig:
 
     # TODO: test reading, parsing, and validating of config
 
-    def test_auto_create_config(self, pytester):
+    def test_config_auto_create(self, pytester):
         confpath = pytester.path.joinpath("test_config.toml")
         config.get_config(confpath.as_posix())
         assert confpath.exists()
@@ -85,13 +85,13 @@ class TestCLIcheckers:
     def test_check_val_digits(self, test_cfg):
         assert cli._check_val(get_vcp_com(VCPCodes.input_source), "5", test_cfg) == 5
 
-    def test_check_val_text_param(self, test_cfg):
+    def test_check_val_param(self, test_cfg):
         assert cli._check_val(get_vcp_com(VCPCodes.input_source), "dp1", test_cfg) == 15
 
-    def test_check_val_text_alias(self, test_cfg):
+    def test_check_val_alias(self, test_cfg):
         assert cli._check_val(get_vcp_com(VCPCodes.input_source), "usb-c", test_cfg) == 27
 
-    def test_check_val_text_invalid_yesparam_yesalias(self, capsys, test_cfg):
+    def test_check_val_invalid_yesparam_yesalias(self, capsys, test_cfg):
         with pytest.raises(MonitorBossError):
             cli._check_val(get_vcp_com(VCPCodes.input_source), "foo", test_cfg)
             output = capsys.readouterr()
@@ -99,7 +99,7 @@ class TestCLIcheckers:
             assert "PARAM NAMES" in output.err
             assert "CONFIG ALIASES" in output.err
 
-    def test_check_val_text_invalid_yesparam_noalias(self, capsys, test_cfg):
+    def test_check_val_invalid_yesparam_noalias(self, capsys, test_cfg):
         with pytest.raises(MonitorBossError):
             cli._check_val(get_vcp_com(VCPCodes.image_luminance), "foo", test_cfg)
             output = capsys.readouterr()
@@ -107,11 +107,11 @@ class TestCLIcheckers:
             assert "PARAM NAMES" in output.err
             assert "CONFIG ALIASES" not in output.err
 
-    def test_check_val_text_invalid_noparam_yesalias(self, capsys, test_cfg):
+    def test_check_val_invalid_noparam_yesalias(self, capsys, test_cfg):
         # TODO: this will become relevant when we allow for aliases on all feature values
         pass
 
-    def test_check_val_text_invalid_noparam_noalias(self, capsys, test_cfg):
+    def test_check_val_invalid_noparam_noalias(self, capsys, test_cfg):
         with pytest.raises(MonitorBossError):
             cli._check_val(get_vcp_com(VCPCodes.image_luminance), "foo", test_cfg)
             output = capsys.readouterr()
@@ -122,7 +122,7 @@ class TestCLIcheckers:
 
 class TestInfoData:
 
-    def FeatureData_serialize(self):
+    def test_FeatureData_serialize(self):
         pass  # TODO: stub
 
     def test_feature_data(self, test_cfg):
@@ -130,14 +130,14 @@ class TestInfoData:
         data = info.FeatureData(com, ['src', 'source', 'input'])
         assert info.feature_data(com, test_cfg) == data
 
-    def MonitorData_serialize(self):
+    def test_MonitorData_serialize(self):
         pass  # TODO: stub
 
     def test_monitor_data(self, test_cfg):
         data = info.MonitorData(1, ['bar', 'baz'])
         assert info.monitor_data(1, test_cfg) == data
 
-    def ValueData_serialize(self):
+    def test_ValueData_serialize(self):
         pass  # TODO: stub
 
     def test_value_data(self, test_cfg):

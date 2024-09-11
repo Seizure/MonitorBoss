@@ -53,6 +53,7 @@ class ValueData:
     def serialize(self) -> dict:
         return {"value": self.value, "param": self.param, "aliases": self.aliases}
 
+
 def value_data(com: VCPCommand, value: int, cfg: Config) -> ValueData:
     data = ValueData(value, "", [])
     for v, k in com.param_names.items():
