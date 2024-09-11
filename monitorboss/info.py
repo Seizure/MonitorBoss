@@ -10,6 +10,9 @@ class FeatureData:
     com: VCPCommand
     aliases: [str]
 
+    def serialize(self) -> dict:
+        return {"name": self.com.name, "code": self.com.value, "aliases": self.aliases}
+
 
 def feature_data(com: VCPCommand, cfg: Config) -> FeatureData:
     return FeatureData(com, [alias for alias, val in cfg.feature_aliases.items() if val == com.value])
@@ -23,6 +26,9 @@ def feature_str(data: FeatureData) -> str:
 class MonitorData:
     id: int
     aliases: [str]
+
+    def serialize(self) -> dict:
+        return {"id": self.id, "aliases": self.aliases}
 
 
 def monitor_data(mon: int, cfg: Config) -> MonitorData:
@@ -44,6 +50,8 @@ class ValueData:
     param: str
     aliases: [str]
 
+    def serialize(self) -> dict:
+        return {"value": self.value, "param": self.param, "aliases": self.aliases}
 
 def value_data(com: VCPCommand, value: int, cfg: Config) -> ValueData:
     data = ValueData(value, "", [])

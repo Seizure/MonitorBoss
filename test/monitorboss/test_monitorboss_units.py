@@ -120,21 +120,38 @@ class TestCLIcheckers:
             assert "CONFIG ALIASES" not in output.err
 
 
-class TestInfo:
+class TestInfoData:
+
+    def FeatureData_serialize(self):
+        pass  # TODO: stub
 
     def test_feature_data(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
         data = info.FeatureData(com, ['src', 'source', 'input'])
         assert info.feature_data(com, test_cfg) == data
 
-    def test_feature_str(self):
-        com = get_vcp_com(VCPCodes.input_source)
-        data = info.FeatureData(com, [])
-        assert info.feature_str(data) == f"{com.name} ({com.value})"
+    def MonitorData_serialize(self):
+        pass  # TODO: stub
 
     def test_monitor_data(self, test_cfg):
         data = info.MonitorData(1, ['bar', 'baz'])
         assert info.monitor_data(1, test_cfg) == data
+
+    def ValueData_serialize(self):
+        pass  # TODO: stub
+
+    def test_value_data(self, test_cfg):
+        data = info.ValueData(17, "hdmi1", ["hdmi"])
+        com = get_vcp_com(VCPCodes.input_source)
+        assert data == info.value_data(com, 17, test_cfg)
+
+
+class TestInfoStr:
+
+    def test_feature_str(self):
+        com = get_vcp_com(VCPCodes.input_source)
+        data = info.FeatureData(com, [])
+        assert info.feature_str(data) == f"{com.name} ({com.value})"
 
     def test_monitor_str_noalias(self):
         data = info.MonitorData(2, [])
@@ -148,22 +165,17 @@ class TestInfo:
         data = info.MonitorData(1, ["bar", "baz"])
         assert info.monitor_str(data) == "monitor #1 (bar, baz)"
 
-    def test_value_data(self, test_cfg):
-        data = info.ValueData(17, "hdmi1", ["hdmi"])
-        com = get_vcp_com(VCPCodes.input_source)
-        assert data == info.value_data(com, 17, test_cfg)
-
-    def test_value_noparam_noalias(self):
+    def test_value_str_noparam_noalias(self):
         data = info.ValueData(80, "", [])
         assert info.value_str(data) == "80"
 
-    def test_value_yesparam_noalias(self):
+    def test_value_str_yesparam_noalias(self):
         data = info.ValueData(1, "on", [])
         assert info.value_str(data) == "1 (PARAM: on)"
 
-    def test_value_noparam_yesalias(self):
+    def test_value_str_noparam_yesalias(self):
         pass  # TODO: this will become relevant when we allow for aliases on all feature values
 
-    def test_value_str_int_yesparam_yesalias(self):
+    def test_value_str_yesparam_yesalias(self):
         data = info.ValueData(17, "hdmi1", ["hdmi", "HDMI"])
         assert info.value_str(data) == "17 (PARAM: hdmi1 | ALIASES: hdmi, HDMI)"

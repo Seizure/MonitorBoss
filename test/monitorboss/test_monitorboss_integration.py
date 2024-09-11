@@ -31,7 +31,7 @@ def test_caps_raw(test_conf_file, capsys):
 
 
 # TODO: this is going to be annoying, do it properly later
-def test_caps_dict(test_conf_file, capsys):
+def test_caps_dict_human(test_conf_file, capsys):
     cli.run(f"--config {test_conf_file.as_posix()} caps 0")
     output = capsys.readouterr()
     assert output.out  # TODO: actually test something meaningful
@@ -39,14 +39,14 @@ def test_caps_dict(test_conf_file, capsys):
 
 
 # TODO: this is going to be annoying, do it properly later
-def test_caps_summary(test_conf_file, capsys):
+def test_caps_summary_human(test_conf_file, capsys):
     cli.run(f"--config {test_conf_file.as_posix()} caps --summary 0")
     output = capsys.readouterr()
     assert output.out  # TODO: actually test something meaningful
     assert output.err == ""
 
 
-def test_get_attr(test_conf_file, capsys):
+def test_get_attr_human(test_conf_file, capsys):
     com = get_vcp_com(VCPCodes.image_luminance)
     cfg = config.get_config(test_conf_file.as_posix())
     fstring = monitorboss.info.feature_str(monitorboss.info.feature_data(com, cfg))
@@ -59,7 +59,7 @@ def test_get_attr(test_conf_file, capsys):
     assert output.err == ""
 
 
-def test_set_attr(test_conf_file, capsys):
+def test_set_attr_human(test_conf_file, capsys):
     com = get_vcp_com(VCPCodes.image_luminance)
     cfg = config.get_config(test_conf_file.as_posix())
     fstring = monitorboss.info.feature_str(monitorboss.info.feature_data(com, cfg))
@@ -74,7 +74,7 @@ def test_set_attr(test_conf_file, capsys):
     assert output.err == ""
 
 
-def test_tog_attr(test_conf_file, capsys):
+def test_tog_attr_human(test_conf_file, capsys):
     com = get_vcp_com(VCPCodes.image_luminance)
     cfg = config.get_config(test_conf_file.as_posix())
     fstring = monitorboss.info.feature_str(monitorboss.info.feature_data(com, cfg))
