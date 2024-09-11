@@ -25,7 +25,7 @@ class TestGetFeature:
 
     # def test_unsupported_code(self):
     #   # behavior for unsupported codes is undefined in practice, so not worth testing
-    #     pass
+    #   pass
 
     # def test_supported_discreet_code(self):
     #   # according to VESA specs, the MAX value for discrete codes should be number of options,
@@ -58,7 +58,7 @@ class TestGetMax:
 
     # def test_unsupported_code(self):
     #   # behavior for unsupported codes is undefined in practice, so not worth testing
-    #     pass
+    #   pass
 
     def test_getmax_supported_continuous_code(self):
         with self.vcp as vcp:
