@@ -7,7 +7,7 @@ from pyddc.vcp_codes import VCPCodes
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
-from monitorboss import config, cli
+from monitorboss import config, cli, info
 
 
 def test_list(test_conf_file, capsys):
@@ -47,10 +47,13 @@ def test_caps_summary(test_conf_file, capsys):
 
 
 def test_get_attr(test_conf_file, capsys):
-    com = get_vcp_com(VCPCodes.input_source)
+    com = get_vcp_com(VCPCodes.image_luminance)
     cfg = config.get_config(test_conf_file.as_posix())
-    expected = f"{monitorboss.info.feature_str(com, cfg)} for {monitorboss.info.monitor_str(1, cfg)} is {monitorboss.info.value_str(com, 27, cfg)}\n"
-    cli.run(f"--config {test_conf_file.as_posix()} get 1 src")
+    fstring = monitorboss.info.feature_str(monitorboss.info.feature_data(com, cfg))
+    mstring = monitorboss.info.monitor_str(monitorboss.info.monitor_data(1, cfg))
+    vstring = monitorboss.info.value_str(monitorboss.info.value_data(com, 75, cfg))
+    expected = f"{fstring} for {mstring} is {vstring} (Maximum: 75)\n"
+    cli.run(f"--config {test_conf_file.as_posix()} get 1 lum")
     output = capsys.readouterr()
     assert output.out == expected
     assert output.err == ""
@@ -59,7 +62,10 @@ def test_get_attr(test_conf_file, capsys):
 def test_set_attr(test_conf_file, capsys):
     com = get_vcp_com(VCPCodes.image_luminance)
     cfg = config.get_config(test_conf_file.as_posix())
-    expected = f"set {monitorboss.info.feature_str(com, cfg)} for {monitorboss.info.monitor_str(1, cfg)} to {monitorboss.info.value_str(com, 75, cfg)}\n"
+    fstring = monitorboss.info.feature_str(monitorboss.info.feature_data(com, cfg))
+    mstring = monitorboss.info.monitor_str(monitorboss.info.monitor_data(1, cfg))
+    vstring = monitorboss.info.value_str(monitorboss.info.value_data(com, 75, cfg))
+    expected = f"set {fstring} for {mstring} to {vstring}\n"
     # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
     #   there should be a way to have separate "Sessions" for each test, should figure out later
     cli.run(f"--config {test_conf_file.as_posix()} set bar lum 75")
@@ -71,7 +77,10 @@ def test_set_attr(test_conf_file, capsys):
 def test_tog_attr(test_conf_file, capsys):
     com = get_vcp_com(VCPCodes.image_luminance)
     cfg = config.get_config(test_conf_file.as_posix())
-    expected = f"toggled {monitorboss.info.feature_str(com, cfg)} for {monitorboss.info.monitor_str(1, cfg)} from {monitorboss.info.value_str(com, 75, cfg)} to {monitorboss.info.value_str(com, 75, cfg)}\n"
+    fstring = monitorboss.info.feature_str(monitorboss.info.feature_data(com, cfg))
+    mstring = monitorboss.info.monitor_str(monitorboss.info.monitor_data(1, cfg))
+    vstring = monitorboss.info.value_str(monitorboss.info.value_data(com, 75, cfg))
+    expected = f"toggled {fstring} for {mstring} from {vstring} to {vstring}\n"
     # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
     #   there should be a way to have separate "Sessions" for each test, should figure out later
     cli.run(f"--config {test_conf_file.as_posix()} tog bar lum 75 75")

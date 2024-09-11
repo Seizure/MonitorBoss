@@ -1,13 +1,12 @@
 import pytest
 import tomlkit
 
-import monitorboss.info
 from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
-from monitorboss import config, cli, MonitorBossError, impl
+from monitorboss import config, cli, MonitorBossError, impl, info
 
 
 class TestConfig:
@@ -109,7 +108,7 @@ class TestCLIcheckers:
             assert "CONFIG ALIASES" not in output.err
 
     def test_check_val_text_invalid_noparam_yesalias(self, capsys, test_cfg):
-        # TODO: this will become relevant when we allow for aliases on all coms
+        # TODO: this will become relevant when we allow for aliases on all feature values
         pass
 
     def test_check_val_text_invalid_noparam_noalias(self, capsys, test_cfg):
@@ -123,39 +122,48 @@ class TestCLIcheckers:
 
 class TestInfo:
 
-    def test_feature_str_com(self, test_cfg):
+    def test_feature_data(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
-        assert monitorboss.info.feature_str(com, test_cfg) == f"{com.name} ({com.value})"
+        data = info.FeatureData(com, ['src', 'source', 'input'])
+        assert info.feature_data(com, test_cfg) == data
 
-    def test_feature_str_int(self, test_cfg):
+    def test_feature_str(self):
         com = get_vcp_com(VCPCodes.input_source)
-        assert monitorboss.info.feature_str(VCPCodes.input_source, test_cfg) == f"{com.name} ({com.value})"
+        data = info.FeatureData(com, [])
+        assert info.feature_str(data) == f"{com.name} ({com.value})"
 
-    def test_monitor_str_noalias(self, test_cfg):
-        assert monitorboss.info.monitor_str(2, test_cfg) == "monitor #2"
+    def test_monitor_data(self, test_cfg):
+        data = info.MonitorData(1, ['bar', 'baz'])
+        assert info.monitor_data(1, test_cfg) == data
 
-    def test_monitor_str_onealias(self, test_cfg):
-        assert monitorboss.info.monitor_str(0, test_cfg) == "monitor #0 (foo)"
+    def test_monitor_str_noalias(self):
+        data = info.MonitorData(2, [])
+        assert info.monitor_str(data) == "monitor #2"
 
-    def test_monitor_str_multialias(self, test_cfg):
-        assert monitorboss.info.monitor_str(1, test_cfg) == "monitor #1 (bar, baz)"
+    def test_monitor_str_onealias(self):
+        data = info.MonitorData(0, ["foo"])
+        assert info.monitor_str(data) == "monitor #0 (foo)"
 
-    def test_value_noparam_noalias(self, test_cfg):
-        com = get_vcp_com(VCPCodes.image_luminance)
-        assert monitorboss.info.value_str(com, 80, test_cfg) == f"80"
+    def test_monitor_str_multialias(self):
+        data = info.MonitorData(1, ["bar", "baz"])
+        assert info.monitor_str(data) == "monitor #1 (bar, baz)"
 
-    def test_value_yesparam_noalias(self, test_cfg):
-        com = get_vcp_com(VCPCodes.display_power_mode)
-        assert monitorboss.info.value_str(com, 1, test_cfg) == "1 (PARAM: on)"
-
-    def test_value_str_int_yesparam_onealias(self, test_cfg):
+    def test_value_data(self, test_cfg):
+        data = info.ValueData(17, "hdmi1", ["hdmi"])
         com = get_vcp_com(VCPCodes.input_source)
-        assert monitorboss.info.value_str(com, 17, test_cfg) == "17 (PARAM: hdmi1 | ALIASES: hdmi)"
+        assert data == info.value_data(com, 17, test_cfg)
 
-    def test_value_str_com_noparam_onealias(self, test_cfg):
-        # TODO: this will become relevant when we allow for aliases on all coms
-        pass
+    def test_value_noparam_noalias(self):
+        data = info.ValueData(80, "", [])
+        assert info.value_str(data) == "80"
 
-    def test_value_str_com_noparam_multialias(self, test_cfg):
-        # TODO: this will become relevant when we allow for aliases on all coms
-        pass
+    def test_value_yesparam_noalias(self):
+        data = info.ValueData(1, "on", [])
+        assert info.value_str(data) == "1 (PARAM: on)"
+
+    def test_value_noparam_yesalias(self):
+        pass  # TODO: this will become relevant when we allow for aliases on all feature values
+
+    def test_value_str_int_yesparam_yesalias(self):
+        data = info.ValueData(17, "hdmi1", ["hdmi", "HDMI"])
+        assert info.value_str(data) == "17 (PARAM: hdmi1 | ALIASES: hdmi, HDMI)"

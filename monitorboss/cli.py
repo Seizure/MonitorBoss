@@ -7,7 +7,7 @@ from time import sleep
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
-from monitorboss.info import feature_str, monitor_str, value_str
+from monitorboss.info import feature_str, monitor_str, value_str, feature_data, monitor_data, value_data
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -81,7 +81,7 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
 def _list_mons(args, cfg: Config):
     _log.debug(f"list monitors: {args}")
     for index, monitor in enumerate(list_monitors()):
-        print(f"{monitor_str(index, cfg)}")
+        print(f"{monitor_str(monitor_data(index, cfg))}")
 
 
 def _get_caps(args, cfg: Config):
@@ -100,13 +100,13 @@ def _get_caps(args, cfg: Config):
                 cap = caps_dict[s][i]
                 com = get_vcp_com(int(cap.cap))
                 if com is not None:
-                    cap.cap = feature_str(com, cfg)
+                    cap.cap = feature_str(feature_data(com, cfg))
                     if cap.values is not None:
                         for x, p in enumerate(cap.values):
-                            cap.values[x] = value_str(com, p, cfg)
+                            cap.values[x] = value_str(value_data(com, p, cfg))
 
     if args.summary:
-        summary = monitor_str(mon, cfg)
+        summary = monitor_str(monitor_data(mon, cfg))
         summary += ":"
 
         if caps_dict["type"]:
@@ -141,7 +141,10 @@ def _get_feature(args, cfg: Config):
         if i+1 < len(mons):
             sleep(cfg.wait_get_time)
     for mon, val, maximum in zip(mons, cur_vals, max_vals):
-        print(f"{feature_str(vcpcom, args)} for {monitor_str(mon, cfg)} is {value_str(vcpcom, val, cfg)}" + (f" (Maximum: {value_str(vcpcom, maximum, cfg)})" if maximum is not None else ""))
+        fstr = feature_str(feature_data(vcpcom, cfg))
+        mstr = monitor_str(monitor_data(mon, cfg))
+        vstr = value_str(value_data(vcpcom, val, cfg))
+        print(f"{fstr} for {mstr} is {vstr}" + (f" (Maximum: {vstr})" if maximum is not None else ""))
 
 
 def _set_feature(args, cfg: Config):
@@ -156,7 +159,10 @@ def _set_feature(args, cfg: Config):
             sleep(cfg.wait_set_time)
     new_vals = [set_feature(m, vcpcom, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(mons, new_vals):
-        print(f"set {feature_str(vcpcom, args)} for {monitor_str(mon, cfg)} to {value_str(vcpcom, new_val, cfg)}")
+        fstr = feature_str(feature_data(vcpcom, cfg))
+        mstr = monitor_str(monitor_data(mon, cfg))
+        vstr = value_str(value_data(vcpcom, new_val, cfg))
+        print(f"set {fstr} for {mstr} to {vstr}")
 
 
 def _tog_feature(args, cfg: Config):
@@ -171,7 +177,11 @@ def _tog_feature(args, cfg: Config):
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     for mon, tog_val in zip(mons, new_vals):
-        print(f"toggled {feature_str(vcpcom, args)} for {monitor_str(mon, cfg)} from {value_str(vcpcom, tog_val.old, cfg)} to {value_str(vcpcom, tog_val.new, cfg)}")
+        fstr = feature_str(feature_data(vcpcom, cfg))
+        mstr = monitor_str(monitor_data(mon, cfg))
+        vstr_new = value_str(value_data(vcpcom, tog_val.new, cfg))
+        vstr_old = value_str(value_data(vcpcom, tog_val.old, cfg))
+        print(f"toggled {fstr} for {mstr} from {vstr_old} to {vstr_new}")
 
 
 text = "Commands for manipulating and polling your monitors"
