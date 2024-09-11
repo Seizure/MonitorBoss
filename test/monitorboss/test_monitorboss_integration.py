@@ -1,6 +1,5 @@
 from textwrap import dedent
 
-import monitorboss.info
 import test.pyddc
 from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes
@@ -10,7 +9,7 @@ pyddc.VCP = VCP
 from monitorboss import config, cli, info
 
 
-def test_list(test_conf_file, capsys):
+def test_list_human(test_conf_file, capsys):
     expected = dedent("""\
     monitor #0 (foo)
     monitor #1 (bar, baz)
@@ -20,14 +19,22 @@ def test_list(test_conf_file, capsys):
     output = capsys.readouterr()
     assert output.out == expected
     assert output.err == ""
+    
+    
+def test_list_json(test_conf_file, capsys):
+    pass  # TODO: stub
 
 
-def test_caps_raw(test_conf_file, capsys):
+def test_caps_raw_human(test_conf_file, capsys):
     expected = test.pyddc.CAPS_STR + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} caps --raw 0")
     output = capsys.readouterr()
     assert output.out == expected
     assert output.err == ""
+
+
+def test_caps_raw_json(test_conf_file, capsys):
+    pass  # TODO: stub
 
 
 # TODO: this is going to be annoying, do it properly later
@@ -36,6 +43,10 @@ def test_caps_dict_human(test_conf_file, capsys):
     output = capsys.readouterr()
     assert output.out  # TODO: actually test something meaningful
     assert output.err == ""
+    
+    
+def test_caps_dict_json(test_conf_file, capsys):
+    pass  # TODO: stub
 
 
 # TODO: this is going to be annoying, do it properly later
@@ -44,14 +55,18 @@ def test_caps_summary_human(test_conf_file, capsys):
     output = capsys.readouterr()
     assert output.out  # TODO: actually test something meaningful
     assert output.err == ""
+    
+
+def test_caps_summary_json(test_conf_file, capsys):
+    pass  # TODO: stub
 
 
-def test_get_attr_human(test_conf_file, capsys):
+def test_get_feature_human(test_conf_file, capsys):
     com = get_vcp_com(VCPCodes.image_luminance)
     cfg = config.get_config(test_conf_file.as_posix())
-    fstring = monitorboss.info.feature_str(monitorboss.info.feature_data(com, cfg))
-    mstring = monitorboss.info.monitor_str(monitorboss.info.monitor_data(1, cfg))
-    vstring = monitorboss.info.value_str(monitorboss.info.value_data(com, 75, cfg))
+    fstring = info.feature_str(info.feature_data(com, cfg))
+    mstring = info.monitor_str(info.monitor_data(1, cfg))
+    vstring = info.value_str(info.value_data(com, 75, cfg))
     expected = f"{fstring} for {mstring} is {vstring} (Maximum: 75)\n"
     cli.run(f"--config {test_conf_file.as_posix()} get 1 lum")
     output = capsys.readouterr()
@@ -59,12 +74,16 @@ def test_get_attr_human(test_conf_file, capsys):
     assert output.err == ""
 
 
-def test_set_attr_human(test_conf_file, capsys):
+def test_get_feature_json(test_conf_file, capsys):
+    pass  # TODO: stub
+
+
+def test_set_feature_human(test_conf_file, capsys):
     com = get_vcp_com(VCPCodes.image_luminance)
     cfg = config.get_config(test_conf_file.as_posix())
-    fstring = monitorboss.info.feature_str(monitorboss.info.feature_data(com, cfg))
-    mstring = monitorboss.info.monitor_str(monitorboss.info.monitor_data(1, cfg))
-    vstring = monitorboss.info.value_str(monitorboss.info.value_data(com, 75, cfg))
+    fstring = info.feature_str(info.feature_data(com, cfg))
+    mstring = info.monitor_str(info.monitor_data(1, cfg))
+    vstring = info.value_str(info.value_data(com, 75, cfg))
     expected = f"set {fstring} for {mstring} to {vstring}\n"
     # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
     #   there should be a way to have separate "Sessions" for each test, should figure out later
@@ -74,12 +93,16 @@ def test_set_attr_human(test_conf_file, capsys):
     assert output.err == ""
 
 
-def test_tog_attr_human(test_conf_file, capsys):
+def test_set_feature_json(test_conf_file, capsys):
+    pass  # TODO: stub
+
+
+def test_tog_feature_human(test_conf_file, capsys):
     com = get_vcp_com(VCPCodes.image_luminance)
     cfg = config.get_config(test_conf_file.as_posix())
-    fstring = monitorboss.info.feature_str(monitorboss.info.feature_data(com, cfg))
-    mstring = monitorboss.info.monitor_str(monitorboss.info.monitor_data(1, cfg))
-    vstring = monitorboss.info.value_str(monitorboss.info.value_data(com, 75, cfg))
+    fstring = info.feature_str(info.feature_data(com, cfg))
+    mstring = info.monitor_str(info.monitor_data(1, cfg))
+    vstring = info.value_str(info.value_data(com, 75, cfg))
     expected = f"toggled {fstring} for {mstring} from {vstring} to {vstring}\n"
     # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
     #   there should be a way to have separate "Sessions" for each test, should figure out later
@@ -87,3 +110,7 @@ def test_tog_attr_human(test_conf_file, capsys):
     output = capsys.readouterr()
     assert output.out == expected
     assert output.err == ""
+
+
+def test_tog_feature_json(test_conf_file, capsys):
+    pass  # TODO: stub
