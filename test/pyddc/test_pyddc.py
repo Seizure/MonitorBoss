@@ -14,11 +14,11 @@ class TestGetFeature:
 
     vcp = VCP.get_vcps()[0]
 
-    def test_cm_assertion(self):
+    def test_get_cm_assertion(self):
         with pytest.raises(AssertionError):
             self.vcp.get_vcp_feature(input_command)
 
-    def test_unreadable_code(self):
+    def test_get_unreadable_code(self):
         with self.vcp as vcp:
             with pytest.raises(TypeError):
                 vcp.get_vcp_feature(reset_command)
@@ -28,11 +28,11 @@ class TestGetFeature:
     #     pass
 
     # def test_supported_discreet_code(self):
-    #   # the MAX value for discrete codes is the number of options, but there is nothing meaningful
-    #   # to test in that regard with a dummy driver, so not bothering
-    #     pass
+    #   # according to VESA specs, the MAX value for discrete codes should be number of options,
+    #   # but there is nothing meaningful to test in that regard with a dummy driver, so not bothering
+    #   pass
 
-    def test_supported_continuous_code(self):
+    def test_get_supported_continuous_code(self):
         with self.vcp as vcp:
             result = vcp.get_vcp_feature(lum_command)
             assert (result.value, result.max) == (75, 80)
@@ -42,25 +42,25 @@ class TestGetMax:
 
     vcp = VCP.get_vcps()[0]
 
-    def test_cm_assertion(self):
+    def test_getmax_cm_assertion(self):
         with pytest.raises(AssertionError):
             self.vcp.get_vcp_feature_max(input_command)
 
-    def test_unreadable_code(self):
+    def test_getmax_unreadable_code(self):
         with self.vcp as vcp:
             with pytest.raises(TypeError):
                 vcp.get_vcp_feature_max(reset_command)
 
     # def test_supported_discreet_code(self):
     #   # according to VESA specs, the MAX value for discrete codes should be number of options,
-    #   but there is nothing meaningful to test in that regard with a dummy driver, so not bothering
+    #   # but there is nothing meaningful to test in that regard with a dummy driver, so not bothering
     #   pass
 
     # def test_unsupported_code(self):
     #   # behavior for unsupported codes is undefined in practice, so not worth testing
     #     pass
 
-    def test_supported_continuous_code(self):
+    def test_getmax_supported_continuous_code(self):
         with self.vcp as vcp:
             assert vcp.get_vcp_feature_max(lum_command) == 80
         assert self.vcp.code_maximum[lum_command.value] == 80
@@ -70,11 +70,11 @@ class TestSetFeature:
 
     vcp = VCP.get_vcps()[0]
 
-    def test_cm_assertion(self):
+    def test_set_cm_assertion(self):
         with pytest.raises(AssertionError):
             self.vcp.set_vcp_feature(input_command, 27)
 
-    def test_unwriteable_code(self):
+    def test_set_unwriteable_code(self):
         with self.vcp as vcp:
             with pytest.raises(TypeError):
                 vcp.set_vcp_feature(active_control, 0)
@@ -88,7 +88,7 @@ class TestSetFeature:
     #   # behavior for unsupported codes is undefined in practice, so not worth testing
     #   pass
 
-    def test_supported_code(self):
+    def test_set_supported_code(self):
         with self.vcp as vcp:
             vcp.set_vcp_feature(lum_command, 30)
             assert vcp.get_vcp_feature(lum_command).value == 30
@@ -98,12 +98,15 @@ class TestCapabilitiesFunctions:
 
     vcp = VCP.get_vcps()[0]
 
-    def test_cm_assertion(self):
+    def test_caps_cm_assertion(self):
         with pytest.raises(AssertionError):
             self.vcp.get_vcp_capabilities()
 
-    # TODO: test different string formats/edge cases
+    # def test_caps_str(self):
+    #     # doesn't seem worth testing in a dummy driver, since I'm hard-coding the caps string
+    #     pass
 
+    # TODO: test different string formats/edge cases
     def test_caps_parsing(self):
         with self.vcp as vcp:
             caps = parse_capabilities(vcp.get_vcp_capabilities())
@@ -116,18 +119,18 @@ class TestVCPCommands:
     def test_codes_commandlist_parity(self):
         assert len(vcp_codes._VCP_COMMANDS) == len(VCPCodes)
 
-    def test_get_with_bad_type(self):
+    def test_get_com_with_bad_type(self):
         with pytest.raises(TypeError):
             get_vcp_com(1.3)
 
-    def test_get_none_by_int(self):
+    def test_get_com_none_by_int(self):
         assert get_vcp_com(1048) is None
 
-    def test_get_none_by_str(self):
+    def test_get_com_none_by_str(self):
         assert get_vcp_com("rawr") is None
 
     def test_get_com_by_int(self):
-        assert get_vcp_com(16).name == "image_luminance"
+        assert get_vcp_com(16).value == 16
 
     def test_get_com_by_str(self):
         assert get_vcp_com("image_luminance").value == 16
