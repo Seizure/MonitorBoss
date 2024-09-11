@@ -94,6 +94,8 @@ def _get_caps(args, cfg: Config):
         return
 
     caps_dict = parse_capabilities(caps_raw)
+    # TODO: This might neglect the (rare) case which involves nested Capabilities
+    # TODO: implement --json
     for s in caps_dict:
         if s.lower().startswith("cmd") or s.lower().startswith("vcp"):
             for i, c in enumerate(caps_dict[s]):
@@ -106,6 +108,7 @@ def _get_caps(args, cfg: Config):
                             cap.values[x] = value_str(value_data(com, p, cfg))
 
     if args.summary:
+        # TODO: implement --json
         summary = monitor_str(monitor_data(mon, cfg))
         summary += ":"
 
@@ -124,6 +127,7 @@ def _get_caps(args, cfg: Config):
         print(summary)
         return
 
+    # TODO: do not use PrettyPrinter if --json
     pprinter = PrettyPrinter(indent=4, sort_dicts=True)
     pprinter.pprint(caps_dict)
 
@@ -141,10 +145,16 @@ def _get_feature(args, cfg: Config):
         if i+1 < len(mons):
             sleep(cfg.wait_get_time)
     for mon, val, maximum in zip(mons, cur_vals, max_vals):
-        fstr = feature_str(feature_data(vcpcom, cfg))
-        mstr = monitor_str(monitor_data(mon, cfg))
-        vstr = value_str(value_data(vcpcom, val, cfg))
-        print(f"{fstr} for {mstr} is {vstr}" + (f" (Maximum: {vstr})" if maximum is not None else ""))
+        fdata = feature_data(vcpcom, cfg)
+        mdata = monitor_data(mon, cfg)
+        vdata = value_data(vcpcom, val, cfg)
+        if args.json:
+            print({"monitor"})
+        else:
+            fstr = feature_str(fdata)
+            mstr = monitor_str(mdata)
+            vstr = value_str(vdata)
+            print(f"{fstr} for {mstr} is {vstr}" + (f" (Maximum: {vstr})" if maximum is not None else ""))
 
 
 def _set_feature(args, cfg: Config):
