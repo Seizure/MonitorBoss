@@ -30,15 +30,13 @@ wait_set = 0
 wait_internal = 0""".strip()
 
 
-# TODO: is there a way to not have redundant code between these?
-@pytest.fixture(scope='module')
-def test_cfg(tmp_path_factory) -> Config:
-    file = tmp_path_factory.mktemp("conf") / "mb_conf.toml"
-    file.write_text(TEST_TOML_CONTENTS)
-    return config.get_config(file.as_posix())
-
 @pytest.fixture(scope='module')
 def test_conf_file(tmp_path_factory) -> Path:
     file = tmp_path_factory.mktemp("conf") / "mb_conf.toml"
     file.write_text(TEST_TOML_CONTENTS)
     return file
+
+
+@pytest.fixture(scope='module')
+def test_cfg(test_conf_file) -> Config:
+    return config.get_config(test_conf_file.as_posix())
