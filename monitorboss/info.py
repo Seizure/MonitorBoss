@@ -11,7 +11,7 @@ class FeatureData:
     aliases: [str]
 
     def serialize(self) -> dict:
-        return {"name": self.com.name, "code": self.com.value, "aliases": self.aliases}
+        return {"name": self.com.name, "code": self.com.value.value, "aliases": self.aliases}
 
 
 def feature_data(com: VCPCommand, cfg: Config) -> FeatureData:
