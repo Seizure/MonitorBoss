@@ -1,3 +1,4 @@
+import json
 from argparse import ArgumentParser
 from collections.abc import Sequence
 from logging import getLogger
@@ -81,16 +82,23 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
 def _list_mons(args, cfg: Config):
     _log.debug(f"list monitors: {args}")
     for index, monitor in enumerate(list_monitors()):
-        print(f"{monitor_str(monitor_data(index, cfg))}")
+        mdata = monitor_data(index, cfg)
+        if args.json:
+            print(json.dumps({"list": {"monitor": mdata.serialize()}}))
+        else:
+            print(monitor_str(mdata))
 
 
 def _get_caps(args, cfg: Config):
     _log.debug(f"get capabilities: {args}")
-    mon = _check_mon(args.mon, cfg)
+    mon = _check_mon(args.monitor, cfg)
     caps_raw = get_vcp_capabilities(mon)
 
     if args.raw:
-        print(caps_raw)
+        if args.json:
+            print(json.dumps({"raw_caps": caps_raw}))
+        else:
+            print(caps_raw)
         return
 
     caps_dict = parse_capabilities(caps_raw)
@@ -135,7 +143,7 @@ def _get_caps(args, cfg: Config):
 def _get_feature(args, cfg: Config):
     _log.debug(f"get feature: {args}")
     vcpcom = _check_feature(args.feature, cfg)
-    mons = [_check_mon(m, cfg) for m in args.mon]
+    mons = [_check_mon(m, cfg) for m in args.monitor]
     cur_vals = []
     max_vals = []
     for i, m in enumerate(mons):
@@ -149,7 +157,7 @@ def _get_feature(args, cfg: Config):
         mdata = monitor_data(mon, cfg)
         vdata = value_data(vcpcom, val, cfg)
         if args.json:
-            print({"monitor"})
+            print(json.dumps({"get": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}))
         else:
             fstr = feature_str(fdata)
             mstr = monitor_str(mdata)
@@ -160,8 +168,8 @@ def _get_feature(args, cfg: Config):
 def _set_feature(args, cfg: Config):
     _log.debug(f"set feature: {args}")
     vcpcom = _check_feature(args.feature, cfg)
-    mons = [_check_mon(m, cfg) for m in args.mon]
-    val = _check_val(vcpcom, args.val, cfg)
+    mons = [_check_mon(m, cfg) for m in args.monitor]
+    val = _check_val(vcpcom, args.value, cfg)
     new_vals = []
     for i, m in enumerate(mons):
         new_vals.append(set_feature(m, vcpcom, val, cfg.wait_internal_time))
@@ -169,29 +177,43 @@ def _set_feature(args, cfg: Config):
             sleep(cfg.wait_set_time)
     new_vals = [set_feature(m, vcpcom, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(mons, new_vals):
-        fstr = feature_str(feature_data(vcpcom, cfg))
-        mstr = monitor_str(monitor_data(mon, cfg))
-        vstr = value_str(value_data(vcpcom, new_val, cfg))
-        print(f"set {fstr} for {mstr} to {vstr}")
+        fdata = feature_data(vcpcom, cfg)
+        mdata = monitor_data(mon, cfg)
+        vdata = value_data(vcpcom, new_val, cfg)
+        if args.json:
+            print(json.dumps({"set": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}))
+        else:
+            fstr = feature_str(fdata)
+            mstr = monitor_str(mdata)
+            vstr = value_str(vdata)
+            print(f"set {fstr} for {mstr} to {vstr}")
 
 
 def _tog_feature(args, cfg: Config):
     _log.debug(f"toggle feature: {args}")
     vcpcom = _check_feature(args.feature, cfg)
-    mons = [_check_mon(m, cfg) for m in args.mon]
-    val1 = _check_val(vcpcom, args.val1, cfg)
-    val2 = _check_val(vcpcom, args.val2, cfg)
-    new_vals = []
+    mons = [_check_mon(m, cfg) for m in args.monitor]
+    val1 = _check_val(vcpcom, args.value1, cfg)
+    val2 = _check_val(vcpcom, args.value2, cfg)
+    tog_vals = []
     for i, m in enumerate(mons):
-        new_vals.append(toggle_feature(m, vcpcom, val1, val2, cfg.wait_internal_time))
+        tog_vals.append(toggle_feature(m, vcpcom, val1, val2, cfg.wait_internal_time))
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
-    for mon, tog_val in zip(mons, new_vals):
-        fstr = feature_str(feature_data(vcpcom, cfg))
-        mstr = monitor_str(monitor_data(mon, cfg))
-        vstr_new = value_str(value_data(vcpcom, tog_val.new, cfg))
-        vstr_old = value_str(value_data(vcpcom, tog_val.old, cfg))
-        print(f"toggled {fstr} for {mstr} from {vstr_old} to {vstr_new}")
+    for mon, tog_val in zip(mons, tog_vals):
+        fdata = feature_data(vcpcom, cfg)
+        mdata = monitor_data(mon, cfg)
+        vdata_new = value_data(vcpcom, tog_val.new, cfg)
+        vdata_original = value_data(vcpcom, tog_val.old, cfg)
+        if args.json:
+            print(json.dumps({"toggle": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "original_value": vdata_original.serialize(), "new_value": vdata_new.serialize()}}))
+            pass
+        else:
+            fstr = feature_str(fdata)
+            mstr = monitor_str(mdata)
+            vstr_new = value_str(vdata_new)
+            vstr_old = value_str(vdata_original)
+            print(f"toggled {fstr} for {mstr} from {vstr_old} to {vstr_new}")
 
 
 text = "Commands for manipulating and polling your monitors"
@@ -210,31 +232,31 @@ description = ("Get the capabilities of a monitor. If no flags are used, the ent
                "a structured format with human-readable names provided for known VCP codes and their defined options.")
 caps_parser = mon_subparsers.add_parser("caps", help=text, description=description)
 caps_parser.set_defaults(func=_get_caps)
-caps_parser.add_argument("mon", type=str, help="the monitor to retrieve capabilities from")
+caps_parser.add_argument("monitor", type=str, help="the monitor to retrieve capabilities from")
 caps_exclusive_flags = caps_parser.add_mutually_exclusive_group()
 caps_exclusive_flags.add_argument("-r", "--raw", action='store_true', help="return the original, unparsed capabilities string")
 caps_exclusive_flags.add_argument("-s", "--summary", action='store_true', help="return a highly formatted and abridged summary of the capabilities")
 
-text = "return the value of a given feature"
+text = "returns the value of a given feature"
 get_parser = mon_subparsers.add_parser("get", help=text, description=text)
 get_parser.set_defaults(func=_get_feature)
-get_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
+get_parser.add_argument("monitor", type=str, nargs="+", help="the monitor(s) to control")
 get_parser.add_argument("feature", type=str, help="the feature to return")
 
 text = "sets a given feature to a given value"
 set_parser = mon_subparsers.add_parser("set", help=text, description=text)
 set_parser.set_defaults(func=_set_feature)
-set_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
+set_parser.add_argument("monitor", type=str, nargs="+", help="the monitor(s) to control")
 set_parser.add_argument("feature", type=str, help="the feature to set")
-set_parser.add_argument("val", type=str, help="the value to set the feature to")
+set_parser.add_argument("value", type=str, help="the value to set the feature to")
 
 text = "toggles a given feature between two given values"
 tog_parser = mon_subparsers.add_parser("tog", help=text, description=text)
 tog_parser.set_defaults(func=_tog_feature)
-tog_parser.add_argument("mon", type=str, nargs="+", help="the monitor(s) to control")
+tog_parser.add_argument("monitor", type=str, nargs="+", help="the monitor(s) to control")
 tog_parser.add_argument("feature", type=str, help="the feature to toggle")
-tog_parser.add_argument("val1", type=str, help="the first value to toggle between")
-tog_parser.add_argument("val2", type=str, help="the second value to toggle between")
+tog_parser.add_argument("value1", type=str, help="the first value to toggle between")
+tog_parser.add_argument("value2", type=str, help="the second value to toggle between")
 
 # conf set {mon_alias, input_alias} alias id<int> [-f]
 # conf set wait time<float>
