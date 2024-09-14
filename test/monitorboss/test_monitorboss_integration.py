@@ -1,3 +1,4 @@
+import json
 from textwrap import dedent
 
 import test.pyddc
@@ -10,10 +11,10 @@ from monitorboss import config, cli, info
 
 
 def test_list_human(test_conf_file, capsys):
-    expected = dedent("""\
-    monitor #0 (foo)
-    monitor #1 (bar, baz)
-    monitor #2
+    expected = dedent(f"""\
+    {info.monitor_str(info.MonitorData(0, ["foo"]))}
+    {info.monitor_str(info.MonitorData(1, ["bar", "baz"]))}
+    {info.monitor_str(info.MonitorData(2, []))}
     """)
     cli.run(f"--config {test_conf_file.as_posix()} list")
     output = capsys.readouterr()
@@ -22,7 +23,16 @@ def test_list_human(test_conf_file, capsys):
     
     
 def test_list_json(test_conf_file, capsys):
-    pass  # TODO: stub
+    mdata0 = info.MonitorData(0, ["foo"])
+    mdata1 = info.MonitorData(1, ["bar", "baz"])
+    mdata2 = info.MonitorData(2, [])
+    expected = json.dumps({"list": {"monitor": mdata0.serialize()}}) + "\n"
+    expected += json.dumps({"list": {"monitor": mdata1.serialize()}}) + "\n"
+    expected += json.dumps({"list": {"monitor": mdata2.serialize()}}) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json list")
+    output = capsys.readouterr()
+    assert output.out == expected
+    assert output.err == ""
 
 
 def test_caps_raw_human(test_conf_file, capsys):
@@ -34,7 +44,11 @@ def test_caps_raw_human(test_conf_file, capsys):
 
 
 def test_caps_raw_json(test_conf_file, capsys):
-    pass  # TODO: stub
+    expected = json.dumps({"caps": {"raw": test.pyddc.CAPS_STR}}) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json caps --raw 0")
+    output = capsys.readouterr()
+    assert output.out == expected
+    assert output.err == ""
 
 
 # TODO: this is going to be annoying, do it properly later
@@ -75,7 +89,16 @@ def test_get_feature_human(test_conf_file, capsys):
 
 
 def test_get_feature_json(test_conf_file, capsys):
-    pass  # TODO: stub
+    com = get_vcp_com(VCPCodes.image_luminance)
+    cfg = config.get_config(test_conf_file.as_posix())
+    fdata = info.feature_data(com, cfg)
+    mdata = info.monitor_data(1, cfg)
+    vdata = info.value_data(com, 75, cfg)
+    expected = json.dumps({"get": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json get bar lum")
+    output = capsys.readouterr()
+    assert output.out == expected
+    assert output.err == ""
 
 
 def test_set_feature_human(test_conf_file, capsys):
@@ -94,7 +117,16 @@ def test_set_feature_human(test_conf_file, capsys):
 
 
 def test_set_feature_json(test_conf_file, capsys):
-    pass  # TODO: stub
+    com = get_vcp_com(VCPCodes.image_luminance)
+    cfg = config.get_config(test_conf_file.as_posix())
+    fdata = info.feature_data(com, cfg)
+    mdata = info.monitor_data(1, cfg)
+    vdata = info.value_data(com, 75, cfg)
+    expected = json.dumps({"set": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json set bar lum 75")
+    output = capsys.readouterr()
+    assert output.out == expected
+    assert output.err == ""
 
 
 def test_tog_feature_human(test_conf_file, capsys):
@@ -113,4 +145,13 @@ def test_tog_feature_human(test_conf_file, capsys):
 
 
 def test_tog_feature_json(test_conf_file, capsys):
-    pass  # TODO: stub
+    com = get_vcp_com(VCPCodes.image_luminance)
+    cfg = config.get_config(test_conf_file.as_posix())
+    fdata = info.feature_data(com, cfg)
+    mdata = info.monitor_data(1, cfg)
+    vdata = info.value_data(com, 75, cfg)
+    expected = json.dumps({"toggle": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "original_value": vdata.serialize(), "new_value": vdata.serialize()}}) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json tog bar lum 75 75")
+    output = capsys.readouterr()
+    assert output.out == expected
+    assert output.err == ""

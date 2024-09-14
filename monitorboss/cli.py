@@ -96,7 +96,7 @@ def _get_caps(args, cfg: Config):
 
     if args.raw:
         if args.json:
-            print(json.dumps({"raw_caps": caps_raw}))
+            print(json.dumps({"caps": {"raw": caps_raw}}))
         else:
             print(caps_raw)
         return
