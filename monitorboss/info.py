@@ -11,8 +11,10 @@ class FeatureData:
     aliases: [str]
 
     def serialize(self) -> dict:
-        # TODO: only include aliases if there are any
-        return {"name": self.com.name, "code": self.com.value.value, "aliases": self.aliases}
+        data = {"name": self.com.name, "code": self.com.value.value}
+        if self.aliases:
+            data["aliases"] = self.aliases
+        return data
 
 
 def feature_data(com: VCPCommand, cfg: Config) -> FeatureData:
@@ -30,7 +32,10 @@ class MonitorData:
 
     def serialize(self) -> dict:
         # TODO: only include aliases if there are any
-        return {"id": self.id, "aliases": self.aliases}
+        data = {"id": self.id}
+        if self.aliases:
+            data["aliases"] = self.aliases
+        return data
 
 
 def monitor_data(mon: int, cfg: Config) -> MonitorData:
@@ -53,8 +58,12 @@ class ValueData:
     aliases: [str]
 
     def serialize(self) -> dict:
-        # TODO: only include param and aliases if there are any
-        return {"value": self.value, "param": self.param, "aliases": self.aliases}
+        data = {"value": self.value}
+        if self.param:
+            data["param"] = self.param
+        if self.aliases:
+            data["aliases"] = self.aliases
+        return data
 
 
 def value_data(com: VCPCommand, value: int, cfg: Config) -> ValueData:
