@@ -122,27 +122,47 @@ class TestCLIcheckers:
 
 class TestInfoData:
 
-    def test_FeatureData_serialize(self):
+    def test_FeatureData_serialize_yesaliases(self):
         com = get_vcp_com(VCPCodes.input_source)
         data = info.FeatureData(com, ['foo', 'bar', 'baz'])
         assert data.serialize() == {"name": "input_source", "code": 96, "aliases": ['foo', 'bar', 'baz']}
+
+    def test_FeatureData_serialize_noaliases(self):
+        # TODO: stub
+        pass
 
     def test_feature_data(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
         data = info.FeatureData(com, ['src', 'source', 'input'])
         assert info.feature_data(com, test_cfg) == data
 
-    def test_MonitorData_serialize(self):
+    def test_MonitorData_yesserialize(self):
         data = info.MonitorData(1, ['foo', 'bar', 'baz'])
         assert data.serialize() == {"id": 1, "aliases": ['foo', 'bar', 'baz']}
+
+    def test_MonitorData_serialize_noaliases(self):
+        # TODO: stub
+        pass
 
     def test_monitor_data(self, test_cfg):
         data = info.MonitorData(1, ['bar', 'baz'])
         assert info.monitor_data(1, test_cfg) == data
 
-    def test_ValueData_serialize(self):
+    def test_ValueData_serialize_yesparam_yesaliases(self):
         data = info.ValueData(75, 'foo', ['bar', 'baz'])
         assert data.serialize() == {"value": 75, "param": 'foo', "aliases": ['bar', 'baz']}
+
+    def test_ValueData_serialize_noparam_yesaliases(self):
+        # TODO: stub
+        pass
+
+    def test_ValueData_serialize_yesparam_noaliases(self):
+        # TODO: stub
+        pass
+
+    def test_ValueData_serialize_noparam_noaliases(self):
+        # TODO: stub
+        pass
 
     def test_value_data(self, test_cfg):
         data = info.ValueData(17, "hdmi1", ["hdmi"])

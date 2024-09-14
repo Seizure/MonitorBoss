@@ -11,6 +11,7 @@ class FeatureData:
     aliases: [str]
 
     def serialize(self) -> dict:
+        # TODO: only include aliases if there are any
         return {"name": self.com.name, "code": self.com.value.value, "aliases": self.aliases}
 
 
@@ -28,6 +29,7 @@ class MonitorData:
     aliases: [str]
 
     def serialize(self) -> dict:
+        # TODO: only include aliases if there are any
         return {"id": self.id, "aliases": self.aliases}
 
 
@@ -51,6 +53,7 @@ class ValueData:
     aliases: [str]
 
     def serialize(self) -> dict:
+        # TODO: only include param and aliases if there are any
         return {"value": self.value, "param": self.param, "aliases": self.aliases}
 
 

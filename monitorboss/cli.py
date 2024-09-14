@@ -106,14 +106,38 @@ def _get_caps(args, cfg: Config):
     # TODO: implement --json
     for s in caps_dict:
         if s.lower().startswith("cmd") or s.lower().startswith("vcp"):
-            for i, c in enumerate(caps_dict[s]):
-                cap = caps_dict[s][i]
-                com = get_vcp_com(int(cap.cap))
-                if com is not None:
-                    cap.cap = feature_str(feature_data(com, cfg))
-                    if cap.values is not None:
-                        for x, p in enumerate(cap.values):
-                            cap.values[x] = value_str(value_data(com, p, cfg))
+            for i, cap in enumerate(caps_dict[s]):
+                code = cap.cap
+                values = cap.values  # may be None
+                vdata_list = None
+                # TODO: while we expect code to always be an int.... what if it isn't?
+                feature = get_vcp_com(int(code))  # may be None
+                fdata = feature_data(feature, cfg) if feature is not None else None
+                if feature is not None and values is not None:
+                    # TODO: while we expect v to always be an int.... what if it isn't?
+                    vdata_list = [value_data(feature, int(v), cfg) for v in values]
+                if args.json:
+                    vjson = [vdata.serialize() for vdata in vdata_list] if vdata_list else None
+                    cap_json = [{"feature": fdata.serialize() if fdata is not None else code}]
+                    if vjson:
+                        cap_json.append({"values": vjson})
+                    caps_dict[s][i] = {"capability": cap_json}
+                else:
+                    cap.cap = feature_str(fdata) if fdata else cap.cap
+                    cap.values = [value_str(vdata) for vdata in vdata_list] if vdata_list else cap.values
+
+
+
+    # for s in caps_dict:
+    #     if s.lower().startswith("cmd") or s.lower().startswith("vcp"):
+    #         for i, c in enumerate(caps_dict[s]):
+    #             cap = caps_dict[s][i]
+    #             com = get_vcp_com(int(cap.cap))
+    #             if com is not None:
+    #                 cap.cap = feature_str(feature_data(com, cfg))
+    #                 if cap.values is not None:
+    #                     for x, p in enumerate(cap.values):
+    #                         cap.values[x] = value_str(value_data(com, p, cfg))
 
     if args.summary:
         # TODO: implement --json
@@ -135,9 +159,11 @@ def _get_caps(args, cfg: Config):
         print(summary)
         return
 
-    # TODO: do not use PrettyPrinter if --json
-    pprinter = PrettyPrinter(indent=4, sort_dicts=True)
-    pprinter.pprint(caps_dict)
+    if args.json:
+        print(json.dumps(caps_dict))
+    else:
+        pprinter = PrettyPrinter(indent=4, sort_dicts=True)
+        pprinter.pprint(caps_dict)
 
 
 def _get_feature(args, cfg: Config):
