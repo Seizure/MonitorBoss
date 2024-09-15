@@ -1,7 +1,7 @@
 import json
 from argparse import ArgumentParser
 from collections.abc import Sequence
-from logging import getLogger
+from logging import getLogger, DEBUG
 from pprint import PrettyPrinter
 from time import sleep
 
@@ -102,23 +102,24 @@ def _get_caps(args, cfg: Config):
         return
 
     caps_dict = parse_capabilities(caps_raw)
-    # TODO: This might neglect the (rare) case which involves nested Capabilities
-    # TODO: implement --json
+    # TODO: PYDDC definition of Capabilities currently allows for:
+    #   - indefinitely nested caps.
+    #   - non-int feature codes and values (see "code" and "v" variables below
+    #   We do not account for this here, but that should change in PYDDC anyways
+    #   When it is, this code can probably be simplified a bit (or will have to change)
     for s in caps_dict:
         if s.lower().startswith("cmd") or s.lower().startswith("vcp"):
             for i, cap in enumerate(caps_dict[s]):
                 code = cap.cap
                 values = cap.values  # may be None
                 vdata_list = None
-                # TODO: while we expect code to always be an int.... what if it isn't?
                 feature = get_vcp_com(int(code))  # may be None
                 fdata = feature_data(feature, cfg) if feature is not None else None
                 if feature is not None and values is not None:
-                    # TODO: while we expect v to always be an int.... what if it isn't?
                     vdata_list = [value_data(feature, int(v), cfg) for v in values]
                 if args.json:
                     vjson = [vdata.serialize() for vdata in vdata_list] if vdata_list else None
-                    cap_json = [{"feature": fdata.serialize() if fdata is not None else code}]
+                    cap_json = [{"feature": (fdata.serialize() if fdata is not None else {"code": code})}]
                     if vjson:
                         cap_json.append({"values": vjson})
                     caps_dict[s][i] = {"capability": cap_json}
@@ -126,44 +127,36 @@ def _get_caps(args, cfg: Config):
                     cap.cap = feature_str(fdata) if fdata else cap.cap
                     cap.values = [value_str(vdata) for vdata in vdata_list] if vdata_list else cap.values
 
-
-
-    # for s in caps_dict:
-    #     if s.lower().startswith("cmd") or s.lower().startswith("vcp"):
-    #         for i, c in enumerate(caps_dict[s]):
-    #             cap = caps_dict[s][i]
-    #             com = get_vcp_com(int(cap.cap))
-    #             if com is not None:
-    #                 cap.cap = feature_str(feature_data(com, cfg))
-    #                 if cap.values is not None:
-    #                     for x, p in enumerate(cap.values):
-    #                         cap.values[x] = value_str(value_data(com, p, cfg))
-
     if args.summary:
         # TODO: implement --json
-        summary = monitor_str(monitor_data(mon, cfg))
-        summary += ":"
+        mdata = monitor_data(mon, cfg)
+        # vcp_features = {}
+        # for s in (x for x in caps_dict if x.lower().startswith("vcp")):
+        #     for c in (y for y in caps_dict[s]):
+        #         print(c)
 
-        if caps_dict["type"]:
-            summary += f" {caps_dict['type']}"
-        if caps_dict["type"] and caps_dict["model"]:
-            summary += ","
-        if caps_dict["model"]:
-            summary += f" model {caps_dict['model']}"
-        summary += '\n'
-        for s in caps_dict:
-            if s.lower().startswith("vcp"):
-                for c in caps_dict[s]:
-                    if isinstance(c.cap, str) and (str(VCPCodes.input_source) in c.cap or str(VCPCodes.image_color_preset) in c.cap):
-                        summary += f"  - {c.cap}: {', '.join(map(str, c.values))}\n"
-        print(summary)
-        return
-
-    if args.json:
-        print(json.dumps(caps_dict))
+        if args.json:
+            summary = {"caps": {"monitor": mdata.serialize()}}
+            if caps_dict["type"]:
+                summary["caps"]["type"] = caps_dict["type"]
+            if caps_dict["model"]:
+                summary["caps"]["model"] = caps_dict["model"]
+        else:
+            summary = f"{monitor_str(mdata)}: {caps_dict.get('type', '')}"
+            summary += "," if caps_dict["type"] and caps_dict["model"] else ""
+            summary += f" model {caps_dict.get('model', '')}\n"
+            for s in caps_dict:
+                if s.lower().startswith("vcp"):
+                    for c in caps_dict[s]:
+                        if isinstance(c.cap, str) and (str(VCPCodes.input_source) in c.cap or str(VCPCodes.image_color_preset) in c.cap):
+                            summary += f"  - {c.cap}: {', '.join(map(str, c.values))}\n"
+            print(summary)
     else:
-        pprinter = PrettyPrinter(indent=4, sort_dicts=True)
-        pprinter.pprint(caps_dict)
+        if args.json:
+            print(json.dumps({"caps": caps_dict}, indent=(4 if _log.getEffectiveLevel() <= DEBUG else None)))
+        else:
+            pprinter = PrettyPrinter(indent=4, sort_dicts=True)
+            pprinter.pprint(caps_dict)
 
 
 def _get_feature(args, cfg: Config):
