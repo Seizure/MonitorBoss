@@ -24,17 +24,59 @@ files = [
 
 [[package]]
 name = "exceptiongroup"
-version = "1.2.1"
+version = "1.2.2"
 description = "Backport of PEP 654 (exception groups)"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "exceptiongroup-1.2.1-py3-none-any.whl", hash = "sha256:5258b9ed329c5bbdd31a309f53cbfb0b155341807f6ff7606a1e801a891b29ad"},
-    {file = "exceptiongroup-1.2.1.tar.gz", hash = "sha256:a4785e48b045528f5bfe627b6ad554ff32def154f42372786903b7abcfe1aa16"},
+    {file = "exceptiongroup-1.2.2-py3-none-any.whl", hash = "sha256:3111b9d131c238bec2f8f516e123e14ba243563fb135d3fe885990585aa7795b"},
+    {file = "exceptiongroup-1.2.2.tar.gz", hash = "sha256:47c2edf7c6738fafb49fd34290706d1a1a2f4d1c6df275526b62cbb4aa5393cc"},
 ]
 
 [package.extras]
 test = ["pytest (>=6)"]
+
+[[package]]
+name = "frozendict"
+version = "2.4.4"
+description = "A simple immutable dictionary"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "frozendict-2.4.4-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:4a59578d47b3949437519b5c39a016a6116b9e787bb19289e333faae81462e59"},
+    {file = "frozendict-2.4.4-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:12a342e439aef28ccec533f0253ea53d75fe9102bd6ea928ff530e76eac38906"},
+    {file = "frozendict-2.4.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7f79c26dff10ce11dad3b3627c89bb2e87b9dd5958c2b24325f16a23019b8b94"},
+    {file = "frozendict-2.4.4-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:2bd009cf4fc47972838a91e9b83654dc9a095dc4f2bb3a37c3f3124c8a364543"},
+    {file = "frozendict-2.4.4-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:87ebcde21565a14fe039672c25550060d6f6d88cf1f339beac094c3b10004eb0"},
+    {file = "frozendict-2.4.4-cp310-cp310-win_amd64.whl", hash = "sha256:fefeb700bc7eb8b4c2dc48704e4221860d254c8989fb53488540bc44e44a1ac2"},
+    {file = "frozendict-2.4.4-cp310-cp310-win_arm64.whl", hash = "sha256:4297d694eb600efa429769125a6f910ec02b85606f22f178bafbee309e7d3ec7"},
+    {file = "frozendict-2.4.4-cp36-cp36m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:812ab17522ba13637826e65454115a914c2da538356e85f43ecea069813e4b33"},
+    {file = "frozendict-2.4.4-cp36-cp36m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7fee9420475bb6ff357000092aa9990c2f6182b2bab15764330f4ad7de2eae49"},
+    {file = "frozendict-2.4.4-cp36-cp36m-musllinux_1_1_aarch64.whl", hash = "sha256:3148062675536724502c6344d7c485dd4667fdf7980ca9bd05e338ccc0c4471e"},
+    {file = "frozendict-2.4.4-cp36-cp36m-musllinux_1_1_x86_64.whl", hash = "sha256:78c94991944dd33c5376f720228e5b252ee67faf3bac50ef381adc9e51e90d9d"},
+    {file = "frozendict-2.4.4-cp36-cp36m-win_amd64.whl", hash = "sha256:1697793b5f62b416c0fc1d94638ec91ed3aa4ab277f6affa3a95216ecb3af170"},
+    {file = "frozendict-2.4.4-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:199a4d32194f3afed6258de7e317054155bc9519252b568d9cfffde7e4d834e5"},
+    {file = "frozendict-2.4.4-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:85375ec6e979e6373bffb4f54576a68bf7497c350861d20686ccae38aab69c0a"},
+    {file = "frozendict-2.4.4-cp37-cp37m-musllinux_1_1_aarch64.whl", hash = "sha256:2d8536e068d6bf281f23fa835ac07747fb0f8851879dd189e9709f9567408b4d"},
+    {file = "frozendict-2.4.4-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:259528ba6b56fa051bc996f1c4d8b57e30d6dd3bc2f27441891b04babc4b5e73"},
+    {file = "frozendict-2.4.4-cp37-cp37m-win_amd64.whl", hash = "sha256:07c3a5dee8bbb84cba770e273cdbf2c87c8e035903af8f781292d72583416801"},
+    {file = "frozendict-2.4.4-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:6874fec816b37b6eb5795b00e0574cba261bf59723e2de607a195d5edaff0786"},
+    {file = "frozendict-2.4.4-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c8f92425686323a950337da4b75b4c17a3327b831df8c881df24038d560640d4"},
+    {file = "frozendict-2.4.4-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5d58d9a8d9e49662c6dafbea5e641f97decdb3d6ccd76e55e79818415362ba25"},
+    {file = "frozendict-2.4.4-cp38-cp38-musllinux_1_1_aarch64.whl", hash = "sha256:93a7b19afb429cbf99d56faf436b45ef2fa8fe9aca89c49eb1610c3bd85f1760"},
+    {file = "frozendict-2.4.4-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:2b70b431e3a72d410a2cdf1497b3aba2f553635e0c0f657ce311d841bf8273b6"},
+    {file = "frozendict-2.4.4-cp38-cp38-win_amd64.whl", hash = "sha256:e1b941132d79ce72d562a13341d38fc217bc1ee24d8c35a20d754e79ff99e038"},
+    {file = "frozendict-2.4.4-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:dc2228874eacae390e63fd4f2bb513b3144066a977dc192163c9f6c7f6de6474"},
+    {file = "frozendict-2.4.4-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:63aa49f1919af7d45fb8fd5dec4c0859bc09f46880bd6297c79bb2db2969b63d"},
+    {file = "frozendict-2.4.4-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c6bf9260018d653f3cab9bd147bd8592bf98a5c6e338be0491ced3c196c034a3"},
+    {file = "frozendict-2.4.4-cp39-cp39-musllinux_1_1_aarch64.whl", hash = "sha256:6eb716e6a6d693c03b1d53280a1947716129f5ef9bcdd061db5c17dea44b80fe"},
+    {file = "frozendict-2.4.4-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:d13b4310db337f4d2103867c5a05090b22bc4d50ca842093779ef541ea9c9eea"},
+    {file = "frozendict-2.4.4-cp39-cp39-win_amd64.whl", hash = "sha256:b3b967d5065872e27b06f785a80c0ed0a45d1f7c9b85223da05358e734d858ca"},
+    {file = "frozendict-2.4.4-cp39-cp39-win_arm64.whl", hash = "sha256:4ae8d05c8d0b6134bfb6bfb369d5fa0c4df21eabb5ca7f645af95fdc6689678e"},
+    {file = "frozendict-2.4.4-py311-none-any.whl", hash = "sha256:705efca8d74d3facbb6ace80ab3afdd28eb8a237bfb4063ed89996b024bc443d"},
+    {file = "frozendict-2.4.4-py312-none-any.whl", hash = "sha256:d9647563e76adb05b7cde2172403123380871360a114f546b4ae1704510801e5"},
+    {file = "frozendict-2.4.4.tar.gz", hash = "sha256:3f7c031b26e4ee6a3f786ceb5e3abf1181c4ade92dce1f847da26ea2c96008c7"},
+]
 
 [[package]]
 name = "iniconfig"
@@ -63,24 +105,24 @@ altgraph = ">=0.17"
 
 [[package]]
 name = "packaging"
-version = "24.0"
+version = "24.1"
 description = "Core utilities for Python packages"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "packaging-24.0-py3-none-any.whl", hash = "sha256:2ddfb553fdf02fb784c234c7ba6ccc288296ceabec964ad2eae3777778130bc5"},
-    {file = "packaging-24.0.tar.gz", hash = "sha256:eb82c5e3e56209074766e6885bb04b8c38a0c015d0a30036ebe7ece34c9989e9"},
+    {file = "packaging-24.1-py3-none-any.whl", hash = "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"},
+    {file = "packaging-24.1.tar.gz", hash = "sha256:026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002"},
 ]
 
 [[package]]
 name = "pefile"
-version = "2023.2.7"
+version = "2024.8.26"
 description = "Python PE parsing module"
 optional = false
 python-versions = ">=3.6.0"
 files = [
-    {file = "pefile-2023.2.7-py3-none-any.whl", hash = "sha256:da185cd2af68c08a6cd4481f7325ed600a88f6a813bad9dea07ab3ef73d8d8d6"},
-    {file = "pefile-2023.2.7.tar.gz", hash = "sha256:82e6114004b3d6911c77c3953e3838654b04511b8b66e8583db70c65998017dc"},
+    {file = "pefile-2024.8.26-py3-none-any.whl", hash = "sha256:76f8b485dcd3b1bb8166f1128d395fa3d87af26360c2358fb75b80019b957c6f"},
+    {file = "pefile-2024.8.26.tar.gz", hash = "sha256:3ff6c5d8b43e8c37bb6e6dd5085658d658a7a0bdcd20b6a07b1fcfc1c4e9d632"},
 ]
 
 [[package]]
@@ -100,23 +142,23 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "pyinstaller"
-version = "6.6.0"
+version = "6.10.0"
 description = "PyInstaller bundles a Python application and all its dependencies into a single package."
 optional = false
-python-versions = "<3.13,>=3.8"
+python-versions = "<3.14,>=3.8"
 files = [
-    {file = "pyinstaller-6.6.0-py3-none-macosx_10_13_universal2.whl", hash = "sha256:d2705efe79f8749526f65c4bce70ae88eea8b6adfb051f123122e86542fe3802"},
-    {file = "pyinstaller-6.6.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:2aa771693ee3e0a899be3e9d946a24eab9896a98d0d4035f05a22f1193004cfb"},
-    {file = "pyinstaller-6.6.0-py3-none-manylinux2014_i686.whl", hash = "sha256:1fc15e8cebf76361568359a40926aa5746fc0a84ca365fb2ac6caeea014a2cd3"},
-    {file = "pyinstaller-6.6.0-py3-none-manylinux2014_ppc64le.whl", hash = "sha256:7c4a55a5d872c118bc7a5e641c2df46ad18585c002d96adad129b4ee8c104463"},
-    {file = "pyinstaller-6.6.0-py3-none-manylinux2014_s390x.whl", hash = "sha256:97197593344f11f3dd2bdadbab14c61fbc4cdf9cc692a89b047cb671764c1824"},
-    {file = "pyinstaller-6.6.0-py3-none-manylinux2014_x86_64.whl", hash = "sha256:00d81ddeee97710245a7ed03b0f9d5a4daf6c3a07adf978487b10991e1e20470"},
-    {file = "pyinstaller-6.6.0-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:b7cab21db6fcfbdab47ee960239d1b44cd95383a4463177bd592613941d67959"},
-    {file = "pyinstaller-6.6.0-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:00996d2090734d9ae4a1e53ed40351b07d593c37118d3e0d435bbcfa8db9edee"},
-    {file = "pyinstaller-6.6.0-py3-none-win32.whl", hash = "sha256:cfe3ed214601de0723cb660994b44934efacb77a1cf0e4cc5133da996bcf36ce"},
-    {file = "pyinstaller-6.6.0-py3-none-win_amd64.whl", hash = "sha256:e2f55fbbdf8a99ea84b39bc5669a68624473c303486d7eb2cd9063b339f0aa28"},
-    {file = "pyinstaller-6.6.0-py3-none-win_arm64.whl", hash = "sha256:abbd591967593dab264bcc3bcb2466c0a1582f19a112e37e916c4212069c7933"},
-    {file = "pyinstaller-6.6.0.tar.gz", hash = "sha256:be6bc2c3073d3e84fb7148d3af33ce9b6a7f01cfb154e06314cd1d4c05798a32"},
+    {file = "pyinstaller-6.10.0-py3-none-macosx_10_13_universal2.whl", hash = "sha256:d60fb22859e11483af735aec115fdde09467cdbb29edd9844839f2c920b748c0"},
+    {file = "pyinstaller-6.10.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:46d75359668993ddd98630a3669dc5249f3c446e35239b43bc7f4155bc574748"},
+    {file = "pyinstaller-6.10.0-py3-none-manylinux2014_i686.whl", hash = "sha256:3398a98fa17d47ccb31f8779ecbdacec025f7adb2f22757a54b706ac8b4fe906"},
+    {file = "pyinstaller-6.10.0-py3-none-manylinux2014_ppc64le.whl", hash = "sha256:e9989f354ae4ed8a3bec7bdb37ae0d170751d6520e500f049c7cd0632d31d5c3"},
+    {file = "pyinstaller-6.10.0-py3-none-manylinux2014_s390x.whl", hash = "sha256:b7c90c91921b3749083115b28f30f40abf2bb481ceff196d2b2ce0eaa2b3d429"},
+    {file = "pyinstaller-6.10.0-py3-none-manylinux2014_x86_64.whl", hash = "sha256:6cf876d7d93b8b4f28d1ad57fa24645cf43119c79e985dd5e5f7a801245e6f53"},
+    {file = "pyinstaller-6.10.0-py3-none-musllinux_1_1_aarch64.whl", hash = "sha256:db05e3f2f10f9f78c56f1fb163d9cb453433429fe4281218ebaf1ebfd39ba942"},
+    {file = "pyinstaller-6.10.0-py3-none-musllinux_1_1_x86_64.whl", hash = "sha256:28eca3817f176fdc19747e1afcf434f13bb9f17a644f611be2c5a61b1f498ed7"},
+    {file = "pyinstaller-6.10.0-py3-none-win32.whl", hash = "sha256:703e041718987e46ba0568a2c71ecf2459fddef57cf9edf3efeed4a53e3dae3f"},
+    {file = "pyinstaller-6.10.0-py3-none-win_amd64.whl", hash = "sha256:95b55966e563e8b8f31a43882aea10169e9a11fdf38e626d86a2907b640c0701"},
+    {file = "pyinstaller-6.10.0-py3-none-win_arm64.whl", hash = "sha256:308e0a8670c9c9ac0cebbf1bbb492e71b6675606f2ec78bc4adfc830d209e087"},
+    {file = "pyinstaller-6.10.0.tar.gz", hash = "sha256:143840f8056ff7b910bf8f16f6cd92cc10a6c2680bb76d0a25d558d543d21270"},
 ]
 
 [package.dependencies]
@@ -124,7 +166,7 @@ altgraph = "*"
 macholib = {version = ">=1.8", markers = "sys_platform == \"darwin\""}
 packaging = ">=22.0"
 pefile = {version = ">=2022.5.30", markers = "sys_platform == \"win32\""}
-pyinstaller-hooks-contrib = ">=2024.3"
+pyinstaller-hooks-contrib = ">=2024.8"
 pywin32-ctypes = {version = ">=0.2.1", markers = "sys_platform == \"win32\""}
 setuptools = ">=42.0.0"
 
@@ -134,13 +176,13 @@ hook-testing = ["execnet (>=1.5.0)", "psutil", "pytest (>=2.7.3)"]
 
 [[package]]
 name = "pyinstaller-hooks-contrib"
-version = "2024.6"
+version = "2024.8"
 description = "Community maintained hooks for PyInstaller"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "pyinstaller_hooks_contrib-2024.6-py2.py3-none-any.whl", hash = "sha256:6cc88dad75261d9e1a7e0c6385139f35dcdbb16640c911a27f6078fe924a38cf"},
-    {file = "pyinstaller_hooks_contrib-2024.6.tar.gz", hash = "sha256:3c188b3a79f5cd46d96520df3934642556a1b6ce8988ec5bbce820ada424bc2b"},
+    {file = "pyinstaller_hooks_contrib-2024.8-py3-none-any.whl", hash = "sha256:0057fe9a5c398d3f580e73e58793a1d4a8315ca91c3df01efea1c14ed557825a"},
+    {file = "pyinstaller_hooks_contrib-2024.8.tar.gz", hash = "sha256:29b68d878ab739e967055b56a93eb9b58e529d5b054fbab7a2f2bacf80cef3e2"},
 ]
 
 [package.dependencies]
@@ -149,13 +191,13 @@ setuptools = ">=42.0.0"
 
 [[package]]
 name = "pytest"
-version = "8.2.0"
+version = "8.3.3"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest-8.2.0-py3-none-any.whl", hash = "sha256:1733f0620f6cda4095bbf0d9ff8022486e91892245bb9e7d5542c018f612f233"},
-    {file = "pytest-8.2.0.tar.gz", hash = "sha256:d507d4482197eac0ba2bae2e9babf0672eb333017bcedaa5fb1a3d42c1174b3f"},
+    {file = "pytest-8.3.3-py3-none-any.whl", hash = "sha256:a6853c7375b2663155079443d2e45de913a911a11d669df02a50814944db57b2"},
+    {file = "pytest-8.3.3.tar.gz", hash = "sha256:70b98107bd648308a7952b06e6ca9a50bc660be218d53c257cc1fc94fda10181"},
 ]
 
 [package.dependencies]
@@ -163,7 +205,7 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 exceptiongroup = {version = ">=1.0.0rc8", markers = "python_version < \"3.11\""}
 iniconfig = "*"
 packaging = "*"
-pluggy = ">=1.5,<2.0"
+pluggy = ">=1.5,<2"
 tomli = {version = ">=1", markers = "python_version < \"3.11\""}
 
 [package.extras]
@@ -182,30 +224,34 @@ files = [
 
 [[package]]
 name = "pywin32-ctypes"
-version = "0.2.2"
+version = "0.2.3"
 description = "A (partial) reimplementation of pywin32 using ctypes/cffi"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "pywin32-ctypes-0.2.2.tar.gz", hash = "sha256:3426e063bdd5fd4df74a14fa3cf80a0b42845a87e1d1e81f6549f9daec593a60"},
-    {file = "pywin32_ctypes-0.2.2-py3-none-any.whl", hash = "sha256:bf490a1a709baf35d688fe0ecf980ed4de11d2b3e37b51e5442587a75d9957e7"},
+    {file = "pywin32-ctypes-0.2.3.tar.gz", hash = "sha256:d162dc04946d704503b2edc4d55f3dba5c1d539ead017afa00142c38b9885755"},
+    {file = "pywin32_ctypes-0.2.3-py3-none-any.whl", hash = "sha256:8a1513379d709975552d202d942d9837758905c8d01eb82b8bcc30918929e7b8"},
 ]
 
 [[package]]
 name = "setuptools"
-version = "69.5.1"
+version = "75.1.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "setuptools-69.5.1-py3-none-any.whl", hash = "sha256:c636ac361bc47580504644275c9ad802c50415c7522212252c033bd15f301f32"},
-    {file = "setuptools-69.5.1.tar.gz", hash = "sha256:6c1fccdac05a97e598fb0ae3bbed5904ccb317337a51139dcd51453611bbb987"},
+    {file = "setuptools-75.1.0-py3-none-any.whl", hash = "sha256:35ab7fd3bcd95e6b7fd704e4a1539513edad446c097797f2985e0e4b960772f2"},
+    {file = "setuptools-75.1.0.tar.gz", hash = "sha256:d59a21b17a275fb872a9c3dae73963160ae079f1049ed956880cd7c09b120538"},
 ]
 
 [package.extras]
-docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier"]
-testing = ["build[virtualenv]", "filelock (>=3.4.0)", "importlib-metadata", "ini2toml[lite] (>=0.9)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "mypy (==1.9)", "packaging (>=23.2)", "pip (>=19.1)", "pytest (>=6,!=8.1.1)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-home (>=0.5)", "pytest-mypy", "pytest-perf", "pytest-ruff (>=0.2.1)", "pytest-timeout", "pytest-xdist (>=3)", "tomli", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
-testing-integration = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "packaging (>=23.2)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
+check = ["pytest-checkdocs (>=2.4)", "pytest-ruff (>=0.2.1)", "ruff (>=0.5.2)"]
+core = ["importlib-metadata (>=6)", "importlib-resources (>=5.10.2)", "jaraco.collections", "jaraco.functools", "jaraco.text (>=3.7)", "more-itertools", "more-itertools (>=8.8)", "packaging", "packaging (>=24)", "platformdirs (>=2.6.2)", "tomli (>=2.0.1)", "wheel (>=0.43.0)"]
+cover = ["pytest-cov"]
+doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "pyproject-hooks (!=1.1)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier", "towncrier (<24.7)"]
+enabler = ["pytest-enabler (>=2.2)"]
+test = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "jaraco.test", "packaging (>=23.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.*)", "pytest-home (>=0.5)", "pytest-perf", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel (>=0.44.0)"]
+type = ["importlib-metadata (>=7.0.2)", "jaraco.develop (>=7.21)", "mypy (==1.11.*)", "pytest-mypy"]
 
 [[package]]
 name = "tomli"
@@ -232,4 +278,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<3.13"
-content-hash = "2cf4c185c68b4d30d48c27331efd73587f5141687fdd5d28c1826c8092af463a"
+content-hash = "5560946a724fdb3932ccf271dbcef251bbbfcd95a05535b302153e63400e512a"
