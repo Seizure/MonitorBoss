@@ -124,84 +124,100 @@ class TestInfoData:
 
     def test_FeatureData_serialize_yesaliases(self):
         com = get_vcp_com(VCPCodes.input_source)
-        data = info.FeatureData(com, ['foo', 'bar', 'baz'])
-        assert data.serialize() == {"name": "input_source", "code": 96, "aliases": ['foo', 'bar', 'baz']}
+        data = info.FeatureData(com.name, com.value, tuple(['foo', 'bar', 'baz']))
+        assert data.serialize() == {"name": "input_source", "code": 96, "aliases": ('foo', 'bar', 'baz')}
 
     def test_FeatureData_serialize_noaliases(self):
         com = get_vcp_com(VCPCodes.input_source)
-        data = info.FeatureData(com, [])
+        data = info.FeatureData(com.name, com.value, tuple())
         assert data.serialize() == {"name": "input_source", "code": 96}
 
     def test_feature_data(self, test_cfg):
         com = get_vcp_com(VCPCodes.input_source)
-        data = info.FeatureData(com, ['src', 'source', 'input'])
+        data = info.FeatureData(com.name, com.value, tuple(['src', 'source', 'input']))
         assert info.feature_data(com, test_cfg) == data
 
     def test_MonitorData_yesserialize(self):
-        data = info.MonitorData(1, ['foo', 'bar', 'baz'])
-        assert data.serialize() == {"id": 1, "aliases": ['foo', 'bar', 'baz']}
+        data = info.MonitorData(1, tuple(['foo', 'bar', 'baz']))
+        assert data.serialize() == {"id": 1, "aliases": ('foo', 'bar', 'baz')}
 
     def test_MonitorData_serialize_noaliases(self):
-        data = info.MonitorData(1, [])
+        data = info.MonitorData(1, tuple())
         assert data.serialize() == {"id": 1}
 
     def test_monitor_data(self, test_cfg):
-        data = info.MonitorData(1, ['bar', 'baz'])
+        data = info.MonitorData(1, tuple(['bar', 'baz']))
         assert info.monitor_data(1, test_cfg) == data
 
     def test_ValueData_serialize_yesparam_yesaliases(self):
-        data = info.ValueData(75, 'foo', ['bar', 'baz'])
-        assert data.serialize() == {"value": 75, "param": 'foo', "aliases": ['bar', 'baz']}
+        data = info.ValueData(75, 'foo', tuple(['bar', 'baz']))
+        assert data.serialize() == {"value": 75, "param": 'foo', "aliases": ('bar', 'baz')}
 
     def test_ValueData_serialize_noparam_yesaliases(self):
-        data = info.ValueData(75, '', ['bar', 'baz'])
-        assert data.serialize() == {"value": 75, "aliases": ['bar', 'baz']}
+        data = info.ValueData(75, '', tuple(['bar', 'baz']))
+        assert data.serialize() == {"value": 75, "aliases": ('bar', 'baz')}
 
     def test_ValueData_serialize_yesparam_noaliases(self):
-        data = info.ValueData(75, 'foo', [])
+        data = info.ValueData(75, 'foo', tuple())
         assert data.serialize() == {"value": 75, "param": 'foo'}
 
     def test_ValueData_serialize_noparam_noaliases(self):
-        data = info.ValueData(75, '', [])
+        data = info.ValueData(75, '', tuple())
         assert data.serialize() == {"value": 75}
 
     def test_value_data(self, test_cfg):
-        data = info.ValueData(17, "hdmi1", ["hdmi"])
+        data = info.ValueData(17, "hdmi1", tuple(["hdmi"]))
         com = get_vcp_com(VCPCodes.input_source)
         assert data == info.value_data(com, 17, test_cfg)
+
+    def test_CapabilityData_serialize_no_errata(self):
+        # TODO: stub
+        pass
+
+    def test_CapabilityData_serialize_yes_errata(self):
+        # TODO: stub
+        pass
+
+    def test_capability_data(self):
+        # TODO: stub
+        pass
 
 
 class TestInfoStr:
 
     def test_feature_str(self):
         com = get_vcp_com(VCPCodes.input_source)
-        data = info.FeatureData(com, [])
+        data = info.FeatureData(com.name, com.value, tuple())
         assert info.feature_str(data) == f"{com.name} ({com.value})"
 
     def test_monitor_str_noalias(self):
-        data = info.MonitorData(2, [])
+        data = info.MonitorData(2, tuple())
         assert info.monitor_str(data) == "monitor #2"
 
     def test_monitor_str_onealias(self):
-        data = info.MonitorData(0, ["foo"])
+        data = info.MonitorData(0, tuple(["foo"]))
         assert info.monitor_str(data) == "monitor #0 (foo)"
 
     def test_monitor_str_multialias(self):
-        data = info.MonitorData(1, ["bar", "baz"])
+        data = info.MonitorData(1, tuple(["bar", "baz"]))
         assert info.monitor_str(data) == "monitor #1 (bar, baz)"
 
     def test_value_str_noparam_noalias(self):
-        data = info.ValueData(24, "", [])
+        data = info.ValueData(24, "", tuple())
         assert info.value_str(data) == "24"
 
     def test_value_str_yesparam_noalias(self):
-        data = info.ValueData(24, "foo", [])
+        data = info.ValueData(24, "foo", tuple())
         assert info.value_str(data) == "24 (PARAM: foo)"
 
     def test_value_str_noparam_yesalias(self):
-        data = info.ValueData(24, "", ['foo', 'bar'])
+        data = info.ValueData(24, "", tuple(['foo', 'bar']))
         assert info.value_str(data) == "24 (ALIASES: foo, bar)"
 
     def test_value_str_yesparam_yesalias(self):
-        data = info.ValueData(24, "foo", ["bar", "baz"])
+        data = info.ValueData(24, "foo", tuple(["bar", "baz"]))
         assert info.value_str(data) == "24 (PARAM: foo | ALIASES: bar, baz)"
+
+    def test_capability_str(self):
+        # TODO: stub
+        pass

@@ -8,7 +8,7 @@ from time import sleep
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
-from monitorboss.info import feature_str, monitor_str, value_str, feature_data, monitor_data, value_data
+from monitorboss.info import feature_str, monitor_str, value_str, feature_data, monitor_data, value_data, capability_data
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -91,6 +91,7 @@ def _list_mons(args, cfg: Config):
 
 def _get_caps(args, cfg: Config):
     _log.debug(f"get capabilities: {args}")
+    indent_level = 4 if _log.getEffectiveLevel() <= DEBUG else None
     mon = _check_mon(args.monitor, cfg)
     caps_raw = get_vcp_capabilities(mon)
 
@@ -102,6 +103,17 @@ def _get_caps(args, cfg: Config):
         return
 
     caps_dict = parse_capabilities(caps_raw)
+    caps_data = capability_data(caps_dict, cfg)
+
+    if args.summary:
+        if args.json:
+            print(json.dumps({"caps": {"full": caps_data.serialize()}}, indent=indent_level))
+        else:
+            print(capability_str(caps_data))
+        return
+
+    print(json.dumps(caps_data.serialize(), indent=4))
+    exit()
     # TODO: PYDDC definition of Capabilities currently allows for:
     #   - indefinitely nested caps.
     #   - non-int feature codes and values (see "code" and "v" variables below
@@ -130,10 +142,15 @@ def _get_caps(args, cfg: Config):
     if args.summary:
         # TODO: implement --json
         mdata = monitor_data(mon, cfg)
-        # vcp_features = {}
-        # for s in (x for x in caps_dict if x.lower().startswith("vcp")):
-        #     for c in (y for y in caps_dict[s]):
-        #         print(c)
+        vcp_features = {}
+        for s in (x for x in caps_dict if x.lower().startswith("vcp")):
+            for c in caps_dict[s]:
+                if args.json:
+                    pass
+                else:
+                    if isinstance(c.cap, str) and ((str(VCPCodes.input_source) in c.cap or str(VCPCodes.image_color_preset) in c.cap)):
+                        vcp_features[s]
+                        pass
 
         if args.json:
             summary = {"caps": {"monitor": mdata.serialize()}}
@@ -153,7 +170,7 @@ def _get_caps(args, cfg: Config):
             print(summary)
     else:
         if args.json:
-            print(json.dumps({"caps": caps_dict}, indent=(4 if _log.getEffectiveLevel() <= DEBUG else None)))
+            print(json.dumps({"caps": caps_dict}, indent=indent_level))
         else:
             pprinter = PrettyPrinter(indent=4, sort_dicts=True)
             pprinter.pprint(caps_dict)

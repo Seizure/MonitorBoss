@@ -69,7 +69,7 @@ class VCPCommand:
     readable: bool
     writeable: bool
     discrete: bool
-    param_names: dict
+    param_names: dict  # TODO: is there a more abstract way to do this? We only care that it's a hashable map
 
     def __str__(self):
         return f"VCPCommand: {self.name} ({self.value})"
