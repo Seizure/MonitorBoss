@@ -78,7 +78,7 @@ class WindowsVCP(VCP):
     def _set_vcp_feature(self, code: VCPCommand, value: int, timeout: float):
         del timeout # unused
         try:
-            if not dxva2.SetVCPFeature(HANDLE(self.handle), BYTE(code.value), DWORD(value)):
+            if not dxva2.SetVCPFeature(HANDLE(self.handle), BYTE(code.code), DWORD(value)):
                 raise VCPError(f"failed to set VCP feature: {ctypes.FormatError()}")
         except OSError as err:
             raise VCPError("failed to close handle") from err
@@ -90,7 +90,7 @@ class WindowsVCP(VCP):
         try:
             if not dxva2.GetVCPFeatureAndVCPFeatureReply(
                 HANDLE(self.handle),
-                BYTE(code.value),
+                BYTE(code.code),
                 None,
                 ctypes.byref(feature_current),
                 ctypes.byref(feature_max),
@@ -98,7 +98,7 @@ class WindowsVCP(VCP):
                 raise VCPError(f"failed to get VCP feature: {ctypes.FormatError()}")
         except OSError as err:
             raise VCPError("failed to get VCP feature") from err
-        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply -> (code: {code.value}) | (feature current/max: {feature_current.value} / {feature_max.value})")
+        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply -> (code: {code.code}) | (feature current/max: {feature_current.value} / {feature_max.value})")
         return VCPFeatureReturn(feature_current.value, feature_max.value)
 
     def _get_vcp_capabilities_str(self, timeout: float) -> str:
@@ -114,7 +114,7 @@ class WindowsVCP(VCP):
                 raise VCPError(f"failed to get VCP capabilities: {ctypes.FormatError()}")
         except OSError as err:
             raise VCPError("failed to get VCP capabilities") from err
-        return caps_str.value.decode("ascii")
+        return caps_str.code.decode("ascii")
 
     @staticmethod
     def get_vcps() -> List[WindowsVCP]:

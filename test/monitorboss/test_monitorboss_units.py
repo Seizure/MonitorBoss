@@ -54,13 +54,13 @@ class TestImpl:
 class TestCLIcheckers:
 
     def test_check_attr_alias_valid(self, test_cfg):
-        assert cli._check_feature("src", test_cfg) == get_vcp_com(VCPCodes.input_source.value)
+        assert cli._check_feature("src", test_cfg) == get_vcp_com(VCPCodes.input_source.code)
 
     def test_check_attr_name_valid(self, test_cfg):
-        assert cli._check_feature("input_source", test_cfg) == get_vcp_com(VCPCodes.input_source.value)
+        assert cli._check_feature("input_source", test_cfg) == get_vcp_com(VCPCodes.input_source.code)
 
     def test_check_attr_int_valid(self, test_cfg):
-        assert cli._check_feature(f"{VCPCodes.input_source.value}", test_cfg) == get_vcp_com(VCPCodes.input_source.value)
+        assert cli._check_feature(f"{VCPCodes.input_source.code}", test_cfg) == get_vcp_com(VCPCodes.input_source.code)
 
     def test_check_attr_namealias_invalid(self, test_cfg):
         with pytest.raises(MonitorBossError):
@@ -124,18 +124,23 @@ class TestInfoData:
 
     def test_FeatureData_serialize_yesaliases(self):
         com = get_vcp_com(VCPCodes.input_source)
-        data = info.FeatureData(com.name, com.value, tuple(['foo', 'bar', 'baz']))
+        data = info.FeatureData(com.name, com.code, tuple(['foo', 'bar', 'baz']))
         assert data.serialize() == {"name": "input_source", "code": 96, "aliases": ('foo', 'bar', 'baz')}
 
     def test_FeatureData_serialize_noaliases(self):
         com = get_vcp_com(VCPCodes.input_source)
-        data = info.FeatureData(com.name, com.value, tuple())
+        data = info.FeatureData(com.name, com.code, tuple())
         assert data.serialize() == {"name": "input_source", "code": 96}
 
-    def test_feature_data(self, test_cfg):
-        com = get_vcp_com(VCPCodes.input_source)
-        data = info.FeatureData(com.name, com.value, tuple(['src', 'source', 'input']))
-        assert info.feature_data(com, test_cfg) == data
+    def test_feature_data_found_com(self, test_cfg):
+        code = VCPCodes.input_source
+        com = get_vcp_com(code)
+        data = info.FeatureData(com.name, com.code, tuple(['src', 'source', 'input']))
+        assert info.feature_data(code.code, test_cfg) == data
+
+    def test_feature_data_no_com(self, test_cfg):
+        # TODO: stub - test when code is not known com
+        pass
 
     def test_MonitorData_yesserialize(self):
         data = info.MonitorData(1, tuple(['foo', 'bar', 'baz']))
@@ -166,9 +171,9 @@ class TestInfoData:
         assert data.serialize() == {"value": 75}
 
     def test_value_data(self, test_cfg):
+        code = VCPCodes.input_source
         data = info.ValueData(17, "hdmi1", tuple(["hdmi"]))
-        com = get_vcp_com(VCPCodes.input_source)
-        assert data == info.value_data(com, 17, test_cfg)
+        assert data == info.value_data(code, 17, test_cfg)
 
     def test_CapabilityData_serialize_no_errata(self):
         # TODO: stub
@@ -187,8 +192,8 @@ class TestInfoStr:
 
     def test_feature_str(self):
         com = get_vcp_com(VCPCodes.input_source)
-        data = info.FeatureData(com.name, com.value, tuple())
-        assert info.feature_str(data) == f"{com.name} ({com.value})"
+        data = info.FeatureData(com.name, com.code, tuple())
+        assert info.feature_str(data) == f"{com.name} ({com.code})"
 
     def test_monitor_str_noalias(self):
         data = info.MonitorData(2, tuple())

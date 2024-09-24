@@ -16,8 +16,8 @@ def compile_usage_md_text() -> str:
 {help_texts[sub]}```
 """ for sub in help_texts if sub != '')}
 ## Available attributes
-{nl.join(f"""* {attr.name} - {attr.value.description}
-  * {attr.value.notes}""" for attr in Feature)}
+{nl.join(f"""* {attr.name} - {attr.code.description}
+  * {attr.code.notes}""" for attr in Feature)}
 '''.replace('./scratch.py',
             'monitorboss.py')
     # TODO: convert replace to regex so it doesnt matter where it's called from

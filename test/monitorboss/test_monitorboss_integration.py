@@ -76,11 +76,11 @@ def test_caps_summary_json(test_conf_file, capsys):
 
 
 def test_get_feature_human(test_conf_file, capsys):
-    com = get_vcp_com(VCPCodes.image_luminance)
+    code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fstring = info.feature_str(info.feature_data(com, cfg))
+    fstring = info.feature_str(info.feature_data(code.code, cfg))
     mstring = info.monitor_str(info.monitor_data(1, cfg))
-    vstring = info.value_str(info.value_data(com, 75, cfg))
+    vstring = info.value_str(info.value_data(code.code, 75, cfg))
     expected = f"{fstring} for {mstring} is {vstring} (Maximum: 75)\n"
     cli.run(f"--config {test_conf_file.as_posix()} get 1 lum")
     output = capsys.readouterr()
@@ -89,11 +89,11 @@ def test_get_feature_human(test_conf_file, capsys):
 
 
 def test_get_feature_json(test_conf_file, capsys):
-    com = get_vcp_com(VCPCodes.image_luminance)
+    code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fdata = info.feature_data(com, cfg)
+    fdata = info.feature_data(code.code, cfg)
     mdata = info.monitor_data(1, cfg)
-    vdata = info.value_data(com, 75, cfg)
+    vdata = info.value_data(code.code, 75, cfg)
     expected = json.dumps({"get": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} --json get bar lum")
     output = capsys.readouterr()
@@ -102,11 +102,11 @@ def test_get_feature_json(test_conf_file, capsys):
 
 
 def test_set_feature_human(test_conf_file, capsys):
-    com = get_vcp_com(VCPCodes.image_luminance)
+    code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fstring = info.feature_str(info.feature_data(com, cfg))
+    fstring = info.feature_str(info.feature_data(code.code, cfg))
     mstring = info.monitor_str(info.monitor_data(1, cfg))
-    vstring = info.value_str(info.value_data(com, 75, cfg))
+    vstring = info.value_str(info.value_data(code.code, 75, cfg))
     expected = f"set {fstring} for {mstring} to {vstring}\n"
     # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
     #   there should be a way to have separate "Sessions" for each test, should figure out later
@@ -117,11 +117,11 @@ def test_set_feature_human(test_conf_file, capsys):
 
 
 def test_set_feature_json(test_conf_file, capsys):
-    com = get_vcp_com(VCPCodes.image_luminance)
+    code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fdata = info.feature_data(com, cfg)
+    fdata = info.feature_data(code.code, cfg)
     mdata = info.monitor_data(1, cfg)
-    vdata = info.value_data(com, 75, cfg)
+    vdata = info.value_data(code.code, 75, cfg)
     expected = json.dumps({"set": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} --json set bar lum 75")
     output = capsys.readouterr()
@@ -130,11 +130,11 @@ def test_set_feature_json(test_conf_file, capsys):
 
 
 def test_tog_feature_human(test_conf_file, capsys):
-    com = get_vcp_com(VCPCodes.image_luminance)
+    code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fstring = info.feature_str(info.feature_data(com, cfg))
+    fstring = info.feature_str(info.feature_data(code.code, cfg))
     mstring = info.monitor_str(info.monitor_data(1, cfg))
-    vstring = info.value_str(info.value_data(com, 75, cfg))
+    vstring = info.value_str(info.value_data(code.code, 75, cfg))
     expected = f"toggled {fstring} for {mstring} from {vstring} to {vstring}\n"
     # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
     #   there should be a way to have separate "Sessions" for each test, should figure out later
@@ -145,11 +145,11 @@ def test_tog_feature_human(test_conf_file, capsys):
 
 
 def test_tog_feature_json(test_conf_file, capsys):
-    com = get_vcp_com(VCPCodes.image_luminance)
+    code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fdata = info.feature_data(com, cfg)
+    fdata = info.feature_data(code.code, cfg)
     mdata = info.monitor_data(1, cfg)
-    vdata = info.value_data(com, 75, cfg)
+    vdata = info.value_data(code.code, 75, cfg)
     expected = json.dumps({"toggle": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "original_value": vdata.serialize(), "new_value": vdata.serialize()}}) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} --json tog bar lum 75 75")
     output = capsys.readouterr()

@@ -65,14 +65,14 @@ class ColorPresetNames(IntEnum):
 class VCPCommand:
     name: str
     desc: str
-    value: VCPCodes
+    code: VCPCodes
     readable: bool
     writeable: bool
     discrete: bool
     param_names: dict  # TODO: is there a more abstract way to do this? We only care that it's a hashable map
 
     def __str__(self):
-        return f"VCPCommand: {self.name} ({self.value})"
+        return f"VCPCommand: {self.name} ({self.code})"
 
 
 # TODO: 'name' can probably be based off the VCPCode, if we set `value` first?
@@ -82,7 +82,7 @@ _VCP_COMMANDS = [
     VCPCommand(
         name="restore_factory_default",
         desc="restore factory default image",
-        value=VCPCodes.restore_factory_default,
+        code=VCPCodes.restore_factory_default,
         readable=False,
         writeable=True,
         discrete=True,
@@ -90,7 +90,7 @@ _VCP_COMMANDS = [
     VCPCommand(
         name="image_luminance",
         desc="image luminance",
-        value=VCPCodes.image_luminance,
+        code=VCPCodes.image_luminance,
         readable=True,
         writeable=True,
         discrete=False,
@@ -98,7 +98,7 @@ _VCP_COMMANDS = [
     VCPCommand(
         name="image_contrast",
         desc="image contrast",
-        value=VCPCodes.image_contrast,
+        code=VCPCodes.image_contrast,
         readable=True,
         writeable=True,
         discrete=False,
@@ -106,7 +106,7 @@ _VCP_COMMANDS = [
     VCPCommand(
         name="image_color_preset",
         desc="image color preset",
-        value=VCPCodes.image_color_preset,
+        code=VCPCodes.image_color_preset,
         readable=True,
         writeable=True,
         discrete=False,
@@ -114,7 +114,7 @@ _VCP_COMMANDS = [
     VCPCommand(
         name="active_control",
         desc="active control",
-        value=VCPCodes.active_control,
+        code=VCPCodes.active_control,
         readable=True,
         writeable=False,
         discrete=True,
@@ -122,7 +122,7 @@ _VCP_COMMANDS = [
     VCPCommand(
         name="input_source",
         desc="input source",
-        value=VCPCodes.input_source,
+        code=VCPCodes.input_source,
         readable=True,
         writeable=True,
         discrete=True,
@@ -130,7 +130,7 @@ _VCP_COMMANDS = [
     VCPCommand(
         name="image_orientation",
         desc="image orientation",
-        value=VCPCodes.image_orientation,
+        code=VCPCodes.image_orientation,
         readable=True,
         writeable=False,
         discrete=True,
@@ -138,7 +138,7 @@ _VCP_COMMANDS = [
     VCPCommand(
         name="display_power_mode",
         desc="display power mode",
-        value=VCPCodes.display_power_mode,
+        code=VCPCodes.display_power_mode,
         readable=True,
         writeable=False,
         discrete=True,
@@ -154,6 +154,6 @@ def get_vcp_com(key: str | int) -> VCPCommand | None:
     for com in _VCP_COMMANDS:
         if isinstance(key, str) and com.name == key:
             return com
-        elif com.value == key:
+        elif com.code == key:
             return com
     return None

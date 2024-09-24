@@ -20,8 +20,8 @@ def _check_feature(feature: str, cfg: Config) -> VCPCommand:
     _log.debug(f"check feature: {feature!r}")
     if feature.isdigit():
         for code in VCPCodes:
-            if int(feature) == code.value:
-                return get_vcp_com(code.value)
+            if int(feature) == code.code:
+                return get_vcp_com(code.code)
         raise MonitorBossError(
             f"{feature} is not a valid feature code."
         )
@@ -30,7 +30,7 @@ def _check_feature(feature: str, cfg: Config) -> VCPCommand:
             if alias == feature:
                 return get_vcp_com(code)
         for code in VCPCodes:
-            com = get_vcp_com(code.value)
+            com = get_vcp_com(code.code)
             if com.name == feature:
                 return com
         raise MonitorBossError(
@@ -61,7 +61,7 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
         if val in com.param_names:
             return com.param_names[val]
         # ... and if not, check if the command is input_source, and if so, check the aliases
-        if com.value == VCPCodes.input_source:
+        if com.code == VCPCodes.input_source:
             # TODO: This will need to be generalized when we allow for arbitrary value aliases
             if val in cfg.input_source_names:
                 return cfg.input_source_names[val]
@@ -71,7 +71,7 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
     if com.param_names:
         error_text += f"\t- [PARAM NAMES]: {', '.join(list(com.param_names.keys()))}\n"
     # TODO: This will need to be generalized when we allow for arbitrary value aliases
-    if com.value == VCPCodes.input_source and cfg.input_source_names:
+    if com.code == VCPCodes.input_source and cfg.input_source_names:
         error_text += f"\t- [CONFIG ALIASES]: {', '.join(list(cfg.input_source_names))}\n"
     error_text += """\t- a code number (non-negative integer).\n
     NOTE: A particular monitor may only support some of these values. Check your monitor's specs for the inputs it accepts."""
@@ -184,14 +184,14 @@ def _get_feature(args, cfg: Config):
     max_vals = []
     for i, m in enumerate(mons):
         ret = get_feature(m, vcpcom, cfg.wait_internal_time)
-        cur_vals.append(ret.value)
+        cur_vals.append(ret.code)
         max_vals.append(None if vcpcom.discrete else ret.max)
         if i+1 < len(mons):
             sleep(cfg.wait_get_time)
     for mon, val, maximum in zip(mons, cur_vals, max_vals):
-        fdata = feature_data(vcpcom, cfg)
+        fdata = feature_data(vcpcom.code, cfg)
         mdata = monitor_data(mon, cfg)
-        vdata = value_data(vcpcom, val, cfg)
+        vdata = value_data(vcpcom.code, val, cfg)
         if args.json:
             print(json.dumps({"get": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}))
         else:
@@ -205,7 +205,7 @@ def _set_feature(args, cfg: Config):
     _log.debug(f"set feature: {args}")
     vcpcom = _check_feature(args.feature, cfg)
     mons = [_check_mon(m, cfg) for m in args.monitor]
-    val = _check_val(vcpcom, args.value, cfg)
+    val = _check_val(vcpcom, args.code, cfg)
     new_vals = []
     for i, m in enumerate(mons):
         new_vals.append(set_feature(m, vcpcom, val, cfg.wait_internal_time))
@@ -213,9 +213,9 @@ def _set_feature(args, cfg: Config):
             sleep(cfg.wait_set_time)
     new_vals = [set_feature(m, vcpcom, val, cfg.wait_internal_time) for m in mons]
     for mon, new_val in zip(mons, new_vals):
-        fdata = feature_data(vcpcom, cfg)
+        fdata = feature_data(vcpcom.code, cfg)
         mdata = monitor_data(mon, cfg)
-        vdata = value_data(vcpcom, new_val, cfg)
+        vdata = value_data(vcpcom.code, new_val, cfg)
         if args.json:
             print(json.dumps({"set": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}))
         else:
@@ -237,10 +237,10 @@ def _tog_feature(args, cfg: Config):
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     for mon, tog_val in zip(mons, tog_vals):
-        fdata = feature_data(vcpcom, cfg)
+        fdata = feature_data(vcpcom.code, cfg)
         mdata = monitor_data(mon, cfg)
-        vdata_new = value_data(vcpcom, tog_val.new, cfg)
-        vdata_original = value_data(vcpcom, tog_val.old, cfg)
+        vdata_new = value_data(vcpcom.code, tog_val.new, cfg)
+        vdata_original = value_data(vcpcom.code, tog_val.old, cfg)
         if args.json:
             print(json.dumps({"toggle": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "original_value": vdata_original.serialize(), "new_value": vdata_new.serialize()}}))
             pass

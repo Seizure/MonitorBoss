@@ -108,7 +108,7 @@ class ToggledFeature:
 
 def toggle_feature(mon: int, feature: VCPCommand, val1: int, val2: int, timeout: float) -> ToggledFeature:
     _log.debug(f"toggle feature: {feature.name} between {val1} and {val2} (for monitor #{mon})")
-    cur_val = get_feature(mon, feature, timeout).value
+    cur_val = get_feature(mon, feature, timeout).code
     new_val = val2 if cur_val == val1 else val1
     set_feature(mon, feature, new_val, timeout)
     return ToggledFeature(cur_val, new_val)
@@ -126,4 +126,4 @@ def signal_monitor(mon: int):
     sleep(visible_wait)
     set_feature(mon, get_vcp_com(VCPCodes.image_luminance), 0, timeout)
     sleep(visible_wait)
-    set_feature(mon, get_vcp_com(VCPCodes.image_luminance), lum.value, timeout)
+    set_feature(mon, get_vcp_com(VCPCodes.image_luminance), lum.code, timeout)

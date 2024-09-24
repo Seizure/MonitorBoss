@@ -96,7 +96,7 @@ class LinuxVCP(VCP):
         # transmission data
         data = bytearray()
         data.append(self.SET_VCP_CMD)
-        data.append(code.value)
+        data.append(code.code)
         low_byte, high_byte = struct.pack("H", value)
         data.append(high_byte)
         data.append(low_byte)
@@ -115,7 +115,7 @@ class LinuxVCP(VCP):
         # transmission data
         data = bytearray()
         data.append(self.GET_VCP_CMD)
-        data.append(code.value)
+        data.append(code.code)
         # add headers and footers
         data.insert(0, (len(data) | self.PROTOCOL_FLAG))
         data.insert(0, self.HOST_ADDRESS)
@@ -153,7 +153,7 @@ class LinuxVCP(VCP):
         ) = struct.unpack(">BBBBHH", payload)
         if reply_code != self.GET_VCP_REPLY:
             raise VCPIOError(f"received unexpected response code: {reply_code}")
-        if vcp_opcode != code.value:
+        if vcp_opcode != code.code:
             raise VCPIOError(f"received unexpected opcode: {vcp_opcode}")
         if result_code > 0:
             try:

@@ -23,8 +23,14 @@ class FeatureData:
         return data
 
 
-def feature_data(com: VCPCommand, cfg: Config) -> FeatureData:
-    return FeatureData(com.name, com.value, tuple([alias for alias, val in cfg.feature_aliases.items() if val == com.value.value]))
+def feature_data(code: int, cfg: Config) -> FeatureData:
+    com = get_vcp_com(code)
+    name = ""
+    aliases = []
+    if com:
+        name = com.name
+        aliases = [alias for alias, val in cfg.feature_aliases.items() if val == com.code.value]
+    return FeatureData(name, code, tuple(aliases))
 
 
 def feature_str(data: FeatureData) -> str:
@@ -66,16 +72,18 @@ class ValueData:
         return data
 
 
-def value_data(com: VCPCommand, value: int, cfg: Config) -> ValueData:
+def value_data(code: int, value: int, cfg: Config) -> ValueData:
+    com = get_vcp_com(code)
     param = ""
     aliases = []
-    for v, k in com.param_names.items():
-        if value == k:
-            param = v
-            break
-    # TODO: This will need to be generalized when we allow for arbitrary value aliases
-    if com.value == VCPCodes.input_source:
-        aliases = [alias for alias, val in cfg.input_source_names.items() if value == val]
+    if com:
+        for v, k in com.param_names.items():
+            if value == k:
+                param = v
+                break
+        # TODO: This will need to be generalized when we allow for arbitrary value aliases
+        if com.code == VCPCodes.input_source:
+            aliases = [alias for alias, val in cfg.input_source_names.items() if value == val]
 
     data = ValueData(value, param, tuple(aliases))
 
@@ -133,32 +141,6 @@ class CapabilityData:
             ),
         }
 
-        data = dict(self.attributes)
-        cmds = {}
-        for cmd_key, feature_tuple in self.cmds.items():
-            features = []
-            for f in feature_tuple:
-                features.append(f.serialize() if isinstance(f, FeatureData) else f)
-            cmds[cmd_key] = features
-        data["cmds"] = cmds
-        vcps = {}
-        for vcp_key, vcp_dict in self.vcps.items():
-            vcp = []
-            for feature_key, value_tuple in vcp_dict.items():
-                values = []
-                for v in value_tuple:
-                    values.append(v.serialize() if isinstance(v, ValueData) else v)
-                feature = {"feature": feature_key.serialize() if isinstance(feature_key, FeatureData) else {"code": feature_key}}
-                if values:
-                    feature["params"] = values
-                vcp.append(feature)
-            vcps[vcp_key] = vcp
-        data["vcps"] = vcps
-        if self.errata:
-            data["errata"] = dict(self.errata)
-
-        return data
-
 
 def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
     info_fields: dict[str, int] = {}
@@ -174,8 +156,7 @@ def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
         if s.lower().startswith("cmd") and caps[s]:
             features = caps[s]
             for i, f in enumerate(features):
-                com = get_vcp_com(f.cap)
-                features[i] = feature_data(com, cfg) if com else f.cap
+                features[i] = feature_data(f.cap, cfg)
             cmds[s] = features
         elif s.lower().startswith("vcp") and caps[s]:
             features_values = {}
@@ -184,14 +165,8 @@ def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
                 values = f.values if f.values else []
                 if com:
                     for j, v in enumerate(values):
-                        values[j] = value_data(com, v, cfg)
-                try:
-                    features_values[feature_data(com, cfg) if com else f.cap] = values
-                except TypeError as err:
-                    print(err)
-                    traceback.print_tb(err.__traceback__)
-                    print(feature_data(com, cfg) if com else f.cap)
-                    exit()
+                        values[j] = value_data(com.code, v, cfg)
+                features_values[feature_data(f.cap, cfg)] = values
 
             vcps[s] = features_values
         else:

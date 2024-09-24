@@ -37,7 +37,7 @@ class DummyVCP(ABCVCP):
 
     def _set_vcp_feature(self, com: VCPCommand, value: int, timeout: float):
         del timeout # unused
-        code = com.value
+        code = com.code
         if code not in supported_codes:
             # This is not defined behavior in practice, some monitors don't complain.
             # Therefor it is probably not worth testing against this result.
@@ -57,7 +57,7 @@ class DummyVCP(ABCVCP):
 
     def _get_vcp_feature(self, com: VCPCommand, timeout: float) -> (int, int):
         del timeout # unused
-        code = com.value
+        code = com.code
         if code not in supported_codes:
             # This is not defined behavior in practice, some monitors don't complain and just return garbage.
             # Therefor it is probably not worth testing against this result.

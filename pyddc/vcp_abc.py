@@ -75,12 +75,12 @@ class VCP(abc.ABC):
             raise TypeError(f"cannot read write-only code: {code}")
         self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply(_, {code.__repr__()}, None, _, _)")
         ret = self._get_vcp_feature(code, timeout)
-        if code.value == VCPCodes.input_source:
+        if code.code == VCPCodes.input_source:
             # The input source sometimes has a high byte that needs to be masked out.
             # Requires further research. Just copy monitorcontrol for now and ignore it.
             ret = VCPFeatureReturn(ret.value & 0xff, ret.max & 0xff)
         if not code.discrete:
-            self.code_maximum[code.value] = ret.max
+            self.code_maximum[code.code] = ret.max
         return ret
 
     @abc.abstractmethod
@@ -103,7 +103,7 @@ class VCP(abc.ABC):
         # support non_specification feature codes. Though...
         # TODO: that might mean VCPCommand needs to store int, not
         #   VCPCode as the value
-        feature_code = code.value.value
+        feature_code = code.code.value
         if feature_code in self.code_maximum:
             return self.code_maximum[feature_code]
         else:

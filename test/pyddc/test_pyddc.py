@@ -63,7 +63,7 @@ class TestGetMax:
     def test_getmax_supported_continuous_code(self):
         with self.vcp as vcp:
             assert vcp.get_vcp_feature_max(lum_command) == 80
-        assert self.vcp.code_maximum[lum_command.value] == 80
+        assert self.vcp.code_maximum[lum_command.code] == 80
 
 
 class TestSetFeature:
@@ -130,7 +130,7 @@ class TestVCPCommands:
         assert get_vcp_com("rawr") is None
 
     def test_get_com_by_int(self):
-        assert get_vcp_com(16).value == 16
+        assert get_vcp_com(16).code == 16
 
     def test_get_com_by_str(self):
-        assert get_vcp_com("image_luminance").value == 16
+        assert get_vcp_com("image_luminance").code == 16
