@@ -65,6 +65,7 @@ class VCP(abc.ABC):
         self.logger.debug(f"SetVCPFeature(_, {code.__repr__()}, {value=})")
         self._set_vcp_feature(code, value, timeout)
 
+    # TODO: discuss whether we need/want timeout here
     @abc.abstractmethod
     def _set_vcp_feature(self, code: VCPCommand, value: int, timeout: float):
         pass
@@ -177,7 +178,7 @@ def _parse_caps_hex_list(caps_str: str) -> list[Capability]:
             value = caps_str[index:index + size]
             try:
                 value = int(value, 16)
-            except ValueError as err:
+            except ValueError:
                 # invalid hex value; just ignore it and keep the string
                 pass
             cap = Capability(value, None)

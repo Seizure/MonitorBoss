@@ -1,9 +1,9 @@
-from enum import Enum # cannot use StrEnum, it's not in Python 3.10
+from enum import Enum  # cannot use StrEnum, it's not in Python 3.10
 from logging import getLogger
 from pathlib import Path
 from dataclasses import dataclass, field
 
-from tomlkit import parse, dump, comment, document, table, TOMLDocument
+from tomlkit import parse, dump, document, table, TOMLDocument
 from tomlkit.items import Array, String, Trivia
 
 from monitorboss import MonitorBossError

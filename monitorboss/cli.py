@@ -109,7 +109,7 @@ def _get_caps(args, cfg: Config):
         if args.json:
             print(json.dumps({"caps": {"full": caps_data.serialize()}}, indent=indent_level))
         else:
-            # TODO: when capability_str is done
+            # TODO: when capability.__str__() is done
             pass
         return
 

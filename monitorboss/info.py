@@ -1,11 +1,9 @@
-import traceback
 from dataclasses import dataclass
-from typing import ItemsView
 
 from frozendict import frozendict
 
 from monitorboss.config import Config
-from pyddc import VCPCommand, get_vcp_com
+from pyddc import get_vcp_com
 from pyddc.vcp_abc import Capabilities
 from pyddc.vcp_codes import VCPCodes
 

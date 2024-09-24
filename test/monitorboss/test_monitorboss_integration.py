@@ -2,7 +2,6 @@ import json
 from textwrap import dedent
 
 import test.pyddc
-from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc

@@ -76,7 +76,7 @@ class WindowsVCP(VCP):
         return super().__exit__(exception_type, exception_value, exception_traceback)
 
     def _set_vcp_feature(self, code: VCPCommand, value: int, timeout: float):
-        del timeout # unused
+        del timeout  # unused
         try:
             if not dxva2.SetVCPFeature(HANDLE(self.handle), BYTE(code.code), DWORD(value)):
                 raise VCPError(f"failed to set VCP feature: {ctypes.FormatError()}")
@@ -84,7 +84,7 @@ class WindowsVCP(VCP):
             raise VCPError("failed to close handle") from err
 
     def _get_vcp_feature(self, com: VCPCommand, timeout: float) -> VCPFeatureReturn:
-        del timeout # unused
+        del timeout  # unused
         feature_current = DWORD()
         feature_max = DWORD()
         try:
@@ -102,7 +102,7 @@ class WindowsVCP(VCP):
         return VCPFeatureReturn(feature_current.value, feature_max.value)
 
     def _get_vcp_capabilities_str(self, timeout: float) -> str:
-        del timeout # unused
+        del timeout  # unused
         cap_length = DWORD()
         self.logger.debug("GetCapabilitiesStringLength")
         try:

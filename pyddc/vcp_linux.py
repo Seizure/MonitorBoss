@@ -3,7 +3,7 @@ from __future__ import annotations
 from .vcp_codes import VCPCommand
 from .vcp_abc import VCP, VCPIOError, VCPPermissionError, VCPFeatureReturn
 from types import TracebackType
-from typing import List, Optional, Tuple, Type
+from typing import List, Optional, Type
 import os
 import struct
 import sys
@@ -91,7 +91,7 @@ class LinuxVCP(VCP):
         return super().__exit__(exception_type, exception_value, exception_traceback)
 
     def _set_vcp_feature(self, com: VCPCommand, value: int, timeout: float):
-        del timeout # unused
+        del timeout  # unused
         self.rate_limit()
         # transmission data
         data = bytearray()
