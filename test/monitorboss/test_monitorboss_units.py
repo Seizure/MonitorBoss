@@ -54,13 +54,13 @@ class TestImpl:
 class TestCLIcheckers:
 
     def test_check_attr_alias_valid(self, test_cfg):
-        assert cli._check_feature("src", test_cfg) == get_vcp_com(VCPCodes.input_source.code)
+        assert cli._check_feature("src", test_cfg) == get_vcp_com(VCPCodes.input_source.value)
 
     def test_check_attr_name_valid(self, test_cfg):
-        assert cli._check_feature("input_source", test_cfg) == get_vcp_com(VCPCodes.input_source.code)
+        assert cli._check_feature("input_source", test_cfg) == get_vcp_com(VCPCodes.input_source.value)
 
     def test_check_attr_int_valid(self, test_cfg):
-        assert cli._check_feature(f"{VCPCodes.input_source.code}", test_cfg) == get_vcp_com(VCPCodes.input_source.code)
+        assert cli._check_feature(f"{VCPCodes.input_source.value}", test_cfg) == get_vcp_com(VCPCodes.input_source.value)
 
     def test_check_attr_namealias_invalid(self, test_cfg):
         with pytest.raises(MonitorBossError):
@@ -136,7 +136,7 @@ class TestInfoData:
         code = VCPCodes.input_source
         com = get_vcp_com(code)
         data = info.FeatureData(com.name, com.code, tuple(['src', 'source', 'input']))
-        assert info.feature_data(code.code, test_cfg) == data
+        assert info.feature_data(code.value, test_cfg) == data
 
     def test_feature_data_no_com(self, test_cfg):
         # TODO: stub - test when code is not known com

@@ -20,8 +20,8 @@ def _check_feature(feature: str, cfg: Config) -> VCPCommand:
     _log.debug(f"check feature: {feature!r}")
     if feature.isdigit():
         for code in VCPCodes:
-            if int(feature) == code.code:
-                return get_vcp_com(code.code)
+            if int(feature) == code.value:
+                return get_vcp_com(code.value)
         raise MonitorBossError(
             f"{feature} is not a valid feature code."
         )
@@ -30,7 +30,7 @@ def _check_feature(feature: str, cfg: Config) -> VCPCommand:
             if alias == feature:
                 return get_vcp_com(code)
         for code in VCPCodes:
-            com = get_vcp_com(code.code)
+            com = get_vcp_com(code.value)
             if com.name == feature:
                 return com
         raise MonitorBossError(
@@ -184,7 +184,7 @@ def _get_feature(args, cfg: Config):
     max_vals = []
     for i, m in enumerate(mons):
         ret = get_feature(m, vcpcom, cfg.wait_internal_time)
-        cur_vals.append(ret.code)
+        cur_vals.append(ret.value)
         max_vals.append(None if vcpcom.discrete else ret.max)
         if i+1 < len(mons):
             sleep(cfg.wait_get_time)
@@ -205,7 +205,7 @@ def _set_feature(args, cfg: Config):
     _log.debug(f"set feature: {args}")
     vcpcom = _check_feature(args.feature, cfg)
     mons = [_check_mon(m, cfg) for m in args.monitor]
-    val = _check_val(vcpcom, args.code, cfg)
+    val = _check_val(vcpcom, args.value, cfg)
     new_vals = []
     for i, m in enumerate(mons):
         new_vals.append(set_feature(m, vcpcom, val, cfg.wait_internal_time))
