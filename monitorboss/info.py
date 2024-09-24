@@ -9,6 +9,8 @@ from pyddc import VCPCommand, get_vcp_com
 from pyddc.vcp_abc import Capabilities
 from pyddc.vcp_codes import VCPCodes
 
+# TODO: move _str functions into classes as __str__
+
 
 @dataclass(frozen=True)
 class FeatureData:
@@ -24,6 +26,12 @@ class FeatureData:
             data["aliases"] = self.aliases
         return data
 
+    def __str__(self):
+        if self.name:
+            return f"{self.name} ({self.code})"
+        else:
+            return str(self.code)
+
 
 def feature_data(code: int, cfg: Config) -> FeatureData:
     com = get_vcp_com(code)
@@ -33,10 +41,6 @@ def feature_data(code: int, cfg: Config) -> FeatureData:
         name = com.name
         aliases = [alias for alias, val in cfg.feature_aliases.items() if val == com.code.value]
     return FeatureData(name, code, tuple(aliases))
-
-
-def feature_str(data: FeatureData) -> str:
-    return f"{data.name} ({data.code})"
 
 
 @dataclass(frozen=True)
@@ -50,13 +54,12 @@ class MonitorData:
             data["aliases"] = self.aliases
         return data
 
+    def __str__(self):
+        return f"monitor #{self.id}" + (f" ({', '.join(map(str, self.aliases))})" if self.aliases else "")
+
 
 def monitor_data(mon: int, cfg: Config) -> MonitorData:
     return MonitorData(mon, tuple([alias for alias, val in cfg.monitor_names.items() if mon == val]))
-
-
-def monitor_str(data: MonitorData) -> str:
-    return f"monitor #{data.id}" + (f" ({', '.join(map(str, data.aliases))})" if data.aliases else "")
 
 
 @dataclass(frozen=True)
@@ -72,6 +75,16 @@ class ValueData:
         if self.aliases:
             data["aliases"] = self.aliases
         return data
+
+    def __str__(self):
+        valstr = f"{self.value}"
+        if self.param or self.aliases:
+            valstr += " ("
+            valstr += f"{'PARAM: ' + self.param if self.param else ''}"
+            valstr += f"{' | ' if self.param and self.aliases else ''}"
+            valstr += f"{('ALIASES: ' + ', '.join(map(str, self.aliases))) if self.aliases else ''}"
+            valstr += ")"
+        return valstr
 
 
 def value_data(code: int, value: int, cfg: Config) -> ValueData:
@@ -90,17 +103,6 @@ def value_data(code: int, value: int, cfg: Config) -> ValueData:
     data = ValueData(value, param, tuple(aliases))
 
     return data
-
-
-def value_str(data: ValueData) -> str:
-    valstr = f"{data.value}"
-    if data.param or data.aliases:
-        valstr += " ("
-        valstr += f"{'PARAM: ' + data.param if data.param else ''}"
-        valstr += f"{' | ' if data.param and data.aliases else ''}"
-        valstr += f"{('ALIASES: ' + ', '.join(map(str, data.aliases))) if data.aliases else ''}"
-        valstr += ")"
-    return valstr
 
 
 # TODO: do we want PYDDC to be the one to format things in a structure like this, rather than a dict?
@@ -180,8 +182,3 @@ def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
     errata = frozendict(errata)
 
     return CapabilityData(info_fields, cmds, vcps, errata)
-
-
-def capability_str(data: CapabilityData) -> str:
-    # TODO: move the code from CLI to here
-    pass

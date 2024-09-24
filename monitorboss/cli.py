@@ -8,7 +8,7 @@ from time import sleep
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
-from monitorboss.info import feature_str, monitor_str, value_str, feature_data, monitor_data, value_data, capability_data
+from monitorboss.info import feature_data, monitor_data, value_data, capability_data
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -86,7 +86,7 @@ def _list_mons(args, cfg: Config):
         if args.json:
             print(json.dumps({"list": {"monitor": mdata.serialize()}}))
         else:
-            print(monitor_str(mdata))
+            print(mdata.__str__())
 
 
 def _get_caps(args, cfg: Config):
@@ -104,14 +104,13 @@ def _get_caps(args, cfg: Config):
 
     caps_dict = parse_capabilities(caps_raw)
     caps_data = capability_data(caps_dict, cfg)
-    print(json.dumps(caps_data.serialize(), indent=4))
-    exit()
 
     if args.summary:
         if args.json:
             print(json.dumps({"caps": {"full": caps_data.serialize()}}, indent=indent_level))
         else:
-            print(capability_str(caps_data))
+            # TODO: when capability_str is done
+            pass
         return
 
     print(json.dumps(caps_data.serialize(), indent=4))
@@ -121,61 +120,61 @@ def _get_caps(args, cfg: Config):
     #   - non-int feature codes and values (see "code" and "v" variables below
     #   We do not account for this here, but that should change in PYDDC anyways
     #   When it is, this code can probably be simplified a bit (or will have to change)
-    for s in caps_dict:
-        if s.lower().startswith("cmd") or s.lower().startswith("vcp"):
-            for i, cap in enumerate(caps_dict[s]):
-                code = cap.cap
-                values = cap.values  # may be None
-                vdata_list = None
-                feature = get_vcp_com(int(code))  # may be None
-                fdata = feature_data(feature, cfg) if feature is not None else None
-                if feature is not None and values is not None:
-                    vdata_list = [value_data(feature, int(v), cfg) for v in values]
-                if args.json:
-                    vjson = [vdata.serialize() for vdata in vdata_list] if vdata_list else None
-                    cap_json = [{"feature": (fdata.serialize() if fdata is not None else {"code": code})}]
-                    if vjson:
-                        cap_json.append({"values": vjson})
-                    caps_dict[s][i] = {"capability": cap_json}
-                else:
-                    cap.cap = feature_str(fdata) if fdata else cap.cap
-                    cap.values = [value_str(vdata) for vdata in vdata_list] if vdata_list else cap.values
-
-    if args.summary:
-        # TODO: implement --json
-        mdata = monitor_data(mon, cfg)
-        vcp_features = {}
-        for s in (x for x in caps_dict if x.lower().startswith("vcp")):
-            for c in caps_dict[s]:
-                if args.json:
-                    pass
-                else:
-                    if isinstance(c.cap, str) and ((str(VCPCodes.input_source) in c.cap or str(VCPCodes.image_color_preset) in c.cap)):
-                        vcp_features[s]
-                        pass
-
-        if args.json:
-            summary = {"caps": {"monitor": mdata.serialize()}}
-            if caps_dict["type"]:
-                summary["caps"]["type"] = caps_dict["type"]
-            if caps_dict["model"]:
-                summary["caps"]["model"] = caps_dict["model"]
-        else:
-            summary = f"{monitor_str(mdata)}: {caps_dict.get('type', '')}"
-            summary += "," if caps_dict["type"] and caps_dict["model"] else ""
-            summary += f" model {caps_dict.get('model', '')}\n"
-            for s in caps_dict:
-                if s.lower().startswith("vcp"):
-                    for c in caps_dict[s]:
-                        if isinstance(c.cap, str) and (str(VCPCodes.input_source) in c.cap or str(VCPCodes.image_color_preset) in c.cap):
-                            summary += f"  - {c.cap}: {', '.join(map(str, c.values))}\n"
-            print(summary)
-    else:
-        if args.json:
-            print(json.dumps({"caps": caps_dict}, indent=indent_level))
-        else:
-            pprinter = PrettyPrinter(indent=4, sort_dicts=True)
-            pprinter.pprint(caps_dict)
+    # for s in caps_dict:
+    #     if s.lower().startswith("cmd") or s.lower().startswith("vcp"):
+    #         for i, cap in enumerate(caps_dict[s]):
+    #             code = cap.cap
+    #             values = cap.values  # may be None
+    #             vdata_list = None
+    #             feature = get_vcp_com(int(code))  # may be None
+    #             fdata = feature_data(feature, cfg) if feature is not None else None
+    #             if feature is not None and values is not None:
+    #                 vdata_list = [value_data(feature, int(v), cfg) for v in values]
+    #             if args.json:
+    #                 vjson = [vdata.serialize() for vdata in vdata_list] if vdata_list else None
+    #                 cap_json = [{"feature": (fdata.serialize() if fdata is not None else {"code": code})}]
+    #                 if vjson:
+    #                     cap_json.append({"values": vjson})
+    #                 caps_dict[s][i] = {"capability": cap_json}
+    #             else:
+    #                 cap.cap = feature_str(fdata) if fdata else cap.cap
+    #                 cap.values = [value_str(vdata) for vdata in vdata_list] if vdata_list else cap.values
+    #
+    # if args.summary:
+    #     # TODO: implement --json
+    #     mdata = monitor_data(mon, cfg)
+    #     vcp_features = {}
+    #     for s in (x for x in caps_dict if x.lower().startswith("vcp")):
+    #         for c in caps_dict[s]:
+    #             if args.json:
+    #                 pass
+    #             else:
+    #                 if isinstance(c.cap, str) and ((str(VCPCodes.input_source) in c.cap or str(VCPCodes.image_color_preset) in c.cap)):
+    #                     vcp_features[s]
+    #                     pass
+    #
+    #     if args.json:
+    #         summary = {"caps": {"monitor": mdata.serialize()}}
+    #         if caps_dict["type"]:
+    #             summary["caps"]["type"] = caps_dict["type"]
+    #         if caps_dict["model"]:
+    #             summary["caps"]["model"] = caps_dict["model"]
+    #     else:
+    #         summary = f"{monitor_str(mdata)}: {caps_dict.get('type', '')}"
+    #         summary += "," if caps_dict["type"] and caps_dict["model"] else ""
+    #         summary += f" model {caps_dict.get('model', '')}\n"
+    #         for s in caps_dict:
+    #             if s.lower().startswith("vcp"):
+    #                 for c in caps_dict[s]:
+    #                     if isinstance(c.cap, str) and (str(VCPCodes.input_source) in c.cap or str(VCPCodes.image_color_preset) in c.cap):
+    #                         summary += f"  - {c.cap}: {', '.join(map(str, c.values))}\n"
+    #         print(summary)
+    # else:
+    #     if args.json:
+    #         print(json.dumps({"caps": caps_dict}, indent=indent_level))
+    #     else:
+    #         pprinter = PrettyPrinter(indent=4, sort_dicts=True)
+    #         pprinter.pprint(caps_dict)
 
 
 def _get_feature(args, cfg: Config):
@@ -195,12 +194,12 @@ def _get_feature(args, cfg: Config):
         mdata = monitor_data(mon, cfg)
         vdata = value_data(vcpcom.code, val, cfg)
         if args.json:
-            print(json.dumps({"get": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}))
+            data = {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}
+            if maximum:
+                data["max_value"] = maximum
+            print(json.dumps({"get": data}))
         else:
-            fstr = feature_str(fdata)
-            mstr = monitor_str(mdata)
-            vstr = value_str(vdata)
-            print(f"{fstr} for {mstr} is {vstr}" + (f" (Maximum: {vstr})" if maximum is not None else ""))
+            print(f"{fdata.__str__()} for {mdata.__str__()} is {vdata.__str__()}" + (f" (Maximum: {maximum})" if maximum else ""))
 
 
 def _set_feature(args, cfg: Config):
@@ -221,10 +220,7 @@ def _set_feature(args, cfg: Config):
         if args.json:
             print(json.dumps({"set": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}))
         else:
-            fstr = feature_str(fdata)
-            mstr = monitor_str(mdata)
-            vstr = value_str(vdata)
-            print(f"set {fstr} for {mstr} to {vstr}")
+            print(f"set {fdata.__str__()} for {mdata.__str__()} to {vdata.__str__()}")
 
 
 def _tog_feature(args, cfg: Config):
@@ -247,11 +243,7 @@ def _tog_feature(args, cfg: Config):
             print(json.dumps({"toggle": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "original_value": vdata_original.serialize(), "new_value": vdata_new.serialize()}}))
             pass
         else:
-            fstr = feature_str(fdata)
-            mstr = monitor_str(mdata)
-            vstr_new = value_str(vdata_new)
-            vstr_old = value_str(vdata_original)
-            print(f"toggled {fstr} for {mstr} from {vstr_old} to {vstr_new}")
+            print(f"toggled {fdata.__str__()} for {mdata.__str__()} from {vdata_original.__str__()} to {vdata_new.__str__()}")
 
 
 text = "Commands for manipulating and polling your monitors"

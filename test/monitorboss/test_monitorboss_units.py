@@ -195,38 +195,42 @@ class TestInfoData:
 
 class TestInfoStr:
 
-    def test_feature_str(self):
+    def test_feature_str_found_com(self):
         com = get_vcp_com(VCPCodes.input_source)
         data = info.FeatureData(com.name, com.code, tuple())
-        assert info.feature_str(data) == f"{com.name} ({com.code})"
+        assert data.__str__() == f"{com.name} ({com.code})"
+
+    def test_feature_str_no_com(self):
+        # TODO: test for if no known com
+        pass
 
     def test_monitor_str_noalias(self):
         data = info.MonitorData(2, tuple())
-        assert info.monitor_str(data) == "monitor #2"
+        assert data.__str__() == "monitor #2"
 
     def test_monitor_str_onealias(self):
         data = info.MonitorData(0, tuple(["foo"]))
-        assert info.monitor_str(data) == "monitor #0 (foo)"
+        assert data.__str__() == "monitor #0 (foo)"
 
     def test_monitor_str_multialias(self):
         data = info.MonitorData(1, tuple(["bar", "baz"]))
-        assert info.monitor_str(data) == "monitor #1 (bar, baz)"
+        assert data.__str__() == "monitor #1 (bar, baz)"
 
     def test_value_str_noparam_noalias(self):
         data = info.ValueData(24, "", tuple())
-        assert info.value_str(data) == "24"
+        assert data.__str__() == "24"
 
     def test_value_str_yesparam_noalias(self):
         data = info.ValueData(24, "foo", tuple())
-        assert info.value_str(data) == "24 (PARAM: foo)"
+        assert data.__str__() == "24 (PARAM: foo)"
 
     def test_value_str_noparam_yesalias(self):
         data = info.ValueData(24, "", tuple(['foo', 'bar']))
-        assert info.value_str(data) == "24 (ALIASES: foo, bar)"
+        assert data.__str__() == "24 (ALIASES: foo, bar)"
 
     def test_value_str_yesparam_yesalias(self):
         data = info.ValueData(24, "foo", tuple(["bar", "baz"]))
-        assert info.value_str(data) == "24 (PARAM: foo | ALIASES: bar, baz)"
+        assert data.__str__() == "24 (PARAM: foo | ALIASES: bar, baz)"
 
     def test_capability_str(self):
         # TODO: stub
