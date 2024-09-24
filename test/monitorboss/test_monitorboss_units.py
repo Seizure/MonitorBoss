@@ -152,6 +152,7 @@ class TestInfoFeatureData:
         # TODO: stub - test when code is not known com
         pass
 
+
 class TestInfoValueData:
 
     def test_ValueData_serialize_yesparam_yesaliases(self):
@@ -195,6 +196,7 @@ class TestInfoValueData:
         # TODO: stub - test when code is not known com
         pass
 
+
 class TestInfoMonitorData:
 
     def test_MonitorData_yesserialize(self):
@@ -220,6 +222,7 @@ class TestInfoMonitorData:
     def test_monitor_data(self, test_cfg):
         data = info.MonitorData(1, tuple(['bar', 'baz']))
         assert info.monitor_data(1, test_cfg) == data
+
 
 class TestInfoCapabilitydata:
 

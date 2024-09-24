@@ -9,8 +9,6 @@ from pyddc import VCPCommand, get_vcp_com
 from pyddc.vcp_abc import Capabilities
 from pyddc.vcp_codes import VCPCodes
 
-# TODO: move _str functions into classes as __str__
-
 
 @dataclass(frozen=True)
 class FeatureData:
