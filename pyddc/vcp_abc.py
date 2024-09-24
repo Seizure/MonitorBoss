@@ -69,18 +69,18 @@ class VCP(abc.ABC):
     def _set_vcp_feature(self, code: VCPCommand, value: int, timeout: float):
         pass
 
-    def get_vcp_feature(self, code: VCPCommand, timeout: float = VCP_TIMEOUT) -> VCPFeatureReturn:
+    def get_vcp_feature(self, com: VCPCommand, timeout: float = VCP_TIMEOUT) -> VCPFeatureReturn:
         assert self._in_ctx, "This function must be run within the context manager"
-        if not code.readable:
-            raise TypeError(f"cannot read write-only code: {code}")
-        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply(_, {code.__repr__()}, None, _, _)")
-        ret = self._get_vcp_feature(code, timeout)
-        if code.code == VCPCodes.input_source:
+        if not com.readable:
+            raise TypeError(f"cannot read write-only code: {com}")
+        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply(_, {com.__repr__()}, None, _, _)")
+        ret = self._get_vcp_feature(com, timeout)
+        if com.code == VCPCodes.input_source:
             # The input source sometimes has a high byte that needs to be masked out.
             # Requires further research. Just copy monitorcontrol for now and ignore it.
             ret = VCPFeatureReturn(ret.value & 0xff, ret.max & 0xff)
-        if not code.discrete:
-            self.code_maximum[code.code] = ret.max
+        if not com.discrete:
+            self.code_maximum[com.code] = ret.max
         return ret
 
     @abc.abstractmethod

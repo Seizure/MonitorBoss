@@ -17,7 +17,9 @@ class FeatureData:
     aliases: tuple[str, ...]
 
     def serialize(self) -> dict:
-        data = {"name": self.name, "code": self.code}
+        data = {"code": self.code}
+        if self.name:
+            data["name"] = self.name
         if self.aliases:
             data["aliases"] = self.aliases
         return data
@@ -105,29 +107,23 @@ def value_str(data: ValueData) -> str:
 @dataclass(frozen=True)
 class CapabilityData:
     attributes: frozendict[str, str]
-    cmds: frozendict[str, tuple[int | FeatureData, ...]]
-    vcps: frozendict[str, frozendict[int | FeatureData, tuple[int | ValueData, ...]]]
+    cmds: frozendict[str, tuple[FeatureData, ...]]
+    vcps: frozendict[str, frozendict[FeatureData, tuple[ValueData, ...]]]
     errata: frozendict[str, tuple[str, ...]]  # TODO: not sure how to find/parse out errata rn
 
     def serialize(self) -> dict:
         return {
             **self.attributes,
             "cmds": {
-                cmd: [
-                    feature.serialize() if isinstance(feature, FeatureData) else feature
-                    for feature in features
-                ]
+                cmd: [feature.serialize() for feature in features]
                 for cmd, features in self.cmds.items()
             },
             "vcps": {
                 vcp: [
                     {
-                        "feature": feature.serialize() if isinstance(feature, FeatureData) else {"code": feature},
+                        "feature": feature.serialize(),
                         **(
-                            {"params": [
-                                value.serialize() if isinstance(value, ValueData) else value
-                                for value in values
-                            ]}
+                            {"params": [value.serialize() for value in values]}
                             if values else {}
                         )
                     }
@@ -144,8 +140,8 @@ class CapabilityData:
 
 def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
     info_fields: dict[str, int] = {}
-    cmds: dict[str, list[int | FeatureData]] = {}
-    vcps: dict[str, dict[int | FeatureData, list[int | ValueData]]] = {}
+    cmds: dict[str, list[FeatureData]] = {}
+    vcps: dict[str, dict[FeatureData, list[ValueData]]] = {}
     errata: dict[str, list[str]] = {}  # TODO: not sure how to find/parse out errata rn
 
     # TODO: PYDDC definition of Capabilities currently allows for:
@@ -161,11 +157,9 @@ def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
         elif s.lower().startswith("vcp") and caps[s]:
             features_values = {}
             for i, f in enumerate(caps[s]):
-                com = get_vcp_com(f.cap)
                 values = f.values if f.values else []
-                if com:
-                    for j, v in enumerate(values):
-                        values[j] = value_data(com.code, v, cfg)
+                for j, v in enumerate(values):
+                    values[j] = value_data(f.cap, v, cfg)
                 features_values[feature_data(f.cap, cfg)] = values
 
             vcps[s] = features_values

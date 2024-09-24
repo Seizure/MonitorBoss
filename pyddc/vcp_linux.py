@@ -90,13 +90,13 @@ class LinuxVCP(VCP):
         self.fd = None
         return super().__exit__(exception_type, exception_value, exception_traceback)
 
-    def _set_vcp_feature(self, code: VCPCommand, value: int, timeout: float):
+    def _set_vcp_feature(self, com: VCPCommand, value: int, timeout: float):
         del timeout # unused
         self.rate_limit()
         # transmission data
         data = bytearray()
         data.append(self.SET_VCP_CMD)
-        data.append(code.code)
+        data.append(com.code)
         low_byte, high_byte = struct.pack("H", value)
         data.append(high_byte)
         data.append(low_byte)
@@ -110,12 +110,12 @@ class LinuxVCP(VCP):
         # store time of last set VCP
         self.last_set = time.time()
 
-    def _get_vcp_feature(self, code: VCPCommand, timeout: float) -> VCPFeatureReturn:
+    def _get_vcp_feature(self, com: VCPCommand, timeout: float) -> VCPFeatureReturn:
         self.rate_limit()
         # transmission data
         data = bytearray()
         data.append(self.GET_VCP_CMD)
-        data.append(code.code)
+        data.append(com.code)
         # add headers and footers
         data.insert(0, (len(data) | self.PROTOCOL_FLAG))
         data.insert(0, self.HOST_ADDRESS)
@@ -153,7 +153,7 @@ class LinuxVCP(VCP):
         ) = struct.unpack(">BBBBHH", payload)
         if reply_code != self.GET_VCP_REPLY:
             raise VCPIOError(f"received unexpected response code: {reply_code}")
-        if vcp_opcode != code.code:
+        if vcp_opcode != com.code:
             raise VCPIOError(f"received unexpected opcode: {vcp_opcode}")
         if result_code > 0:
             try:

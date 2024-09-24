@@ -127,6 +127,7 @@ class TestInfoData:
         data = info.FeatureData(com.name, com.code, tuple(['foo', 'bar', 'baz']))
         assert data.serialize() == {"name": "input_source", "code": 96, "aliases": ('foo', 'bar', 'baz')}
 
+    # TODO: make this one test no name
     def test_FeatureData_serialize_noaliases(self):
         com = get_vcp_com(VCPCodes.input_source)
         data = info.FeatureData(com.name, com.code, tuple())
@@ -170,10 +171,14 @@ class TestInfoData:
         data = info.ValueData(75, '', tuple())
         assert data.serialize() == {"value": 75}
 
-    def test_value_data(self, test_cfg):
+    def test_value_data_found_com(self, test_cfg):
         code = VCPCodes.input_source
         data = info.ValueData(17, "hdmi1", tuple(["hdmi"]))
         assert data == info.value_data(code, 17, test_cfg)
+
+    def test_value_data_no_com(self, test_cfg):
+        # TODO: stub - test when code is not known com
+        pass
 
     def test_CapabilityData_serialize_no_errata(self):
         # TODO: stub

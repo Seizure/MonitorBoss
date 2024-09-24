@@ -104,6 +104,8 @@ def _get_caps(args, cfg: Config):
 
     caps_dict = parse_capabilities(caps_raw)
     caps_data = capability_data(caps_dict, cfg)
+    print(json.dumps(caps_data.serialize(), indent=4))
+    exit()
 
     if args.summary:
         if args.json:
