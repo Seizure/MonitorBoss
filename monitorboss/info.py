@@ -1,3 +1,4 @@
+import textwrap
 from dataclasses import dataclass
 
 from frozendict import frozendict
@@ -134,6 +135,56 @@ class CapabilityData:
                 if self.errata else {}
             ),
         }
+
+    def __str__(self):
+        attr_pairs = []
+        for attr, val in self.attributes.items():
+            attr_pairs.append(f"{attr}: {val}")
+        attr_str = "\n".join(map(str, attr_pairs))
+
+        cmd_str_list = []
+        for cmd_key, cmd_values in self.cmds.items():
+            cmd_str_list.append(f"{cmd_key}: {', '.join(map(str, cmd_values))}")
+        cmd_str = "\n".join(map(str, cmd_str_list))
+
+        vcp_str_list = []
+        for vcp_key, vcp_features in self.vcps.items():
+            vcp_str = f"{vcp_key}:\n"
+            vcp_feature_str_list = []
+            for feature, value_tuple in vcp_features.items():
+                vcp_feature_str_list.append(f"\t{feature.__str__()}: {', '.join(map(str, value_tuple))}")
+            vcp_str += textwrap.indent('\n'.join(map(str, vcp_feature_str_list)), "\t")
+            vcp_str_list.append(vcp_str)
+        vcp_str = "\n".join(map(str, vcp_str_list))
+
+        errata_str_dict = {}
+        for errata_key, errata_tuple in self.errata.items():
+            errata_str_dict[errata_key] = ', '.join(map(str, errata_tuple))
+
+        capability_str = attr_str + "\n"
+        if cmd_str_list:
+            if len(cmd_str_list) == 1:
+                capability_str += cmd_str_list[0] + "\n"
+            else:
+                capability_str += "CMDS:\n" + textwrap.indent(cmd_str, "\t") + "\n"
+
+        if vcp_str_list:
+            if len(vcp_str_list) == 1:
+                capability_str += vcp_str_list[0] + "\n"
+            else:
+                capability_str += "VCP:\n" + textwrap.indent(vcp_str, "\t") + "\n"
+
+        if errata_str_dict:
+            errata_value_list = list(errata_str_dict.values())
+            if len(errata_str_dict) == 1 and not list(errata_str_dict.keys())[0]:
+                capability_str += "Errata: " + errata_value_list[0] + "\n"
+            else:
+                capability_str += "Errata:\n"
+                for errata_key, errata_values in errata_str_dict:
+                    capability_str += errata_key + errata_values
+                capability_str += "\n"
+
+        return capability_str
 
 
 def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:

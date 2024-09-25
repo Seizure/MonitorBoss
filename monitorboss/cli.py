@@ -105,13 +105,23 @@ def _get_caps(args, cfg: Config):
     caps_dict = parse_capabilities(caps_raw)
     caps_data = capability_data(caps_dict, cfg)
 
+    print(caps_data.__str__())
+    exit()
+
     if args.summary:
         if args.json:
-            print(json.dumps({"caps": {"full": caps_data.serialize()}}, indent=indent_level))
+            pass
+            # TODO: when SummaryData is made
         else:
-            # TODO: when capability.__str__() is done
+            # TODO: when SummaryData is made
             pass
         return
+
+    if args.json:
+        print(json.dumps({"caps": {"full": caps_data.serialize()}}, indent=indent_level))
+    else:
+        pass
+        # TODO: when capability.__str__() is done
 
     print(json.dumps(caps_data.serialize(), indent=4))
     exit()
