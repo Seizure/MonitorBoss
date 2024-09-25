@@ -238,7 +238,6 @@ class TestInfoCapabilitydata:
         # TODO: stub
         pass
 
-
     def test_capability_data(self):
         # TODO: stub
         pass
