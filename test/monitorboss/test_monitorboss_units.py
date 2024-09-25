@@ -234,6 +234,54 @@ class TestInfoCapabilitydata:
         # TODO: stub
         pass
 
+    def test_CapabilityData_attr_str_empty(self):
+        # TODO: stub
+        pass
+
+    def test_CapabilityData_attr_str_present(self):
+        # TODO: stub
+        pass
+
+    def test_CapabilityData_cmds_str_empty(self):
+        # TODO: stub
+        pass
+
+    def test_CapabilityData_cmds_str_single(self):
+        # TODO: stub
+        pass
+
+    def test_CapabilityData_cmds_str_multi(self):
+        # TODO: stub
+        pass
+
+    def test_CapabilityData_vcp_str_empty(self):
+        # TODO: stub
+        pass
+
+    def test_CapabilityData_vcp_str_single(self):
+        # TODO: stub
+        pass
+
+    def test_CapabilityData_vcp_str_multi(self):
+        # TODO: stub
+        pass
+
+    def test_CapabilityData_errata_str_empty(self):
+        # TODO: stub
+        pass
+
+    def test_CapabilityData_errata_str_single_named(self):
+        # TODO: stub
+        pass
+
+    def test_CapabilityData_errata_str_single_blank(self):
+        # TODO: stub
+        pass
+
+    def test_CapabilityData_errata_str_multi(self):
+        # TODO: stub
+        pass
+
     def test_CapabilityData_str(self):
         # TODO: stub
         pass

@@ -23,7 +23,7 @@ class FeatureData:
             data["aliases"] = self.aliases
         return data
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.name:
             return f"{self.name} ({self.code})"
         else:
@@ -51,7 +51,7 @@ class MonitorData:
             data["aliases"] = self.aliases
         return data
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"monitor #{self.id}" + (f" ({', '.join(map(str, self.aliases))})" if self.aliases else "")
 
 
@@ -73,7 +73,7 @@ class ValueData:
             data["aliases"] = self.aliases
         return data
 
-    def __str__(self):
+    def __str__(self) -> str:
         valstr = f"{self.value}"
         if self.param or self.aliases:
             valstr += " ("
@@ -136,18 +136,27 @@ class CapabilityData:
             ),
         }
 
-    # TODO:  break each section into separate functions, for unit testing
-    def __str__(self):
+    def _attr_str(self) -> str:
         attr_pairs = []
         for attr, val in self.attributes.items():
             attr_pairs.append(f"{attr}: {val}")
-        attr_str = "\n".join(map(str, attr_pairs))
+        if attr_pairs:
+            return "\n".join(map(str, attr_pairs)) + "\n"
+        return ""
 
+    def _cmds_str(self) -> str:
         cmd_str_list = []
         for cmd_key, cmd_values in self.cmds.items():
             cmd_str_list.append(f"{cmd_key}: {', '.join(map(str, cmd_values))}")
         cmd_str = "\n".join(map(str, cmd_str_list))
 
+        if cmd_str_list:
+            if len(cmd_str_list) == 1:
+                return cmd_str + "\n"
+            return "CMDS:\n" + textwrap.indent(cmd_str, "\t") + "\n"
+        return ""
+
+    def _vcp_str(self) -> str:
         vcp_str_list = []
         for vcp_key, vcp_features in self.vcps.items():
             vcp_str = f"{vcp_key}:\n"
@@ -158,34 +167,27 @@ class CapabilityData:
             vcp_str_list.append(vcp_str)
         vcp_str = "\n".join(map(str, vcp_str_list))
 
+        if vcp_str_list:
+            if len(vcp_str_list) == 1:
+                return vcp_str_list[0] + "\n"
+            return "VCP:\n" + textwrap.indent(vcp_str, "\t") + "\n"
+        return ""
+
+    def _errata_str(self) -> str:
         errata_str_dict = {}
         for errata_key, errata_tuple in self.errata.items():
             errata_str_dict[errata_key] = ', '.join(map(str, errata_tuple))
 
-        capability_str = attr_str + "\n"
-        if cmd_str_list:
-            if len(cmd_str_list) == 1:
-                capability_str += cmd_str_list[0] + "\n"
-            else:
-                capability_str += "CMDS:\n" + textwrap.indent(cmd_str, "\t") + "\n"
-
-        if vcp_str_list:
-            if len(vcp_str_list) == 1:
-                capability_str += vcp_str_list[0] + "\n"
-            else:
-                capability_str += "VCP:\n" + textwrap.indent(vcp_str, "\t") + "\n"
-
         if errata_str_dict:
             errata_value_list = list(errata_str_dict.values())
             if len(errata_str_dict) == 1 and not list(errata_str_dict.keys())[0]:
-                capability_str += "Errata: " + errata_value_list[0] + "\n"
+                return "Errata: " + errata_value_list[0] + "\n"
             else:
-                capability_str += "Errata:\n"
-                for errata_key, errata_values in errata_str_dict:
-                    capability_str += errata_key + errata_values
-                capability_str += "\n"
+                return "Errata:\n" + "\n".join(map(str, [(errata_key + errata_values) for errata_key, errata_values in errata_str_dict])) + "\n"
+        return ""
 
-        return capability_str
+    def __str__(self) -> str:
+        return f"{self._attr_str()}{self._cmds_str()}{self._vcp_str()}{self._errata_str()}\n"
 
 
 def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
