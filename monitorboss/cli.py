@@ -8,7 +8,8 @@ from time import sleep
 from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
-from monitorboss.info import feature_data, monitor_data, value_data, capability_data
+from monitorboss.info import feature_data, monitor_data, value_data, capability_data, FeatureData, ValueData, \
+    CapabilityData
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -89,6 +90,26 @@ def _list_mons(args, cfg: Config):
             print(mdata.__str__())
 
 
+def _extract_summary_data(caps_data: CapabilityData) -> tuple[dict[str, str], dict[str, dict[FeatureData, tuple[ValueData, ...]]]]:
+    desired_attributes = ("type", "model")
+    attribute_dict: dict[str, str] = {}
+    for attr_key, attr_value in caps_data.attributes.items():
+        if attr_key in desired_attributes:
+            attribute_dict[attr_key] = attr_value
+
+    desired_features = (VCPCodes.input_source.value, VCPCodes.image_color_preset.value)
+    vcp_feature_dict: dict[str, dict[FeatureData, tuple[ValueData, ...]]] = {}
+    for vcp_key, vcp in caps_data.vcps.items():
+        if vcp:
+            feature_dict: dict[FeatureData, tuple[ValueData, ...]] = {}
+            for feature, values in vcp.items():
+                if feature.code in desired_features:
+                    feature_dict[feature] = values
+            vcp_feature_dict[vcp_key] = feature_dict
+
+    return attribute_dict, vcp_feature_dict
+
+
 def _get_caps(args, cfg: Config):
     _log.debug(f"get capabilities: {args}")
     indent_level = 4 if _log.getEffectiveLevel() <= DEBUG else None
@@ -106,11 +127,36 @@ def _get_caps(args, cfg: Config):
     caps_data = capability_data(caps_dict, cfg)
 
     if args.summary:
+        attribute_dict, vcp_feature_dict = _extract_summary_data(caps_data)
+
         if args.json:
-            pass
-            # TODO
+            summary_dict = {}
+            for attr_key, attr_value in attribute_dict.items():
+                summary_dict[attr_key] = attr_value
+            summary_dict["vcps"] = {}
+            for vcp_key, feature_dict in vcp_feature_dict.items():
+                feature_list = []
+                for feature, value_tuple in feature_dict.items():
+                    value_list = [v.serialize() for v in value_tuple]
+                    feature_list.append({"feature": feature.serialize(), "params": value_list})
+                summary_dict["vcps"][vcp_key] = feature_list
+            print(json.dumps({"caps": {"summary": summary_dict}}, indent=indent_level))
         else:
-            # TODO
+            # TODO: maybe do JSON first, since that gets the data we need to make the str?
+            desired_features = [VCPCodes.input_source.value, VCPCodes.image_color_preset.value]
+
+            vcp_str_dict = {}
+            for vcp_key, vcp in caps_data.vcps.items():
+                if vcp:
+                    vcp_str_list = []
+                    for feature, values in vcp.items():
+                        if feature.code in desired_features:
+                            vcp_str_list.append()
+
+
+
+            summary = f"{monitor_data(args.monitor, cfg).__str__()}"
+
             pass
         return
 

@@ -5,7 +5,7 @@ import pytest
 from monitorboss import config
 from monitorboss.config import Config
 
-pytest_plugins = "pytester"  # used by the TestConfig functions in test_monitorboss_units.py
+pytest_plugins = "pytester"  # used by the functions in test_config_units.py
 
 TEST_TOML_CONTENTS = """
 [monitor_names]
