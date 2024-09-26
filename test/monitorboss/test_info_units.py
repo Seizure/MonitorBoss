@@ -1,3 +1,5 @@
+from frozendict import frozendict
+
 from monitorboss import info
 from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes
@@ -5,25 +7,21 @@ from pyddc.vcp_codes import VCPCodes
 
 class TestInfoFeatureData:
 
-    def test_FeatureData_serialize_yesaliases(self):
-        com = get_vcp_com(VCPCodes.input_source)
-        data = info.FeatureData(com.name, com.code, tuple(['foo', 'bar', 'baz']))
-        assert data.serialize() == {"name": "input_source", "code": 96, "aliases": ('foo', 'bar', 'baz')}
+    def test_FeatureData_serialize_yesname_yesaliases(self):
+        data = info.FeatureData("foo", 42, tuple(['foo', 'bar', 'baz']))
+        assert data.serialize() == {"name": "foo", "code": 42, "aliases": ('foo', 'bar', 'baz')}
 
-    # TODO: make this one test no name
-    def test_FeatureData_serialize_noaliases(self):
-        com = get_vcp_com(VCPCodes.input_source)
-        data = info.FeatureData(com.name, com.code, tuple())
-        assert data.serialize() == {"name": "input_source", "code": 96}
+    def test_FeatureData_serialize_noname_noaliases(self):
+        data = info.FeatureData("", 42, tuple())
+        assert data.serialize() == {"code": 42}
 
-    def test_FeatureData_str_found_com(self):
-        com = get_vcp_com(VCPCodes.input_source)
-        data = info.FeatureData(com.name, com.code, tuple())
-        assert data.__str__() == f"{com.name} ({com.code})"
+    def test_FeatureData_str_yesname(self):
+        data = info.FeatureData("foo", 42, tuple())
+        assert data.__str__() == "foo (42)"
 
-    def test_FeatureData_str_no_com(self):
-        # TODO: test for if no known com
-        pass
+    def test_FeatureData_str_noname(self):
+        data = info.FeatureData("", 42, tuple())
+        assert data.__str__() == "42"
 
     def test_feature_data_found_com(self, test_cfg):
         code = VCPCodes.input_source
@@ -32,8 +30,8 @@ class TestInfoFeatureData:
         assert info.feature_data(code.value, test_cfg) == data
 
     def test_feature_data_no_com(self, test_cfg):
-        # TODO: stub - test when code is not known com
-        pass
+        data = info.FeatureData("", 9001, tuple())
+        assert info.feature_data(9001, test_cfg) == data
 
 
 class TestInfoValueData:
@@ -76,8 +74,8 @@ class TestInfoValueData:
         assert data == info.value_data(code, 17, test_cfg)
 
     def test_value_data_no_com(self, test_cfg):
-        # TODO: stub - test when code is not known com
-        pass
+        data = info.ValueData(17, "", tuple())
+        assert data == info.value_data(9001, 17, test_cfg)
 
 
 class TestInfoMonitorData:
@@ -109,66 +107,160 @@ class TestInfoMonitorData:
 
 class TestInfoCapabilitydata:
 
-    def test_CapabilityData_serialize_no_errata(self):
-        # TODO: stub
-        pass
+    def test_CapabilityData_serialize_no_errata(self, test_cfg):
+        feature1 = info.FeatureData("", 42, ())
+        feature2 = info.FeatureData("", 84, ())
+        value1 = info.ValueData(12, "", ())
+        value2 = info.ValueData(24, "", ())
+        attributes = frozendict({"foo": "bar", "baz": "qux"})
+        cmds = frozendict({"cmds_0": (feature1, feature2), "cmds_1": (feature1, feature2)})
+        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)}),
+                           "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
+        data = info.CapabilityData(attributes, cmds, vcps, frozendict())
+
+        expected = {"foo": "bar", "baz": "qux",
+                    "cmds":
+                        {"cmds_0": [feature1.serialize(), feature2.serialize()],
+                         "cmds_1": [feature1.serialize(), feature2.serialize()]},
+                    "vcps":
+                        {"vcp_0": [
+                            {"feature": feature1.serialize(), "params": [value1.serialize(), value2.serialize()]},
+                            {"feature": feature2.serialize(), "params": [value1.serialize(), value2.serialize()]}
+                        ],
+                            "vcp_1": [
+                                {"feature": feature1.serialize(), "params": [value1.serialize(), value2.serialize()]},
+                            {"feature": feature2.serialize(), "params": [value1.serialize(), value2.serialize()]}
+                            ]}}
+
+        assert data.serialize() == expected
 
     def test_CapabilityData_serialize_yes_errata(self):
-        # TODO: stub
-        pass
+        feature1 = info.FeatureData("", 42, ())
+        feature2 = info.FeatureData("", 84, ())
+        value1 = info.ValueData(12, "", ())
+        value2 = info.ValueData(24, "", ())
+        attributes = frozendict({"foo": "bar", "baz": "qux"})
+        cmds = frozendict({"cmds_0": (feature1, feature2), "cmds_1": (feature1, feature2)})
+        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)}),
+                           "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
+        errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
+        data = info.CapabilityData(attributes, cmds, vcps, errata)
+
+        expected = {"foo": "bar", "baz": "qux",
+                    "cmds":
+                        {"cmds_0": [feature1.serialize(), feature2.serialize()],
+                         "cmds_1": [feature1.serialize(), feature2.serialize()]},
+                    "vcps":
+                        {"vcp_0": [
+                            {"feature": feature1.serialize(), "params": [value1.serialize(), value2.serialize()]},
+                            {"feature": feature2.serialize(), "params": [value1.serialize(), value2.serialize()]}
+                        ],
+                            "vcp_1": [
+                                {"feature": feature1.serialize(), "params": [value1.serialize(), value2.serialize()]},
+                                {"feature": feature2.serialize(), "params": [value1.serialize(), value2.serialize()]}
+                            ]},
+                    "errata": {"": ("foo", "bar"), "baz": ("qux", "corge")}}
+
+        assert data.serialize() == expected
 
     def test_CapabilityData_attr_str_empty(self):
-        # TODO: stub
-        pass
+        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
+
+        assert data._attr_str() == ""
 
     def test_CapabilityData_attr_str_present(self):
-        # TODO: stub
-        pass
+        attributes = frozendict({"foo": "bar", "baz": "qux"})
+        data = info.CapabilityData(attributes, frozendict(), frozendict(), frozendict())
+
+        assert data._attr_str() == "foo: bar\nbaz: qux\n"
 
     def test_CapabilityData_cmds_str_empty(self):
-        # TODO: stub
-        pass
+        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
+
+        assert data._cmds_str() == ""
 
     def test_CapabilityData_cmds_str_single(self):
-        # TODO: stub
-        pass
+        feature1 = info.FeatureData("", 42, ())
+        feature2 = info.FeatureData("", 84, ())
+        cmds = frozendict({"cmds_0": (feature1, feature2)})
+        data = info.CapabilityData(frozendict(), cmds, frozendict(), frozendict())
+
+        assert data._cmds_str() == "cmds_0: 42, 84\n"
 
     def test_CapabilityData_cmds_str_multi(self):
-        # TODO: stub
-        pass
+        feature1 = info.FeatureData("", 42, ())
+        feature2 = info.FeatureData("", 84, ())
+        cmds = frozendict({"cmds_0": (feature1, feature2), "cmds_1": (feature1, feature2)})
+        data = info.CapabilityData(frozendict(), cmds, frozendict(), frozendict())
+
+        assert data._cmds_str() == "CMDS:\n\tcmds_0: 42, 84\n\tcmds_1: 42, 84\n"
 
     def test_CapabilityData_vcp_str_empty(self):
-        # TODO: stub
-        pass
+        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
+
+        assert data._vcp_str() == ""
 
     def test_CapabilityData_vcp_str_single(self):
-        # TODO: stub
-        pass
+        feature1 = info.FeatureData("", 42, ())
+        feature2 = info.FeatureData("", 84, ())
+        value1 = info.ValueData(12, "", ())
+        value2 = info.ValueData(24, "", ())
+        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
+        data = info.CapabilityData(frozendict(), frozendict(), vcps, frozendict())
+
+        assert data._vcp_str() == "vcp_0:\n\t* 42: 12, 24\n\t* 84: 12, 24\n"
 
     def test_CapabilityData_vcp_str_multi(self):
-        # TODO: stub
-        pass
+        feature1 = info.FeatureData("", 42, ())
+        feature2 = info.FeatureData("", 84, ())
+        value1 = info.ValueData(12, "", ())
+        value2 = info.ValueData(24, "", ())
+        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)}),
+                           "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
+        data = info.CapabilityData(frozendict(), frozendict(), vcps, frozendict())
+
+        assert data._vcp_str() == "VCP:\n\tvcp_0:\n\t\t* 42: 12, 24\n\t\t* 84: 12, 24\n\tvcp_1:\n\t\t* 42: 12, 24\n\t\t* 84: 12, 24\n"
 
     def test_CapabilityData_errata_str_empty(self):
-        # TODO: stub
-        pass
+        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
+
+        assert data._errata_str() == ""
 
     def test_CapabilityData_errata_str_single_named(self):
-        # TODO: stub
-        pass
+        errata = frozendict({"baz": ("qux", "corge")})
+        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata)
+
+        assert data._errata_str() == "Errata:\n\tbaz: qux, corge\n"
 
     def test_CapabilityData_errata_str_single_blank(self):
-        # TODO: stub
-        pass
+        errata = frozendict({"": ("foo", "bar")})
+        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata)
+
+        assert data._errata_str() == "Errata: foo, bar\n"
 
     def test_CapabilityData_errata_str_multi(self):
-        # TODO: stub
-        pass
+        errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
+        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata)
+
+        assert data._errata_str() == "Errata:\n\tfoo, bar\n\tbaz: qux, corge\n"
 
     def test_CapabilityData_str(self):
-        # TODO: stub
-        pass
+        feature1 = info.FeatureData("", 42, ())
+        feature2 = info.FeatureData("", 84, ())
+        value1 = info.ValueData(12, "", ())
+        value2 = info.ValueData(24, "", ())
+        attributes = frozendict({"foo": "bar", "baz": "qux"})
+        cmds = frozendict({"cmds_0": (feature1, feature2), "cmds_1": (feature1, feature2)})
+        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)}),
+                           "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
+        errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
+        data = info.CapabilityData(attributes, cmds, vcps, errata)
+
+        expected = f"{data._attr_str()}{data._cmds_str()}{data._vcp_str()}{data._errata_str()}\n"
+
+        assert data.__str__() == expected
 
     def test_capability_data(self):
-        # TODO: stub
+        # TODO: this is going to be very annoying, and the function will be changing when PYDDC updates its caps output
+        #   so we will do later
         pass
