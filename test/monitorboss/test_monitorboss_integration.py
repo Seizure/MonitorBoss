@@ -42,8 +42,9 @@ def test_caps_raw_human(test_conf_file, capsys):
     assert output.err == ""
 
 
-def test_caps_raw_json(test_conf_file, capsys):
-    expected = json.dumps({"caps": {"raw": test.pyddc.CAPS_STR}}) + "\n"
+def test_caps_raw_json(test_conf_file, test_cfg, capsys):
+    mdata = info.monitor_data(0, test_cfg)
+    expected = json.dumps({"caps": {"type": "raw", "monitor": mdata.serialize(), "data":  test.pyddc.CAPS_STR}}) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} --json caps --raw 0")
     output = capsys.readouterr()
     assert output.out == expected
