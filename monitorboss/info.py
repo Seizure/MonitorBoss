@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 from frozendict import frozendict
 
+from monitorboss import indentation
 from monitorboss.config import Config
 from pyddc import get_vcp_com
 from pyddc.vcp_abc import Capabilities
@@ -137,12 +138,9 @@ class CapabilityData:
         }
 
     def _attr_str(self) -> str:
-        attr_pairs = []
-        for attr, val in self.attributes.items():
-            attr_pairs.append(f"{attr}: {val}")
-        if attr_pairs:
-            return "\n".join(map(str, attr_pairs)) + "\n"
-        return ""
+        if not self.attributes:
+            return ""
+        return "".join(f"{attr}: {val}\n" for attr, val in self.attributes.items())
 
     def _cmds_str(self) -> str:
         cmd_str_list = []
@@ -153,7 +151,7 @@ class CapabilityData:
         if cmd_str_list:
             if len(cmd_str_list) == 1:
                 return cmd_str + "\n"
-            return "CMDS:\n" + textwrap.indent(cmd_str, "\t") + "\n"
+            return "CMDS:\n" + textwrap.indent(cmd_str, indentation) + "\n"
         return ""
 
     def _vcp_str(self) -> str:
@@ -163,14 +161,14 @@ class CapabilityData:
             vcp_feature_str_list = []
             for feature, value_tuple in vcp_features.items():
                 vcp_feature_str_list.append(f"* " + feature.__str__() + (f": {', '.join(map(str, value_tuple))}" if value_tuple else ""))
-            vcp_str += textwrap.indent('\n'.join(map(str, vcp_feature_str_list)), "\t")
+            vcp_str += textwrap.indent('\n'.join(map(str, vcp_feature_str_list)), indentation)
             vcp_str_list.append(vcp_str)
         vcp_str = "\n".join(map(str, vcp_str_list))
 
         if vcp_str_list:
             if len(vcp_str_list) == 1:
                 return vcp_str_list[0] + "\n"
-            return "VCP:\n" + textwrap.indent(vcp_str, "\t") + "\n"
+            return "VCP:\n" + textwrap.indent(vcp_str, indentation) + "\n"
         return ""
 
     def _errata_str(self) -> str:

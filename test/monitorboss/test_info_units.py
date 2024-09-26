@@ -1,6 +1,6 @@
 from frozendict import frozendict
 
-from monitorboss import info
+from monitorboss import info, indentation
 from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes
 
@@ -193,7 +193,7 @@ class TestInfoCapabilitydata:
         cmds = frozendict({"cmds_0": (feature1, feature2), "cmds_1": (feature1, feature2)})
         data = info.CapabilityData(frozendict(), cmds, frozendict(), frozendict())
 
-        assert data._cmds_str() == "CMDS:\n\tcmds_0: 42, 84\n\tcmds_1: 42, 84\n"
+        assert data._cmds_str() == f"CMDS:\n{indentation}cmds_0: 42, 84\n{indentation}cmds_1: 42, 84\n"
 
     def test_CapabilityData_vcp_str_empty(self):
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
@@ -208,7 +208,7 @@ class TestInfoCapabilitydata:
         vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
         data = info.CapabilityData(frozendict(), frozendict(), vcps, frozendict())
 
-        assert data._vcp_str() == "vcp_0:\n\t* 42: 12, 24\n\t* 84: 12, 24\n"
+        assert data._vcp_str() == f"vcp_0:\n{indentation}* 42: 12, 24\n{indentation}* 84: 12, 24\n"
 
     def test_CapabilityData_vcp_str_multi(self):
         feature1 = info.FeatureData("", 42, ())
@@ -219,7 +219,9 @@ class TestInfoCapabilitydata:
                            "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
         data = info.CapabilityData(frozendict(), frozendict(), vcps, frozendict())
 
-        assert data._vcp_str() == "VCP:\n\tvcp_0:\n\t\t* 42: 12, 24\n\t\t* 84: 12, 24\n\tvcp_1:\n\t\t* 42: 12, 24\n\t\t* 84: 12, 24\n"
+        assert data._vcp_str() == (f"VCP:\n{indentation}vcp_0:\n{indentation}{indentation}* 42: 12, 24\n" +
+                                   f"{indentation}{indentation}* 84: 12, 24\n{indentation}vcp_1:\n" +
+                                   f"{indentation}{indentation}* 42: 12, 24\n{indentation}{indentation}* 84: 12, 24\n")
 
     def test_CapabilityData_errata_str_empty(self):
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())

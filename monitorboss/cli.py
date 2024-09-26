@@ -6,7 +6,7 @@ from logging import getLogger, DEBUG
 from pprint import PrettyPrinter
 from time import sleep
 
-from monitorboss import MonitorBossError
+from monitorboss import MonitorBossError, indentation
 from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
 from monitorboss.info import feature_data, monitor_data, value_data, capability_data, FeatureData, ValueData, \
@@ -169,7 +169,7 @@ def _get_caps(args, cfg: Config):
     if args.json:
         print(json.dumps({"caps": {"type": "full", "monitor": mdata.serialize(), "data": caps_data.serialize()}}, indent=_INDENT_LEVEL))
     else:
-        print(mdata.__str__() + ":\n" + textwrap.indent(caps_data.__str__(), "\t"))
+        print(mdata.__str__() + ":\n" + textwrap.indent(caps_data.__str__(), indentation))
 
 
 def _get_feature(args, cfg: Config):
