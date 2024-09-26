@@ -72,11 +72,11 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
     # If we got here, an invalid value was provided
     error_text = f"{val} is not a valid value for feature \"{com.name}\".\nValid values are:\n"
     if com.param_names:
-        error_text += f"\t- [PARAM NAMES]: {', '.join(list(com.param_names.keys()))}\n"
+        error_text += f"{indentation}- [PARAM NAMES]: {', '.join(list(com.param_names.keys()))}\n"
     # TODO: This will need to be generalized when we allow for arbitrary value aliases
     if com.code == VCPCodes.input_source and cfg.input_source_names:
-        error_text += f"\t- [CONFIG ALIASES]: {', '.join(list(cfg.input_source_names))}\n"
-    error_text += """\t- a code number (non-negative integer).\n
+        error_text += f"{indentation}- [CONFIG ALIASES]: {', '.join(list(cfg.input_source_names))}\n"
+    error_text += f"""{indentation}- a code number (non-negative integer).\n
     NOTE: A particular monitor may only support some of these values. Check your monitor's specs for the inputs it accepts."""
 
     raise MonitorBossError(error_text)
@@ -138,7 +138,7 @@ def _caps_summary_human(mon: MonitorData, caps_data: CapabilityData) -> str:
         summary += vcp_key + (":" if vcp else "") + "\n"
         for feature, values in vcp.items():
             value_str = ", ".join(map(str, [v.__str__() for v in values]))
-            summary += f"\t* {feature.__str__()}: {value_str}\n"
+            summary += f"{indentation}* {feature.__str__()}: {value_str}\n"
 
     return summary
 
