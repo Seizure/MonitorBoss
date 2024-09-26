@@ -232,7 +232,7 @@ class TestInfoCapabilitydata:
         errata = frozendict({"baz": ("qux", "corge")})
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata)
 
-        assert data._errata_str() == "Errata:\n\tbaz: qux, corge\n"
+        assert data._errata_str() == f"Errata:\n{indentation}baz: qux, corge\n"
 
     def test_CapabilityData_errata_str_single_blank(self):
         errata = frozendict({"": ("foo", "bar")})
@@ -244,7 +244,7 @@ class TestInfoCapabilitydata:
         errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata)
 
-        assert data._errata_str() == "Errata:\n\tfoo, bar\n\tbaz: qux, corge\n"
+        assert data._errata_str() == f"Errata:\n{indentation}foo, bar\n{indentation}baz: qux, corge\n"
 
     def test_CapabilityData_str(self):
         feature1 = info.FeatureData("", 42, ())

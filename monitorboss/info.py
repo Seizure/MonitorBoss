@@ -181,7 +181,10 @@ class CapabilityData:
             if len(errata_str_dict) == 1 and not list(errata_str_dict.keys())[0]:
                 return "Errata: " + errata_value_list[0] + "\n"
             else:
-                return "Errata:\n" + "\n".join(map(str, [f"\t{errata_key}{': ' if errata_key else ''}{errata_values}" for errata_key, errata_values in errata_str_dict.items()])) + "\n"
+                return "Errata:\n" + "\n".join(map(str, [
+                    f"{indentation}{errata_key}{': ' if errata_key else ''}{errata_values}"
+                    for errata_key, errata_values in errata_str_dict.items()
+                ])) + "\n"
         return ""
 
     def __str__(self) -> str:
