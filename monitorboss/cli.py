@@ -131,8 +131,16 @@ def _caps_summary_json(mon: MonitorData, caps_data: CapabilityData) -> str:
 def _caps_summary_human(mon: MonitorData, caps_data: CapabilityData) -> str:
     attribute_dict, vcp_feature_dict = _extract_caps_summary_data(caps_data)
 
-    # summary =
-    pass
+    summary = f"{mon.__str__()}"
+    attr_str = ", ".join(map(str, [f"{key}: {val}" for key, val in attribute_dict.items()]))
+    summary += f"{attr_str}\n" if attr_str else "\n"
+    for vcp_key, vcp in vcp_feature_dict.items():
+        summary += vcp_key + (":" if vcp else "") + "\n"
+        for feature, values in vcp.items():
+            value_str = ", ".join(map(str, [v.__str__() for v in values]))
+            summary += f"\t* {feature.__str__()}: {value_str}\n"
+
+    return summary
 
 
 def _get_caps(args, cfg: Config):
