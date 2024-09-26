@@ -1,4 +1,5 @@
 import json
+import textwrap
 from argparse import ArgumentParser
 from collections.abc import Sequence
 from logging import getLogger, DEBUG
@@ -9,11 +10,12 @@ from monitorboss import MonitorBossError
 from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
 from monitorboss.info import feature_data, monitor_data, value_data, capability_data, FeatureData, ValueData, \
-    CapabilityData
+    CapabilityData, MonitorData
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
 _log = getLogger(__name__)
+_INDENT_LEVEL = 4 if _log.level <= DEBUG else None
 
 
 # TODO: This does not allow for custom/OEM codes as is (for when we add such)
@@ -90,7 +92,7 @@ def _list_mons(args, cfg: Config):
             print(mdata.__str__())
 
 
-def _extract_summary_data(caps_data: CapabilityData) -> tuple[dict[str, str], dict[str, dict[FeatureData, tuple[ValueData, ...]]]]:
+def _extract_caps_summary_data(caps_data: CapabilityData) -> tuple[dict[str, str], dict[str, dict[FeatureData, tuple[ValueData, ...]]]]:
     desired_attributes = ("type", "model")
     attribute_dict: dict[str, str] = {}
     for attr_key, attr_value in caps_data.attributes.items():
@@ -110,15 +112,38 @@ def _extract_summary_data(caps_data: CapabilityData) -> tuple[dict[str, str], di
     return attribute_dict, vcp_feature_dict
 
 
+def _caps_summary_json(mon: MonitorData, caps_data: CapabilityData) -> str:
+    attribute_dict, vcp_feature_dict = _extract_caps_summary_data(caps_data)
+
+    summary_dict = {}
+    for attr_key, attr_value in attribute_dict.items():
+        summary_dict[attr_key] = attr_value
+    summary_dict["vcps"] = {}
+    for vcp_key, feature_dict in vcp_feature_dict.items():
+        feature_list = []
+        for feature, value_tuple in feature_dict.items():
+            value_list = [v.serialize() for v in value_tuple]
+            feature_list.append({"feature": feature.serialize(), "params": value_list})
+        summary_dict["vcps"][vcp_key] = feature_list
+    return json.dumps({"caps": {"type": "summary", "monitor": mon.serialize(), "data": summary_dict}}, indent=_INDENT_LEVEL)
+
+
+def _caps_summary_human(mon: MonitorData, caps_data: CapabilityData) -> str:
+    attribute_dict, vcp_feature_dict = _extract_caps_summary_data(caps_data)
+
+    # summary =
+    pass
+
+
 def _get_caps(args, cfg: Config):
     _log.debug(f"get capabilities: {args}")
-    indent_level = 4 if _log.getEffectiveLevel() <= DEBUG else None
     mon = _check_mon(args.monitor, cfg)
     caps_raw = get_vcp_capabilities(mon)
+    mdata = monitor_data(mon, cfg)
 
     if args.raw:
         if args.json:
-            print(json.dumps({"caps": {"raw": caps_raw}}))
+            print(json.dumps({"caps": {"type": "raw", "monitor": mdata.serialize(), "data": caps_raw}}))
         else:
             print(caps_raw)
         return
@@ -127,43 +152,16 @@ def _get_caps(args, cfg: Config):
     caps_data = capability_data(caps_dict, cfg)
 
     if args.summary:
-        attribute_dict, vcp_feature_dict = _extract_summary_data(caps_data)
-
         if args.json:
-            summary_dict = {}
-            for attr_key, attr_value in attribute_dict.items():
-                summary_dict[attr_key] = attr_value
-            summary_dict["vcps"] = {}
-            for vcp_key, feature_dict in vcp_feature_dict.items():
-                feature_list = []
-                for feature, value_tuple in feature_dict.items():
-                    value_list = [v.serialize() for v in value_tuple]
-                    feature_list.append({"feature": feature.serialize(), "params": value_list})
-                summary_dict["vcps"][vcp_key] = feature_list
-            print(json.dumps({"caps": {"summary": summary_dict}}, indent=indent_level))
+            print(_caps_summary_json(mdata, caps_data))
         else:
-            # TODO: maybe do JSON first, since that gets the data we need to make the str?
-            desired_features = [VCPCodes.input_source.value, VCPCodes.image_color_preset.value]
-
-            vcp_str_dict = {}
-            for vcp_key, vcp in caps_data.vcps.items():
-                if vcp:
-                    vcp_str_list = []
-                    for feature, values in vcp.items():
-                        if feature.code in desired_features:
-                            vcp_str_list.append()
-
-
-
-            summary = f"{monitor_data(args.monitor, cfg).__str__()}"
-
-            pass
+            print(_caps_summary_human(mdata, caps_data))
         return
 
     if args.json:
-        print(json.dumps({"caps": {"full": caps_data.serialize()}}, indent=indent_level))
+        print(json.dumps({"caps": {"type": "full", "monitor": mdata.serialize(), "data": caps_data.serialize()}}, indent=_INDENT_LEVEL))
     else:
-        print(caps_data.__str__())
+        print(mdata.__str__() + ":\n" + textwrap.indent(caps_data.__str__(), "\t"))
 
 
 def _get_feature(args, cfg: Config):

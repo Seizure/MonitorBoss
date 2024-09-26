@@ -162,7 +162,7 @@ class CapabilityData:
             vcp_str = f"{vcp_key}:\n"
             vcp_feature_str_list = []
             for feature, value_tuple in vcp_features.items():
-                vcp_feature_str_list.append(f"\t* " + feature.__str__() + (f": {', '.join(map(str, value_tuple))}" if value_tuple else ""))
+                vcp_feature_str_list.append(f"* " + feature.__str__() + (f": {', '.join(map(str, value_tuple))}" if value_tuple else ""))
             vcp_str += textwrap.indent('\n'.join(map(str, vcp_feature_str_list)), "\t")
             vcp_str_list.append(vcp_str)
         vcp_str = "\n".join(map(str, vcp_str_list))

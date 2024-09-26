@@ -8,7 +8,7 @@ pyddc.VCP = VCP
 from monitorboss import cli, MonitorBossError
 
 
-class TestCLIcheckers:
+class TestCheckAttribute:
 
     def test_check_attr_alias_valid(self, test_cfg):
         assert cli._check_feature("src", test_cfg) == get_vcp_com(VCPCodes.input_source.value)
@@ -27,6 +27,9 @@ class TestCLIcheckers:
         with pytest.raises(MonitorBossError):
             cli._check_feature("1568", test_cfg)
 
+
+class TestCheckMonitor:
+
     def test_check_mon_str_valid(self, test_cfg):
         assert cli._check_mon("baz", test_cfg) == 1
 
@@ -38,6 +41,9 @@ class TestCLIcheckers:
     # That is handled by impl._get_monitor
     def test_check_mon_id(self, test_cfg):
         assert cli._check_mon("8", test_cfg) == 8
+
+
+class TestCheckValue:
 
     def test_check_val_digits(self, test_cfg):
         assert cli._check_val(get_vcp_com(VCPCodes.input_source), "5", test_cfg) == 5
@@ -77,3 +83,16 @@ class TestCLIcheckers:
             assert "CONFIG ALIASES" not in output.err
 
 
+class TestSummaryUtils:
+
+    def test_extract_caps_summary_data(self):
+        # TODO: stub
+        pass
+
+    def _test_caps_summary_json(self):
+        # TODO: stub
+        pass
+
+    def test_caps_summary_human(self):
+        # TODO: stub
+        pass
