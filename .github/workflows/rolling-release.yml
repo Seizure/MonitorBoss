@@ -17,10 +17,20 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install PyInstaller and PyTest
+      - name: Install Poetry
         shell: pwsh
         run: |
-          pip install pyinstaller pytest
+          pip install poetry
+      - name: Install PyInstaller
+        shell: pwsh
+        run: |
+          pip install pyinstaller
+      - name: Install MonitorBoss
+        shell: pwsh
+        run: |
+          poetry lock
+          poetry update
+          poetry install
       - name: Build MonitorBoss
         shell: pwsh
         run: |
@@ -28,7 +38,7 @@ jobs:
       - name: Test the release build
         shell: pwsh
         run: |
-          pytest
+          poetry run pytest
       - name: Advance release tag to master
         run: |
           git tag ${{ env.RELEASE_TAG }} -f
