@@ -38,18 +38,18 @@ class DummyVCP(ABCVCP):
     def _set_vcp_feature(self, com: VCPCommand, value: int, timeout: float):
         del timeout # unused
         code = com.code
-        if code not in supported_codes:
+        if code not in supported_codes: # pragma: no cover
             # This is not defined behavior in practice, some monitors don't complain.
             # Therefor it is probably not worth testing against this result.
             raise OSError("The monitor does not support the specified VCP code.")
         if supported_codes[code] is None:
-            if value > unknown_max_values[code]:
+            if value > unknown_max_values[code]: # pragma: no cover
                 # This is not defined behavior in practice, some monitors don't complain.
                 # Therefor is it probably not worth testing against this result.
                 raise ValueError(f"value of {value} exceeds code maximum of {unknown_max_values[code]} for {VCPCommand.name}")
             else:
                 current_values[code] = value
-        else:
+        else: # pragma: no cover
             if value in supported_codes[code]:
                 current_values[code] = value
             else:
@@ -60,7 +60,7 @@ class DummyVCP(ABCVCP):
     def _get_vcp_feature(self, com: VCPCommand, timeout: float) -> (int, int):
         del timeout # unused
         code = com.code
-        if code not in supported_codes:
+        if code not in supported_codes: # pragma: no cover
             # This is not defined behavior in practice, some monitors don't complain and just return garbage.
             # Therefor it is probably not worth testing against this result.
             raise OSError("The monitor does not support the specified VCP code.")

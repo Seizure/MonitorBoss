@@ -1,0 +1,5 @@
+[report]
+exclude_also =
+    pragma: no cover
+    pragma: stop cover(?s:.)*?pragma: start cover
+    \A(?s:.*# pragma: exclude file.*)\Z

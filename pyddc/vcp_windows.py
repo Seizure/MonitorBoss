@@ -1,3 +1,5 @@
+# pragma: exclude file
+
 from __future__ import annotations
 
 from .vcp_codes import VCPCommand
