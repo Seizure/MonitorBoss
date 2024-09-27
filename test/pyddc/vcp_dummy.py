@@ -10,11 +10,11 @@ supported_codes = {
     4: [],  # factory reset code (WO) TODO: should find a better WO command (with actual values)
     16: None,  # luminance (RW/continuous)
     18: None,  # contrast (RW/continuous)
-    96: [27, 15, 17],  # input source code (RW/discreet); with params for USBC, dp1, and hdm1
+    96: [27, 15, 17, 257],  # input source code (RW/discreet); with params for USBC, dp1, and hdm1
     170: [1, 2, 4]  # image orientation (RO/discreet); with params for who knows what
 }
 
-current_values = {16: 75, 18: 75, 96: 27, 170: 2}  # lum is 75, input is USBC(27), image orientation is 2 (whatever that means)
+current_values = {16: 75, 18: 75, 96: 257, 170: 2}  # lum is 75, input is 1 (analog) with high byte set, image orientation is 2 (whatever that means)
 unknown_max_values = {16: 80, 18: 100}
 
 
@@ -44,6 +44,8 @@ class DummyVCP(ABCVCP):
             raise OSError("The monitor does not support the specified VCP code.")
         if supported_codes[code] is None:
             if value > unknown_max_values[code]:
+                # This is not defined behavior in practice, some monitors don't complain.
+                # Therefor is it probably not worth testing against this result.
                 raise ValueError(f"value of {value} exceeds code maximum of {unknown_max_values[code]} for {VCPCommand.name}")
             else:
                 current_values[code] = value

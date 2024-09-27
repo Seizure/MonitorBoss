@@ -37,6 +37,11 @@ class TestGetFeature:
             result = vcp.get_vcp_feature(lum_command)
             assert (result.value, result.max) == (75, 80)
 
+    def test_get_masked_high_byte(self):
+        with self.vcp as vcp:
+            result = vcp.get_vcp_feature(input_command)
+            assert (result.value, result.max) == (1, 0)
+
 
 class TestGetMax:
 
@@ -85,6 +90,10 @@ class TestSetFeature:
                 vcp.set_vcp_feature(lum_command, 85)
 
     # def test_unsupported_code(self):
+    #   # behavior for unsupported codes is undefined in practice, so not worth testing
+    #   pass
+
+    # def test_abovemax_code(self):
     #   # behavior for unsupported codes is undefined in practice, so not worth testing
     #   pass
 
