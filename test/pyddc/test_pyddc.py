@@ -119,7 +119,7 @@ class TestCapabilitiesFunctions:
     def test_caps_parsing(self):
         with self.vcp as vcp:
             caps = parse_capabilities(vcp.get_vcp_capabilities())
-            assert caps.__str__() == "{'prot': 'monitor', 'type': 'LCD', 'model': 'DUMM13', 'cmds': [<4>], 'vcp': [<16>, <18>, <96 (27, 15, 17)>, <170 (1, 2, 4)>], 'mccs_ver': '2.1'}"
+            assert str(caps) == "{'prot': 'monitor', 'type': 'LCD', 'model': 'DUMM13', 'cmds': [<4>], 'vcp': [<16>, <18>, <96 (27, 15, 17)>, <170 (1, 2, 4)>], 'mccs_ver': '2.1'}"
 
 
 class TestVCPCommands:

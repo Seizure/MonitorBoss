@@ -62,7 +62,7 @@ class VCP(abc.ABC):
             maximum = self.get_vcp_feature_max(code, timeout)
             if value > maximum:
                 raise ValueError(f"value of {value} exceeds code maximum of {maximum} for {code.name}")
-        self.logger.debug(f"SetVCPFeature(_, {code.__repr__()}, {value=})")
+        self.logger.debug(f"SetVCPFeature(_, {repr(code)}, {value=})")
         self._set_vcp_feature(code, value, timeout)
 
     # TODO: discuss whether we need/want timeout here
@@ -74,7 +74,7 @@ class VCP(abc.ABC):
         assert self._in_ctx, "This function must be run within the context manager"
         if not com.readable:
             raise TypeError(f"cannot read write-only code: {com}")
-        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply(_, {com.__repr__()}, None, _, _)")
+        self.logger.debug(f"GetVCPFeatureAndVCPFeatureReply(_, {repr(com)}, None, _, _)")
         ret = self._get_vcp_feature(com, timeout)
         if com.code == VCPCodes.input_source:
             # The input source sometimes has a high byte that needs to be masked out.

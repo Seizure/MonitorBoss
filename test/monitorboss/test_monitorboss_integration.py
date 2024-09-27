@@ -11,9 +11,9 @@ from monitorboss import config, cli, info
 
 def test_list_human(test_conf_file, capsys):
     expected = dedent(f"""\
-    {info.MonitorData(0, tuple(["foo"])).__str__()}
-    {info.MonitorData(1, tuple(["bar", "baz"])).__str__()}
-    {info.MonitorData(2, tuple()).__str__()}
+    {info.MonitorData(0, tuple(["foo"]))}
+    {info.MonitorData(1, tuple(["bar", "baz"]))}
+    {info.MonitorData(2, tuple())}
     """)
     cli.run(f"--config {test_conf_file.as_posix()} list")
     output = capsys.readouterr()
@@ -81,9 +81,9 @@ def test_caps_summary_json(test_conf_file, capsys):
 def test_get_feature_human(test_conf_file, capsys):
     code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fstring = info.feature_data(code.value, cfg).__str__()
-    mstring = info.monitor_data(1, cfg).__str__()
-    vstring = info.value_data(code.value, 75, cfg).__str__()
+    fstring = str(info.feature_data(code.value, cfg))
+    mstring = str(info.monitor_data(1, cfg))
+    vstring = str(info.value_data(code.value, 75, cfg))
     expected = f"{fstring} for {mstring} is {vstring} (Maximum: 80)\n"
     cli.run(f"--config {test_conf_file.as_posix()} get 1 lum")
     output = capsys.readouterr()
@@ -107,9 +107,9 @@ def test_get_feature_json(test_conf_file, capsys):
 def test_set_feature_human(test_conf_file, capsys):
     code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fstring = info.feature_data(code.value, cfg).__str__()
-    mstring = info.monitor_data(1, cfg).__str__()
-    vstring = info.value_data(code.value, 75, cfg).__str__()
+    fstring = str(info.feature_data(code.value, cfg))
+    mstring = str(info.monitor_data(1, cfg))
+    vstring = str(info.value_data(code.value, 75, cfg))
     expected = f"set {fstring} for {mstring} to {vstring}\n"
     cli.run(f"--config {test_conf_file.as_posix()} set bar lum 75")
     output = capsys.readouterr()
@@ -133,9 +133,9 @@ def test_set_feature_json(test_conf_file, capsys):
 def test_tog_feature_human(test_conf_file, capsys):
     code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fstring = info.feature_data(code.value, cfg).__str__()
-    mstring = info.monitor_data(1, cfg).__str__()
-    vstring = info.value_data(code.value, 75, cfg).__str__()
+    fstring = str(info.feature_data(code.value, cfg))
+    mstring = str(info.monitor_data(1, cfg))
+    vstring = str(info.value_data(code.value, 75, cfg))
     expected = f"toggled {fstring} for {mstring} from {vstring} to {vstring}\n"
     # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
     #   there should be a way to have separate "Sessions" for each test, should figure out later

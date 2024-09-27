@@ -17,11 +17,11 @@ class TestInfoFeatureData:
 
     def test_FeatureData_str_yesname(self):
         data = info.FeatureData("foo", 42, tuple())
-        assert data.__str__() == "foo (42)"
+        assert str(data) == "foo (42)"
 
     def test_FeatureData_str_noname(self):
         data = info.FeatureData("", 42, tuple())
-        assert data.__str__() == "42"
+        assert str(data) == "42"
 
     def test_feature_data_found_com(self, test_cfg):
         code = VCPCodes.input_source
@@ -54,19 +54,19 @@ class TestInfoValueData:
 
     def test_ValueData_str_noparam_noalias(self):
         data = info.ValueData(24, "", tuple())
-        assert data.__str__() == "24"
+        assert str(data) == "24"
 
     def test_ValueData_str_yesparam_noalias(self):
         data = info.ValueData(24, "foo", tuple())
-        assert data.__str__() == "24 (PARAM: foo)"
+        assert str(data) == "24 (PARAM: foo)"
 
     def test_ValueData_str_noparam_yesalias(self):
         data = info.ValueData(24, "", tuple(['foo', 'bar']))
-        assert data.__str__() == "24 (ALIASES: foo, bar)"
+        assert str(data) == "24 (ALIASES: foo, bar)"
 
     def test_ValueData_str_yesparam_yesalias(self):
         data = info.ValueData(24, "foo", tuple(["bar", "baz"]))
-        assert data.__str__() == "24 (PARAM: foo | ALIASES: bar, baz)"
+        assert str(data) == "24 (PARAM: foo | ALIASES: bar, baz)"
 
     def test_value_data_found_com(self, test_cfg):
         code = VCPCodes.input_source
@@ -90,15 +90,15 @@ class TestInfoMonitorData:
 
     def test_MonitorData_str_noalias(self):
         data = info.MonitorData(2, tuple())
-        assert data.__str__() == "monitor #2"
+        assert str(data) == "monitor #2"
 
     def test_MonitorData_str_onealias(self):
         data = info.MonitorData(0, tuple(["foo"]))
-        assert data.__str__() == "monitor #0 (foo)"
+        assert str(data) == "monitor #0 (foo)"
 
     def test_MonitorData_str_multialias(self):
         data = info.MonitorData(1, tuple(["bar", "baz"]))
-        assert data.__str__() == "monitor #1 (bar, baz)"
+        assert str(data) == "monitor #1 (bar, baz)"
 
     def test_monitor_data(self, test_cfg):
         data = info.MonitorData(1, tuple(['bar', 'baz']))
@@ -260,7 +260,7 @@ class TestInfoCapabilitydata:
 
         expected = f"{data._attr_str()}{data._cmds_str()}{data._vcp_str()}{data._errata_str()}\n"
 
-        assert data.__str__() == expected
+        assert str(data) == expected
 
     def test_capability_data(self):
         # TODO: this is going to be very annoying, and the function will be changing when PYDDC updates its caps output
