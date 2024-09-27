@@ -90,12 +90,12 @@ class TestSummaryUtils:
     def test_extract_caps_summary_data(self):
         feature1 = info.FeatureData("", 42, ())
         feature2 = info.FeatureData("", 84, ())
-        feature3 = info.FeatureData("", VCPCodes.input_source, ())
-        feature4 = info.FeatureData("", VCPCodes.image_color_preset, ())
+        feature3 = info.FeatureData("", VCPCodes.input_source.value, ())
+        feature4 = info.FeatureData("", VCPCodes.image_color_preset.value, ())
         value1 = info.ValueData(12, "", ())
         value2 = info.ValueData(34, "", ())
-        value3 = info.ValueData(InputSourceNames.hdmi2, "", ())
-        value4 = info.ValueData(ColorPresetNames.ct5000k, "", ())
+        value3 = info.ValueData(InputSourceNames.hdmi2.value, "", ())
+        value4 = info.ValueData(ColorPresetNames.ct5000k.value, "", ())
         attributes = frozendict({"model": "CAF3", "foo": "bar", "baz": "qux", "type": "LCD"})
         cmds = frozendict({"cmds_0": (feature1, feature2, feature3), "cmds_1": (feature1, feature2, feature4)})
         vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2), feature3: (value3,)}),
@@ -111,12 +111,12 @@ class TestSummaryUtils:
         mon = info.MonitorData(42, ())
         feature1 = info.FeatureData("", 42, ())
         feature2 = info.FeatureData("", 84, ())
-        feature3 = info.FeatureData("", VCPCodes.input_source, ())
-        feature4 = info.FeatureData("", VCPCodes.image_color_preset, ())
+        feature3 = info.FeatureData("", VCPCodes.input_source.value, ())
+        feature4 = info.FeatureData("", VCPCodes.image_color_preset.value, ())
         value1 = info.ValueData(12, "", ())
         value2 = info.ValueData(34, "", ())
-        value3 = info.ValueData(InputSourceNames.hdmi2, "", ())
-        value4 = info.ValueData(ColorPresetNames.ct5000k, "", ())
+        value3 = info.ValueData(InputSourceNames.hdmi2.value, "", ())
+        value4 = info.ValueData(ColorPresetNames.ct5000k.value, "", ())
         attributes = frozendict({"model": "CAF3", "foo": "bar", "baz": "qux", "type": "LCD"})
         cmds = frozendict({"cmds_0": (feature1, feature2, feature3), "cmds_1": (feature1, feature2, feature4)})
         vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2), feature3: (value3,)}),
@@ -132,12 +132,12 @@ class TestSummaryUtils:
         mon = info.MonitorData(42, ())
         feature1 = info.FeatureData("", 42, ())
         feature2 = info.FeatureData("", 84, ())
-        feature3 = info.FeatureData("", VCPCodes.input_source, ())
-        feature4 = info.FeatureData("", VCPCodes.image_color_preset, ())
+        feature3 = info.FeatureData("", VCPCodes.input_source.value, ())
+        feature4 = info.FeatureData("", VCPCodes.image_color_preset.value, ())
         value1 = info.ValueData(12, "", ())
         value2 = info.ValueData(34, "", ())
-        value3 = info.ValueData(InputSourceNames.hdmi2, "", ())
-        value4 = info.ValueData(ColorPresetNames.ct5000k, "", ())
+        value3 = info.ValueData(InputSourceNames.hdmi2.value, "", ())
+        value4 = info.ValueData(ColorPresetNames.ct5000k.value, "", ())
         attributes = frozendict({"model": "CAF3", "foo": "bar", "baz": "qux", "type": "LCD"})
         cmds = frozendict({"cmds_0": (feature1, feature2, feature3), "cmds_1": (feature1, feature2, feature4)})
         vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2), feature3: (value3,)}),
@@ -145,7 +145,7 @@ class TestSummaryUtils:
         errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
         data = info.CapabilityData(attributes, cmds, vcps, errata)
 
-        expected = f'monitor #42model: CAF3, type: LCD\nvcp_0:\n{indentation}* VCPCodes.input_source: 18\nvcp_1:\n{indentation}* VCPCodes.image_color_preset: 4\n'
+        expected = f'monitor #42model: CAF3, type: LCD\nvcp_0:\n{indentation}* 96: 18\nvcp_1:\n{indentation}* 20: 4\n'
 
         assert cli._caps_summary_human(mon, data) == expected
 
