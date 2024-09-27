@@ -22,11 +22,7 @@ jobs:
           poetry lock
           poetry update
           poetry install
-      - name: Install Pytest
-        shell: pwsh
-        run: |
-          pip install pytest
       - name: Test MonitorBoss
         shell: pwsh
         run: |
-          pytest
+          poetry run pytest
