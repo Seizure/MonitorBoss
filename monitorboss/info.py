@@ -17,27 +17,24 @@ class FeatureData:
     aliases: tuple[str, ...]
 
     def serialize(self) -> dict:
-        data = {"code": self.code}
-        if self.name:
-            data["name"] = self.name
-        if self.aliases:
-            data["aliases"] = self.aliases
-        return data
+        return {
+            "code": self.code,
+            **({"name": self.name} if self.name else {}),
+            **({"aliases": self.aliases} if self.aliases else {}),
+        }
 
     def __str__(self) -> str:
-        if self.name:
-            return f"{self.name} ({self.code})"
-        else:
-            return str(self.code)
+        return f"{self.name} ({self.code})" if self.name else str(self.code)
 
 
 def feature_data(code: int, cfg: Config) -> FeatureData:
     com = get_vcp_com(code)
-    name = ""
-    aliases = []
     if com:
         name = com.name
         aliases = [alias for alias, val in cfg.feature_aliases.items() if val == com.code.value]
+    else:
+        name = ""
+        aliases = []
     return FeatureData(name, code, tuple(aliases))
 
 
@@ -47,13 +44,13 @@ class MonitorData:
     aliases: tuple[str, ...]
 
     def serialize(self) -> dict:
-        data = {"id": self.id}
-        if self.aliases:
-            data["aliases"] = self.aliases
-        return data
+        return {
+            "id": self.id,
+            **({"aliases": self.aliases} if self.aliases else {}),
+        }
 
     def __str__(self) -> str:
-        return f"monitor #{self.id}" + (f" ({', '.join(map(str, self.aliases))})" if self.aliases else "")
+        return f"monitor #{self.id} ({', '.join(map(str, self.aliases))})" if self.aliases else f"monitor #{self.id}"
 
 
 def monitor_data(mon: int, cfg: Config) -> MonitorData:
@@ -67,22 +64,15 @@ class ValueData:
     aliases: tuple[str, ...]
 
     def serialize(self) -> dict:
-        data = {"value": self.value}
-        if self.param:
-            data["param"] = self.param
-        if self.aliases:
-            data["aliases"] = self.aliases
-        return data
+        return {
+            "value": self.value,
+            **({"param": self.param} if self.param else {}),
+            **({"aliases": self.aliases} if self.aliases else {}),
+        }
 
     def __str__(self) -> str:
-        valstr = f"{self.value}"
-        if self.param or self.aliases:
-            valstr += " ("
-            valstr += f"{'PARAM: ' + self.param if self.param else ''}"
-            valstr += f"{' | ' if self.param and self.aliases else ''}"
-            valstr += f"{('ALIASES: ' + ', '.join(map(str, self.aliases))) if self.aliases else ''}"
-            valstr += ")"
-        return valstr
+        data = ([f"PARAM: {self.param}"] if self.param else []) + ([f"ALIASES: {', '.join(map(str, self.aliases))}"] if self.aliases else [])
+        return f"{self.value} ({' | '.join(data)})" if data else f"{self.value}"
 
 
 def value_data(code: int, value: int, cfg: Config) -> ValueData:
@@ -90,17 +80,14 @@ def value_data(code: int, value: int, cfg: Config) -> ValueData:
     param = ""
     aliases = []
     if com:
-        for v, k in com.param_names.items():
-            if value == k:
-                param = v
+        for key, val in com.param_names.items():
+            if value == val:
+                param = key
                 break
         # TODO: This will need to be generalized when we allow for arbitrary value aliases
         if com.code == VCPCodes.input_source:
             aliases = [alias for alias, val in cfg.input_source_names.items() if value == val]
-
-    data = ValueData(value, param, tuple(aliases))
-
-    return data
+    return ValueData(value, param, tuple(aliases))
 
 
 # TODO: do we want PYDDC to be the one to format things in a structure like this, rather than a dict?
@@ -122,19 +109,13 @@ class CapabilityData:
                 vcp: [
                     {
                         "feature": feature.serialize(),
-                        **(
-                            {"params": [value.serialize() for value in values]}
-                            if values else {}
-                        )
+                        **({"params": [param.serialize() for param in params]} if params else {}),
                     }
-                    for feature, values in vcp_dict.items()
+                    for feature, params in vcp_features.items()
                 ]
-                for vcp, vcp_dict in self.vcps.items()
+                for vcp, vcp_features in self.vcps.items()
             },
-            **(
-                {"errata": dict(self.errata)}
-                if self.errata else {}
-            ),
+            **({"errata": dict(self.errata)} if self.errata else {}),
         }
 
     def _attr_str(self) -> str:
@@ -143,52 +124,40 @@ class CapabilityData:
         return "".join(f"{attr}: {val}\n" for attr, val in self.attributes.items())
 
     def _cmds_str(self) -> str:
-        cmd_str_list = []
-        for cmd_key, cmd_values in self.cmds.items():
-            cmd_str_list.append(f"{cmd_key}: {', '.join(map(str, cmd_values))}")
-        cmd_str = "\n".join(map(str, cmd_str_list))
-
-        if cmd_str_list:
-            if len(cmd_str_list) == 1:
-                return cmd_str + "\n"
-            return "CMDS:\n" + textwrap.indent(cmd_str, indentation) + "\n"
-        return ""
+        if not self.cmds:
+            return ""
+        cmds = [f"{cmd}: {', '.join(map(str, values))}" for cmd, values in self.cmds.items()]
+        if len(cmds) == 1:
+            return cmds[0] + "\n"
+        return "CMDS:\n" + textwrap.indent("\n".join(cmds), indentation) + "\n"
 
     def _vcp_str(self) -> str:
-        vcp_str_list = []
-        for vcp_key, vcp_features in self.vcps.items():
-            vcp_str = f"{vcp_key}:\n"
-            vcp_feature_str_list = []
-            for feature, value_tuple in vcp_features.items():
-                vcp_feature_str_list.append(f"* " + feature.__str__() + (f": {', '.join(map(str, value_tuple))}" if value_tuple else ""))
-            vcp_str += textwrap.indent('\n'.join(map(str, vcp_feature_str_list)), indentation)
-            vcp_str_list.append(vcp_str)
-        vcp_str = "\n".join(map(str, vcp_str_list))
-
-        if vcp_str_list:
-            if len(vcp_str_list) == 1:
-                return vcp_str_list[0] + "\n"
-            return "VCP:\n" + textwrap.indent(vcp_str, indentation) + "\n"
-        return ""
+        if not self.vcps:
+            return ""
+        vcps = [
+            f"{vcp}:\n" + textwrap.indent("\n".join(
+                f"* {feature}" + (f": {', '.join(map(str, values))}" if values else "")
+                for feature, values in features.items()
+            ), indentation)
+            for vcp, features in self.vcps.items()
+        ]
+        if len(vcps) == 1:
+            return vcps[0] + "\n"
+        return "VCP:\n" + textwrap.indent("\n".join(vcps), indentation) + "\n"
 
     def _errata_str(self) -> str:
-        errata_str_dict = {}
-        for errata_key, errata_tuple in self.errata.items():
-            errata_str_dict[errata_key] = ', '.join(map(str, errata_tuple))
-
-        if errata_str_dict:
-            errata_value_list = list(errata_str_dict.values())
-            if len(errata_str_dict) == 1 and not list(errata_str_dict.keys())[0]:
-                return "Errata: " + errata_value_list[0] + "\n"
-            else:
-                return "Errata:\n" + "\n".join(map(str, [
-                    f"{indentation}{errata_key}{': ' if errata_key else ''}{errata_values}"
-                    for errata_key, errata_values in errata_str_dict.items()
-                ])) + "\n"
-        return ""
+        if not self.errata:
+            return ""
+        errata = {key: ", ".join(map(str, value)) for key, value in self.errata.items()}
+        if len(errata) == 1 and not list(errata.keys())[0]:
+            return f"Errata: {list(errata.values())[0]}\n"
+        return "Errata:\n" + textwrap.indent("\n".join(
+            f"{key}{': ' if key else ''}{values}"
+            for key, values in errata.items()
+        ), indentation) + "\n"
 
     def __str__(self) -> str:
-        return f"{self._attr_str()}{self._cmds_str()}{self._vcp_str()}{self._errata_str()}\n"
+        return self._attr_str() + self._cmds_str() + self._vcp_str() + self._errata_str() + "\n"
 
 
 def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
@@ -201,35 +170,20 @@ def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
     #   - indefinitely nested caps.
     #   - non-int feature codes and values (passing cap.cap and cap.values data without checking)
     #   We do not account for this here, but that should change in PYDDC anyways
-    for s in caps:
-        if s.lower().startswith("cmd") and caps[s]:
-            features = caps[s]
-            for i, f in enumerate(features):
-                features[i] = feature_data(f.cap, cfg)
-            cmds[s] = features
-        elif s.lower().startswith("vcp") and caps[s]:
-            features_values = {}
-            for i, f in enumerate(caps[s]):
-                values = f.values if f.values else []
-                for j, v in enumerate(values):
-                    values[j] = value_data(f.cap, v, cfg)
-                features_values[feature_data(f.cap, cfg)] = values
-
-            vcps[s] = features_values
+    for name, cap in caps.items():
+        if name.lower().startswith("cmd") and cap:
+            cmds[name] = [feature_data(f.cap, cfg) for f in cap]
+        elif name.lower().startswith("vcp") and cap:
+            vcps[name] = {
+                feature_data(f.cap, cfg): [value_data(f.cap, v, cfg) for v in f.values] if f.values else []
+                for f in cap
+            }
         else:
-            info_fields[s] = caps[s]
+            info_fields[name] = cap
 
-    info_fields = frozendict(info_fields.items())
-    for k, l in cmds.items():
-        cmds[k] = tuple(l)
-    cmds = frozendict(cmds)
-    for k, d in vcps.items():
-        for j, l in vcps[k].items():
-            vcps[k][j] = tuple(l)
-        vcps[k] = frozendict(d)
-    vcps = frozendict(vcps)
-    for k, l in errata.items():
-        errata[k] = tuple(l)
-    errata = frozendict(errata)
-
-    return CapabilityData(info_fields, cmds, vcps, errata)
+    return CapabilityData(
+        frozendict(info_fields),
+        frozendict({k: tuple(v) for k, v in cmds.items()}),
+        frozendict({k: frozendict({vk: tuple(vv) for vk, vv in v.items()}) for k, v in vcps.items()}),
+        frozendict({k: tuple(v) for k, v in errata.items()})
+    )
