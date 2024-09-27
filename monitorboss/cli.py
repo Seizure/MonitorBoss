@@ -87,7 +87,7 @@ def _list_mons(args, cfg: Config):
     for index, monitor in enumerate(list_monitors()):
         mdata = monitor_data(index, cfg)
         if args.json:
-            print(json.dumps({"list": {"monitor": mdata.serialize()}}))
+            print(json.dumps({"list": {"monitor": mdata.serialize()}}, indent=_INDENT_LEVEL))
         else:
             print(mdata.__str__())
 
@@ -151,7 +151,7 @@ def _get_caps(args, cfg: Config):
 
     if args.raw:
         if args.json:
-            print(json.dumps({"caps": {"type": "raw", "monitor": mdata.serialize(), "data": caps_raw}}))
+            print(json.dumps({"caps": {"type": "raw", "monitor": mdata.serialize(), "data": caps_raw}}, indent=_INDENT_LEVEL))
         else:
             print(caps_raw)
         return
@@ -192,7 +192,7 @@ def _get_feature(args, cfg: Config):
             data = {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}
             if maximum:
                 data["max_value"] = maximum
-            print(json.dumps({"get": data}))
+            print(json.dumps({"get": data}, indent=_INDENT_LEVEL))
         else:
             print(f"{fdata.__str__()} for {mdata.__str__()} is {vdata.__str__()}" + (f" (Maximum: {maximum})" if maximum else ""))
 
@@ -213,7 +213,7 @@ def _set_feature(args, cfg: Config):
         mdata = monitor_data(mon, cfg)
         vdata = value_data(vcpcom.code, new_val, cfg)
         if args.json:
-            print(json.dumps({"set": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}))
+            print(json.dumps({"set": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}, indent=_INDENT_LEVEL))
         else:
             print(f"set {fdata.__str__()} for {mdata.__str__()} to {vdata.__str__()}")
 
@@ -235,7 +235,7 @@ def _tog_feature(args, cfg: Config):
         vdata_new = value_data(vcpcom.code, tog_val.new, cfg)
         vdata_original = value_data(vcpcom.code, tog_val.old, cfg)
         if args.json:
-            print(json.dumps({"toggle": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "original_value": vdata_original.serialize(), "new_value": vdata_new.serialize()}}))
+            print(json.dumps({"toggle": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "original_value": vdata_original.serialize(), "new_value": vdata_new.serialize()}}, indent=_INDENT_LEVEL))
             pass
         else:
             print(f"toggled {fdata.__str__()} for {mdata.__str__()} from {vdata_original.__str__()} to {vdata_new.__str__()}")
