@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 
 from frozendict import frozendict
@@ -57,32 +59,38 @@ class TestCheckValue:
         assert cli._check_val(get_vcp_com(VCPCodes.input_source), "usb-c", test_cfg) == 27
 
     def test_check_val_invalid_yesparam_yesalias(self, capsys, test_cfg):
-        with pytest.raises(MonitorBossError):
+        try:
             cli._check_val(get_vcp_com(VCPCodes.input_source), "foo", test_cfg)
-            output = capsys.readouterr()
-            assert output.out == ""
-            assert "PARAM NAMES" in output.err
-            assert "CONFIG ALIASES" in output.err
+        except MonitorBossError as err:
+            print(err, file=sys.stderr)
+        output = capsys.readouterr()
+        assert output.out == ""
+        assert "PARAM NAMES" in output.err
+        assert "CONFIG ALIASES" in output.err
 
     def test_check_val_invalid_yesparam_noalias(self, capsys, test_cfg):
-        with pytest.raises(MonitorBossError):
-            cli._check_val(get_vcp_com(VCPCodes.image_luminance), "foo", test_cfg)
-            output = capsys.readouterr()
-            assert output.out == ""
-            assert "PARAM NAMES" in output.err
-            assert "CONFIG ALIASES" not in output.err
+        try:
+            cli._check_val(get_vcp_com(VCPCodes.display_power_mode), "foo", test_cfg)
+        except MonitorBossError as err:
+            print(err, file=sys.stderr)
+        output = capsys.readouterr()
+        assert output.out == ""
+        assert "PARAM NAMES" in output.err
+        assert "CONFIG ALIASES" not in output.err
 
     def test_check_val_invalid_noparam_yesalias(self, capsys, test_cfg):
         # TODO: this will become relevant when we allow for aliases on all feature values
         pass
 
     def test_check_val_invalid_noparam_noalias(self, capsys, test_cfg):
-        with pytest.raises(MonitorBossError):
+        try:
             cli._check_val(get_vcp_com(VCPCodes.image_luminance), "foo", test_cfg)
-            output = capsys.readouterr()
-            assert output.out == ""
-            assert "PARAM NAMES" not in output.err
-            assert "CONFIG ALIASES" not in output.err
+        except MonitorBossError as err:
+            print(err, file=sys.stderr)
+        output = capsys.readouterr()
+        assert output.out == ""
+        assert "PARAM NAMES" not in output.err
+        assert "CONFIG ALIASES" not in output.err
 
 
 class TestSummaryUtils:
