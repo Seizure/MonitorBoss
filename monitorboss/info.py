@@ -161,29 +161,24 @@ class CapabilityData:
 
 
 def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
-    info_fields: dict[str, int] = {}
-    cmds: dict[str, list[FeatureData]] = {}
-    vcps: dict[str, dict[FeatureData, list[ValueData]]] = {}
-    errata: dict[str, list[str]] = {}  # TODO: not sure how to find/parse out errata rn
-
     # TODO: PYDDC definition of Capabilities currently allows for:
     #   - indefinitely nested caps.
     #   - non-int feature codes and values (passing cap.cap and cap.values data without checking)
     #   We do not account for this here, but that should change in PYDDC anyways
-    for name, cap in caps.items():
-        if name.lower().startswith("cmd"):
-            cmds[name] = [feature_data(f.cap, cfg) for f in cap] if cap else []
-        elif name.lower().startswith("vcp"):
-            vcps[name] = {
-                feature_data(f.cap, cfg): [value_data(f.cap, v, cfg) for v in f.values] if f.values else []
-                for f in cap
-            } if cap else {}
-        else:
-            info_fields[name] = cap
-
-    return CapabilityData(
-        frozendict(info_fields),
-        frozendict({k: tuple(v) for k, v in cmds.items()}),
-        frozendict({k: frozendict({vk: tuple(vv) for vk, vv in v.items()}) for k, v in vcps.items()}),
-        frozendict({k: tuple(v) for k, v in errata.items()})
-    )
+    cmds = frozendict({
+        name: tuple(feature_data(f.cap, cfg) for f in cap) if cap else ()
+        for name, cap in caps.items() if name.lower().startswith("cmd")
+    })
+    vcps = frozendict({
+        name: frozendict({
+            feature_data(f.cap, cfg): tuple(value_data(f.cap, v, cfg) for v in f.values) if f.values else ()
+            for f in cap
+        }) if cap else frozendict()
+        for name, cap in caps.items() if name.lower().startswith("vcp")
+    })
+    info_fields = frozendict({
+        name: cap
+        for name, cap in caps.items() if name not in cmds and name not in vcps
+    })
+    errata: dict[str, list[str]] = frozendict()  # TODO: not sure how to find/parse out errata rn
+    return CapabilityData(info_fields, cmds, vcps, errata)
