@@ -54,7 +54,7 @@ class MonitorData:
 
 
 def monitor_data(mon: int, cfg: Config) -> MonitorData:
-    return MonitorData(mon, tuple([alias for alias, val in cfg.monitor_names.items() if mon == val]))
+    return MonitorData(mon, tuple(alias for alias, val in cfg.monitor_names.items() if mon == val))
 
 
 @dataclass(frozen=True)

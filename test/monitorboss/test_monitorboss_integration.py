@@ -11,9 +11,9 @@ from monitorboss import config, cli, info
 
 def test_list_human(test_conf_file, capsys):
     expected = dedent(f"""\
-    {info.MonitorData(0, tuple(["foo"]))}
-    {info.MonitorData(1, tuple(["bar", "baz"]))}
-    {info.MonitorData(2, tuple())}
+    {info.MonitorData(0, ("foo",))}
+    {info.MonitorData(1, ("bar", "baz"))}
+    {info.MonitorData(2, ())}
     """)
     cli.run(f"--config {test_conf_file.as_posix()} list")
     output = capsys.readouterr()
@@ -22,9 +22,9 @@ def test_list_human(test_conf_file, capsys):
     
     
 def test_list_json(test_conf_file, capsys):
-    mdata0 = info.MonitorData(0, tuple(["foo"]))
-    mdata1 = info.MonitorData(1, tuple(["bar", "baz"]))
-    mdata2 = info.MonitorData(2, tuple())
+    mdata0 = info.MonitorData(0, ("foo",))
+    mdata1 = info.MonitorData(1, ("bar", "baz"))
+    mdata2 = info.MonitorData(2, ())
     expected = json.dumps({"list": {"monitor": mdata0.serialize()}}) + "\n"
     expected += json.dumps({"list": {"monitor": mdata1.serialize()}}) + "\n"
     expected += json.dumps({"list": {"monitor": mdata2.serialize()}}) + "\n"
