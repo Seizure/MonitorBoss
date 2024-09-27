@@ -68,17 +68,15 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
             # TODO: This will need to be generalized when we allow for arbitrary value aliases
             if val in cfg.input_source_names:
                 return cfg.input_source_names[val]
-
     # If we got here, an invalid value was provided
     error_text = f"{val} is not a valid value for feature \"{com.name}\".\nValid values are:\n"
     if com.param_names:
-        error_text += f"{indentation}- [PARAM NAMES]: {', '.join(list(com.param_names.keys()))}\n"
+        error_text += f"{indentation}- [PARAM NAMES]: {', '.join(com.param_names.keys())}\n"
     # TODO: This will need to be generalized when we allow for arbitrary value aliases
     if com.code == VCPCodes.input_source and cfg.input_source_names:
-        error_text += f"{indentation}- [CONFIG ALIASES]: {', '.join(list(cfg.input_source_names))}\n"
-    error_text += f"""{indentation}- a code number (non-negative integer).\n
-    NOTE: A particular monitor may only support some of these values. Check your monitor's specs for the inputs it accepts."""
-
+        error_text += f"{indentation}- [CONFIG ALIASES]: {', '.join(cfg.input_source_names.keys())}\n"
+    error_text += f"{indentation}- a code number (non-negative integer)\n"
+    error_text += f"NOTE: A particular monitor may only support some of these values. Check your monitor's specs for the inputs it accepts."
     raise MonitorBossError(error_text)
 
 
@@ -89,57 +87,46 @@ def _list_mons(args, cfg: Config):
         if args.json:
             print(json.dumps({"list": {"monitor": mdata.serialize()}}, indent=_INDENT_LEVEL))
         else:
-            print(mdata.__str__())
+            print(mdata)
 
 
 def _extract_caps_summary_data(caps_data: CapabilityData) -> tuple[dict[str, str], dict[str, dict[FeatureData, tuple[ValueData, ...]]]]:
-    desired_attributes = ("type", "model")
-    attribute_dict: dict[str, str] = {}
-    for attr_key, attr_value in caps_data.attributes.items():
-        if attr_key in desired_attributes:
-            attribute_dict[attr_key] = attr_value
-
-    desired_features = (VCPCodes.input_source.value, VCPCodes.image_color_preset.value)
-    vcp_feature_dict: dict[str, dict[FeatureData, tuple[ValueData, ...]]] = {}
-    for vcp_key, vcp in caps_data.vcps.items():
-        if vcp:
-            feature_dict: dict[FeatureData, tuple[ValueData, ...]] = {}
-            for feature, values in vcp.items():
-                if feature.code in desired_features:
-                    feature_dict[feature] = values
-            vcp_feature_dict[vcp_key] = feature_dict
-
-    return attribute_dict, vcp_feature_dict
+    desired_attributes = {"type", "model"}
+    attributes = {attr: value for attr, value in caps_data.attributes.items() if attr in desired_attributes}
+    desired_features = {VCPCodes.input_source.value, VCPCodes.image_color_preset.value}
+    vcp_features = {
+    	vcp: {feature: params for feature, params in features.items() if feature.code in desired_features}
+    	for vcp, features in caps_data.vcps.items() if features
+    }
+    return attributes, vcp_features
 
 
 def _caps_summary_json(mon: MonitorData, caps_data: CapabilityData) -> str:
-    attribute_dict, vcp_feature_dict = _extract_caps_summary_data(caps_data)
-
-    summary_dict = {}
-    for attr_key, attr_value in attribute_dict.items():
-        summary_dict[attr_key] = attr_value
-    summary_dict["vcps"] = {}
-    for vcp_key, feature_dict in vcp_feature_dict.items():
-        feature_list = []
-        for feature, value_tuple in feature_dict.items():
-            value_list = [v.serialize() for v in value_tuple]
-            feature_list.append({"feature": feature.serialize(), "params": value_list})
-        summary_dict["vcps"][vcp_key] = feature_list
-    return json.dumps({"caps": {"type": "summary", "monitor": mon.serialize(), "data": summary_dict}}, indent=_INDENT_LEVEL)
+    attributes, vcp_features = _extract_caps_summary_data(caps_data)
+    vcps = {
+        vcp: [
+            {
+                "feature": feature.serialize(),
+                "params": [param.serialize() for param in params],
+            }
+            for feature, params in features.items()
+        ]
+        for vcp, features in vcp_features.items()
+    }
+    return json.dumps({
+        "caps": {"type": "summary", "monitor": mon.serialize(), "data": {**attributes, "vcps": vcps}}
+    }, indent=_INDENT_LEVEL)
 
 
 def _caps_summary_human(mon: MonitorData, caps_data: CapabilityData) -> str:
-    attribute_dict, vcp_feature_dict = _extract_caps_summary_data(caps_data)
-
-    summary = f"{mon.__str__()}"
-    attr_str = ", ".join(map(str, [f"{key}: {val}" for key, val in attribute_dict.items()]))
+    attributes, vcp_features = _extract_caps_summary_data(caps_data)
+    summary = f"{mon}"
+    attr_str = ", ".join(f"{attr}: {value}" for attr, value in attributes.items())
     summary += f"{attr_str}\n" if attr_str else "\n"
-    for vcp_key, vcp in vcp_feature_dict.items():
-        summary += vcp_key + (":" if vcp else "") + "\n"
-        for feature, values in vcp.items():
-            value_str = ", ".join(map(str, [v.__str__() for v in values]))
-            summary += f"{indentation}* {feature.__str__()}: {value_str}\n"
-
+    for vcp, features in vcp_features.items():
+        summary += vcp + (":" if features else "") + "\n"
+        for feature, params in features.items():
+            summary += f"{indentation}* {feature}: {', '.join(map(str, params))}\n"
     return summary
 
 
@@ -169,7 +156,7 @@ def _get_caps(args, cfg: Config):
     if args.json:
         print(json.dumps({"caps": {"type": "full", "monitor": mdata.serialize(), "data": caps_data.serialize()}}, indent=_INDENT_LEVEL))
     else:
-        print(mdata.__str__() + ":\n" + textwrap.indent(caps_data.__str__(), indentation))
+        print(str(mdata) + ":\n" + textwrap.indent(str(caps_data), indentation))
 
 
 def _get_feature(args, cfg: Config):
@@ -182,7 +169,7 @@ def _get_feature(args, cfg: Config):
         ret = get_feature(m, vcpcom, cfg.wait_internal_time)
         cur_vals.append(ret.value)
         max_vals.append(None if vcpcom.discrete else ret.max)
-        if i+1 < len(mons):
+        if i + 1 < len(mons):
             sleep(cfg.wait_get_time)
     for mon, val, maximum in zip(mons, cur_vals, max_vals):
         fdata = feature_data(vcpcom.code, cfg)
@@ -194,7 +181,7 @@ def _get_feature(args, cfg: Config):
                 data["max_value"] = maximum
             print(json.dumps({"get": data}, indent=_INDENT_LEVEL))
         else:
-            print(f"{fdata.__str__()} for {mdata.__str__()} is {vdata.__str__()}" + (f" (Maximum: {maximum})" if maximum else ""))
+            print(f"{fdata} for {mdata} is {vdata}" + (f" (Maximum: {maximum})" if maximum else ""))
 
 
 def _set_feature(args, cfg: Config):
@@ -215,7 +202,7 @@ def _set_feature(args, cfg: Config):
         if args.json:
             print(json.dumps({"set": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}, indent=_INDENT_LEVEL))
         else:
-            print(f"set {fdata.__str__()} for {mdata.__str__()} to {vdata.__str__()}")
+            print(f"set {fdata} for {mdata} to {vdata}")
 
 
 def _tog_feature(args, cfg: Config):
@@ -238,7 +225,7 @@ def _tog_feature(args, cfg: Config):
             print(json.dumps({"toggle": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "original_value": vdata_original.serialize(), "new_value": vdata_new.serialize()}}, indent=_INDENT_LEVEL))
             pass
         else:
-            print(f"toggled {fdata.__str__()} for {mdata.__str__()} from {vdata_original.__str__()} to {vdata_new.__str__()}")
+            print(f"toggled {fdata} for {mdata} from {vdata_original} to {vdata_new}")
 
 
 text = "Commands for manipulating and polling your monitors"
