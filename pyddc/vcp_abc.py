@@ -123,16 +123,6 @@ class Capability:
     cap: int | str
     values: list[int | str] | None
 
-    def __str__(self):
-        if self.values is None:
-            return f"<{self.cap}>"
-        return f"<{self.cap} ({', '.join(map(str, self.values))})>"
-
-    def __repr__(self):
-        if self.values is None:
-            return f"<{self.cap}>"
-        return f"<{self.cap} ({', '.join(map(str, self.values))})>"
-
 
 def _get_close_paren_index(caps_str: str, open_index: int) -> int:
     assert caps_str[open_index] == '('
