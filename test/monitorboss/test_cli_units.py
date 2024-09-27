@@ -1,11 +1,13 @@
 import pytest
 
+from frozendict import frozendict
+
 from pyddc import get_vcp_com
-from pyddc.vcp_codes import VCPCodes
+from pyddc.vcp_codes import VCPCodes, InputSourceNames, ColorPresetNames
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
-from monitorboss import cli, MonitorBossError
+from monitorboss import cli, MonitorBossError, indentation, info
 
 
 class TestCheckAttribute:
@@ -86,13 +88,65 @@ class TestCheckValue:
 class TestSummaryUtils:
 
     def test_extract_caps_summary_data(self):
-        # TODO: stub
-        pass
+        feature1 = info.FeatureData("", 42, ())
+        feature2 = info.FeatureData("", 84, ())
+        feature3 = info.FeatureData("", VCPCodes.input_source, ())
+        feature4 = info.FeatureData("", VCPCodes.image_color_preset, ())
+        value1 = info.ValueData(12, "", ())
+        value2 = info.ValueData(34, "", ())
+        value3 = info.ValueData(InputSourceNames.hdmi2, "", ())
+        value4 = info.ValueData(ColorPresetNames.ct5000k, "", ())
+        attributes = frozendict({"model": "CAF3", "foo": "bar", "baz": "qux", "type": "LCD"})
+        cmds = frozendict({"cmds_0": (feature1, feature2, feature3), "cmds_1": (feature1, feature2, feature4)})
+        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2), feature3: (value3,)}),
+                           "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2), feature4: (value4,)})})
+        errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
+        data = info.CapabilityData(attributes, cmds, vcps, errata)
 
-    def _test_caps_summary_json(self):
-        # TODO: stub
-        pass
+        expected = ({'model': 'CAF3', 'type': 'LCD'}, {'vcp_0': {feature3: (value3,)}, 'vcp_1': {feature4: (value4,)}})
+
+        assert cli._extract_caps_summary_data(data) == expected
+
+    def test_caps_summary_json(self):
+        mon = info.MonitorData(42, ())
+        feature1 = info.FeatureData("", 42, ())
+        feature2 = info.FeatureData("", 84, ())
+        feature3 = info.FeatureData("", VCPCodes.input_source, ())
+        feature4 = info.FeatureData("", VCPCodes.image_color_preset, ())
+        value1 = info.ValueData(12, "", ())
+        value2 = info.ValueData(34, "", ())
+        value3 = info.ValueData(InputSourceNames.hdmi2, "", ())
+        value4 = info.ValueData(ColorPresetNames.ct5000k, "", ())
+        attributes = frozendict({"model": "CAF3", "foo": "bar", "baz": "qux", "type": "LCD"})
+        cmds = frozendict({"cmds_0": (feature1, feature2, feature3), "cmds_1": (feature1, feature2, feature4)})
+        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2), feature3: (value3,)}),
+                           "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2), feature4: (value4,)})})
+        errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
+        data = info.CapabilityData(attributes, cmds, vcps, errata)
+
+        expected = '{"caps": {"type": "summary", "monitor": {"id": 42}, "data": {"model": "CAF3", "type": "LCD", "vcps": {"vcp_0": [{"feature": {"code": 96}, "params": [{"value": 18}]}], "vcp_1": [{"feature": {"code": 20}, "params": [{"value": 4}]}]}}}}'
+
+        assert cli._caps_summary_json(mon, data) == expected
 
     def test_caps_summary_human(self):
-        # TODO: stub
-        pass
+        mon = info.MonitorData(42, ())
+        feature1 = info.FeatureData("", 42, ())
+        feature2 = info.FeatureData("", 84, ())
+        feature3 = info.FeatureData("", VCPCodes.input_source, ())
+        feature4 = info.FeatureData("", VCPCodes.image_color_preset, ())
+        value1 = info.ValueData(12, "", ())
+        value2 = info.ValueData(34, "", ())
+        value3 = info.ValueData(InputSourceNames.hdmi2, "", ())
+        value4 = info.ValueData(ColorPresetNames.ct5000k, "", ())
+        attributes = frozendict({"model": "CAF3", "foo": "bar", "baz": "qux", "type": "LCD"})
+        cmds = frozendict({"cmds_0": (feature1, feature2, feature3), "cmds_1": (feature1, feature2, feature4)})
+        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2), feature3: (value3,)}),
+                           "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2), feature4: (value4,)})})
+        errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
+        data = info.CapabilityData(attributes, cmds, vcps, errata)
+
+        expected = f'monitor #42model: CAF3, type: LCD\nvcp_0:\n{indentation}* VCPCodes.input_source: 18\nvcp_1:\n{indentation}* VCPCodes.image_color_preset: 4\n'
+
+        assert cli._caps_summary_human(mon, data) == expected
+
+    # TODO: test presence/lack of _INDENT in json depending on logging level

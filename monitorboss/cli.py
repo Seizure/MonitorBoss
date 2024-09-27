@@ -15,7 +15,7 @@ from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
 _log = getLogger(__name__)
-_INDENT_LEVEL = 4 if _log.level <= DEBUG else None
+_INDENT_LEVEL = 4 if _log.level >= DEBUG else None
 
 
 # TODO: This does not allow for custom/OEM codes as is (for when we add such)
