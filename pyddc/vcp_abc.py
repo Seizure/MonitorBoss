@@ -33,18 +33,18 @@ VCP_TIMEOUT = 0.04  # at least 40ms per the DDC-CI specification
 
 class VCP(abc.ABC):
 
-    @abc.abstractmethod
+    @abc.abstractmethod # pragma: no cover
     def __init__(self):
         self.logger = getLogger(__name__)
         self.code_maximum: dict[int, int] = {}
         self._in_ctx = False
 
-    @abc.abstractmethod
+    @abc.abstractmethod # pragma: no cover
     def __enter__(self):
         self._in_ctx = True
         return self
 
-    @abc.abstractmethod
+    @abc.abstractmethod # pragma: no cover
     def __exit__(
             self,
             exception_type: Optional[Type[BaseException]],
@@ -66,7 +66,7 @@ class VCP(abc.ABC):
         self._set_vcp_feature(code, value, timeout)
 
     # TODO: discuss whether we need/want timeout here
-    @abc.abstractmethod
+    @abc.abstractmethod # pragma: no cover
     def _set_vcp_feature(self, code: VCPCommand, value: int, timeout: float):
         pass
 
@@ -84,7 +84,7 @@ class VCP(abc.ABC):
             self.code_maximum[com.code] = ret.max
         return ret
 
-    @abc.abstractmethod
+    @abc.abstractmethod # pragma: no cover
     def _get_vcp_feature(self, code: VCPCommand, timeout: float) -> VCPFeatureReturn:
         pass
 
@@ -92,7 +92,7 @@ class VCP(abc.ABC):
         assert self._in_ctx, "This function must be run within the context manager"
         return self._get_vcp_capabilities_str(timeout)
 
-    @abc.abstractmethod
+    @abc.abstractmethod # pragma: no cover
     def _get_vcp_capabilities_str(self, timeout: float) -> str:
         pass
 
@@ -113,7 +113,7 @@ class VCP(abc.ABC):
             return maximum
 
     @staticmethod
-    @abc.abstractmethod
+    @abc.abstractmethod # pragma: no cover
     def get_vcps() -> List[VCP]:
         pass
 
