@@ -171,13 +171,13 @@ def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
     #   - non-int feature codes and values (passing cap.cap and cap.values data without checking)
     #   We do not account for this here, but that should change in PYDDC anyways
     for name, cap in caps.items():
-        if name.lower().startswith("cmd") and cap:
-            cmds[name] = [feature_data(f.cap, cfg) for f in cap]
-        elif name.lower().startswith("vcp") and cap:
+        if name.lower().startswith("cmd"):
+            cmds[name] = [feature_data(f.cap, cfg) for f in cap] if cap else []
+        elif name.lower().startswith("vcp"):
             vcps[name] = {
                 feature_data(f.cap, cfg): [value_data(f.cap, v, cfg) for v in f.values] if f.values else []
                 for f in cap
-            }
+            } if cap else {}
         else:
             info_fields[name] = cap
 
