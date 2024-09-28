@@ -5,13 +5,11 @@ import pytest
 
 from frozendict import frozendict
 
-import test.pyddc
-from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes, InputSourceNames, ColorPresetNames
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
-from monitorboss import cli, MonitorBossError, indentation, info, output
+from monitorboss import indentation, info, output
 
 
 mdata = info.MonitorData(42, ())
