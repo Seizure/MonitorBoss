@@ -4,18 +4,26 @@ from types import TracebackType
 from typing import List, Optional, Type
 
 from pyddc import VCPCommand, VCPFeatureReturn, ABCVCP
+from pyddc.vcp_codes import VCPCodes
 from test.pyddc import CAPS_STR
 
+RESET = VCPCodes.restore_factory_default.value
+LUM = VCPCodes.image_luminance.value
+CNT = VCPCodes.image_contrast.value
+INPUT = VCPCodes.input_source.value
+ORIENT = VCPCodes.image_orientation.value
+
+
 supported_codes = {
-    4: [],  # factory reset code (WO) TODO: should find a better WO command (with actual values)
-    16: None,  # luminance (RW/continuous)
-    18: None,  # contrast (RW/continuous)
-    96: [27, 15, 17, 257],  # input source code (RW/discreet); with params for USBC, dp1, and hdm1
-    170: [1, 2, 4]  # image orientation (RO/discreet); with params for who knows what
+    RESET: [],  # factory reset code (WO) TODO: should find a better WO command (with actual values)
+    LUM: None,  # luminance (RW/continuous)
+    CNT: None,  # contrast (RW/continuous)
+    INPUT: [27, 15, 17, 257],  # input source code (RW/discreet); with params for USBC, dp1, and hdm1
+    ORIENT: [1, 2, 4]  # image orientation (RO/discreet); with params for who knows what
 }
 
-current_values = {16: 75, 18: 75, 96: 257, 170: 2}  # lum is 75, input is 1 (analog) with high byte set, image orientation is 2 (whatever that means)
-unknown_max_values = {16: 80, 18: 100}
+current_values = {LUM: 75, CNT: 75, INPUT: 257, ORIENT: 2}  # input is 1 (analog) with high byte set
+unknown_max_values = {LUM: 80, CNT: 100}
 
 
 class DummyVCP(ABCVCP):
