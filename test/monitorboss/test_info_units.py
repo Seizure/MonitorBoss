@@ -185,7 +185,7 @@ class TestInfoCapabilitydata:
         cmds = frozendict({"cmds_0": (feature1, feature2)})
         data = info.CapabilityData(frozendict(), cmds, frozendict(), frozendict())
 
-        assert data._cmds_str() == "cmds_0: 42, 84\n"
+        assert data._cmds_str() == f"cmds_0: {feature1}, {feature2}\n"
 
     def test_CapabilityData_cmds_str_multi(self):
         feature1 = info.FeatureData("", 42, ())
@@ -193,7 +193,7 @@ class TestInfoCapabilitydata:
         cmds = frozendict({"cmds_0": (feature1, feature2), "cmds_1": (feature1, feature2)})
         data = info.CapabilityData(frozendict(), cmds, frozendict(), frozendict())
 
-        assert data._cmds_str() == f"CMDS:\n{indentation}cmds_0: 42, 84\n{indentation}cmds_1: 42, 84\n"
+        assert data._cmds_str() == f"CMDS:\n{indentation}cmds_0: {feature1}, {feature2}\n{indentation}cmds_1: {feature1}, {feature2}\n"
 
     def test_CapabilityData_vcp_str_empty(self):
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
@@ -208,7 +208,7 @@ class TestInfoCapabilitydata:
         vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
         data = info.CapabilityData(frozendict(), frozendict(), vcps, frozendict())
 
-        assert data._vcp_str() == f"vcp_0:\n{indentation}* 42: 12, 24\n{indentation}* 84: 12, 24\n"
+        assert data._vcp_str() == f"vcp_0:\n{indentation}* {feature1}: {value1}, {value2}\n{indentation}* {feature2}: {value1}, {value2}\n"
 
     def test_CapabilityData_vcp_str_multi(self):
         feature1 = info.FeatureData("", 42, ())
@@ -219,9 +219,9 @@ class TestInfoCapabilitydata:
                            "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
         data = info.CapabilityData(frozendict(), frozendict(), vcps, frozendict())
 
-        assert data._vcp_str() == (f"VCP:\n{indentation}vcp_0:\n{indentation}{indentation}* 42: 12, 24\n" +
-                                   f"{indentation}{indentation}* 84: 12, 24\n{indentation}vcp_1:\n" +
-                                   f"{indentation}{indentation}* 42: 12, 24\n{indentation}{indentation}* 84: 12, 24\n")
+        assert data._vcp_str() == (f"VCP:\n{indentation}vcp_0:\n{indentation}{indentation}* {feature1}: {value1}, {value2}\n" +
+                                   f"{indentation}{indentation}* {feature2}: {value1}, {value2}\n{indentation}vcp_1:\n" +
+                                   f"{indentation}{indentation}* {feature1}: {value1}, {value2}\n{indentation}{indentation}* {feature2}: {value1}, {value2}\n")
 
     def test_CapabilityData_errata_str_empty(self):
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
@@ -232,19 +232,19 @@ class TestInfoCapabilitydata:
         errata = frozendict({"baz": ("qux", "corge")})
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata)
 
-        assert data._errata_str() == f"Errata:\n{indentation}baz: qux, corge\n"
+        assert data._errata_str() == f"Errata:\n{indentation}baz: qux, corge"
 
     def test_CapabilityData_errata_str_single_blank(self):
         errata = frozendict({"": ("foo", "bar")})
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata)
 
-        assert data._errata_str() == "Errata: foo, bar\n"
+        assert data._errata_str() == "Errata: foo, bar"
 
     def test_CapabilityData_errata_str_multi(self):
         errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata)
 
-        assert data._errata_str() == f"Errata:\n{indentation}foo, bar\n{indentation}baz: qux, corge\n"
+        assert data._errata_str() == f"Errata:\n{indentation}foo, bar\n{indentation}baz: qux, corge"
 
     def test_CapabilityData_str(self):
         feature1 = info.FeatureData("", 42, ())
@@ -258,7 +258,7 @@ class TestInfoCapabilitydata:
         errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
         data = info.CapabilityData(attributes, cmds, vcps, errata)
 
-        expected = f"{data._attr_str()}{data._cmds_str()}{data._vcp_str()}{data._errata_str()}\n"
+        expected = f"{data._attr_str()}{data._cmds_str()}{data._vcp_str()}{data._errata_str()}"
 
         assert str(data) == expected
 

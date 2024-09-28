@@ -1,5 +1,6 @@
 import json
 import sys
+import textwrap
 
 import pytest
 
@@ -35,7 +36,8 @@ cmds = frozendict({"cmds_0": (feature1, feature2, feature3), "cmds_1": (feature1
 vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2), feature3: (value3,)}),
                    "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2), feature4: (value4,)})})
 errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
-data = info.CapabilityData(attributes, cmds, vcps, errata)
+caps = info.CapabilityData(attributes, cmds, vcps, errata)
+capsjson = json.dumps(caps.serialize())
 
 
 def test_caps_raw_json():
@@ -47,21 +49,25 @@ def test_caps_raw_human():
 
 
 def test_caps_full_json():
-    pass
-    
+    assert output.caps_full_output(mdata, caps, True) == '{"caps": {"type": "full", "monitor": ' + mdatajson + ', "data": ' + capsjson + '}}'
+
+
+def test_caps_full_human():
+    assert output.caps_full_output(mdata, caps, False) == f"{mdata}:\n{textwrap.indent(str(caps), indentation)}"
+
 
 def test_extract_caps_summary_data():
     expected = ({'model': 'CAF3', 'type': 'LCD'}, {'vcp_0': {feature3: (value3,)}, 'vcp_1': {feature4: (value4,)}})
 
-    assert output.extract_caps_summary_data(data) == expected
+    assert output.extract_caps_summary_data(caps) == expected
 
 
 def test_caps_summary_json():
     expected = '{"caps": {"type": "summary", "monitor": ' + mdatajson + ', "data": {"model": "CAF3", "type": "LCD", "vcps": {"vcp_0": [{"feature": ' + feature3json + ', "params": [' + value3json + ']}], "vcp_1": [{"feature": ' + feature4json + ', "params": [' + value4json + ']}]}}}}'
 
-    assert output.caps_summary_output(mdata, data, True) == expected
+    assert output.caps_summary_output(mdata, caps, True) == expected
 
 def test_caps_summary_human():
     expected = f'{mdata} - model: CAF3, type: LCD\nvcp_0:\n{indentation}* {feature3}: {value3}\nvcp_1:\n{indentation}* {feature4}: {value4}\n'
 
-    assert output.caps_summary_output(mdata, data, False) == expected
+    assert output.caps_summary_output(mdata, caps, False) == expected

@@ -150,14 +150,14 @@ class CapabilityData:
             return ""
         errata = {key: ", ".join(map(str, value)) for key, value in self.errata.items()}
         if len(errata) == 1 and not list(errata.keys())[0]:
-            return f"Errata: {list(errata.values())[0]}\n"
+            return f"Errata: {list(errata.values())[0]}"
         return "Errata:\n" + textwrap.indent("\n".join(
             f"{key}{': ' if key else ''}{values}"
             for key, values in errata.items()
-        ), indentation) + "\n"
+        ), indentation)
 
     def __str__(self) -> str:
-        return self._attr_str() + self._cmds_str() + self._vcp_str() + self._errata_str() + "\n"
+        return self._attr_str() + self._cmds_str() + self._vcp_str() + self._errata_str()
 
 
 def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
