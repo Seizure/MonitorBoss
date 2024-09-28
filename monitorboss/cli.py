@@ -9,7 +9,7 @@ from monitorboss import MonitorBossError, indentation
 from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
 from monitorboss.info import feature_data, monitor_data, value_data, capability_data
-from monitorboss.output import caps_summary_output, caps_raw_output, caps_full_output
+from monitorboss.output import caps_summary_output, caps_raw_output, caps_full_output, list_mons_output
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -81,12 +81,7 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
 
 def _list_mons(args, cfg: Config):
     _log.debug(f"list monitors: {args}")
-    for index, monitor in enumerate(list_monitors()):
-        mdata = monitor_data(index, cfg)
-        if args.json:
-            print(json.dumps({"list": {"monitor": mdata.serialize()}}, indent=_INDENT_LEVEL))
-        else:
-            print(mdata)
+    print(list_mons_output([monitor_data(index, cfg) for index, _ in enumerate(list_monitors())], args.json))
 
 
 def _get_caps(args, cfg: Config):

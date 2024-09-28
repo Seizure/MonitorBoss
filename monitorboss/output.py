@@ -10,17 +10,14 @@ _log = getLogger(__name__)
 _INDENT_LEVEL = 4 if _log.level >= DEBUG else None
 
 
-def _list_mons_output(mons: list[MonitorData], json_output: bool) -> str:
+def list_mons_output(mons: list[MonitorData], json_output: bool) -> str:
     if json_output:
         monlist = []
         for mon in mons:
             monlist.append({"monitor": mon.serialize()})
         return json.dumps({"list": monlist})
 
-    output = ""
-    for mon in mons:
-        output += str(mon)
-    return output
+    return "\n".join(map(str, mons))
 
 def caps_raw_output(mon: MonitorData, caps: str, json_output: bool) -> str:
     if json_output:

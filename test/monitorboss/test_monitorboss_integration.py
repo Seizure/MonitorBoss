@@ -14,11 +14,7 @@ mdata1 = info.MonitorData(1, ("bar", "baz"))
 mdata2 = info.MonitorData(2, ())
 
 def test_list_human(test_conf_file, capsys):
-    expected = dedent(f"""\
-    {mdata0}
-    {mdata1}
-    {mdata2}
-    """)
+    expected = f"{mdata0}\n{mdata1}\n{mdata2}\n"
     cli.run(f"--config {test_conf_file.as_posix()} list")
     output = capsys.readouterr()
     assert output.out == expected
@@ -26,9 +22,7 @@ def test_list_human(test_conf_file, capsys):
     
     
 def test_list_json(test_conf_file, capsys):
-    expected = json.dumps({"list": {"monitor": mdata0.serialize()}}) + "\n"
-    expected += json.dumps({"list": {"monitor": mdata1.serialize()}}) + "\n"
-    expected += json.dumps({"list": {"monitor": mdata2.serialize()}}) + "\n"
+    expected = json.dumps({"list": [{"monitor": mdata0.serialize()}, {"monitor": mdata1.serialize()}, {"monitor": mdata2.serialize()}]}) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} --json list")
     output = capsys.readouterr()
     assert output.out == expected

@@ -13,8 +13,10 @@ pyddc.VCP = VCP
 from monitorboss import indentation, info, output
 
 
-mdata = info.MonitorData(42, ())
-mdatajson = json.dumps(mdata.serialize())
+mdata0 = info.MonitorData(42, ())
+mdata0json = json.dumps(mdata0.serialize())
+mdata1 = info.MonitorData(43, ())
+mdata1json = json.dumps(mdata1.serialize())
 feature1 = info.FeatureData("", 42, ())
 feature1json = json.dumps(feature1.serialize())
 feature2 = info.FeatureData("", 84, ())
@@ -40,20 +42,28 @@ caps = info.CapabilityData(attributes, cmds, vcps, errata)
 capsjson = json.dumps(caps.serialize())
 
 
+def test_list_mons_json():
+    assert output.list_mons_output([mdata0, mdata1], True) == '{"list": [{"monitor": ' + mdata0json + '}, {"monitor": ' + mdata1json + '}]}'
+
+
+def test_list_mons_human():
+    assert output.list_mons_output([mdata0, mdata1], False) == f"{mdata0}\n{mdata1}"
+
+
 def test_caps_raw_json():
-    assert output.caps_raw_output(mdata, "foo", True) == '{"caps": {"type": "raw", "monitor": ' + mdatajson + ', "data": "foo"}}'
+    assert output.caps_raw_output(mdata0, "foo", True) == '{"caps": {"type": "raw", "monitor": ' + mdata0json + ', "data": "foo"}}'
 
 
 def test_caps_raw_human():
-    assert output.caps_raw_output(mdata, "foo", False) == f"Capability string for {mdata}:\nfoo"
+    assert output.caps_raw_output(mdata0, "foo", False) == f"Capability string for {mdata0}:\nfoo"
 
 
 def test_caps_full_json():
-    assert output.caps_full_output(mdata, caps, True) == '{"caps": {"type": "full", "monitor": ' + mdatajson + ', "data": ' + capsjson + '}}'
+    assert output.caps_full_output(mdata0, caps, True) == '{"caps": {"type": "full", "monitor": ' + mdata0json + ', "data": ' + capsjson + '}}'
 
 
 def test_caps_full_human():
-    assert output.caps_full_output(mdata, caps, False) == f"{mdata}:\n{textwrap.indent(str(caps), indentation)}"
+    assert output.caps_full_output(mdata0, caps, False) == f"{mdata0}:\n{textwrap.indent(str(caps), indentation)}"
 
 
 def test_extract_caps_summary_data():
@@ -63,11 +73,11 @@ def test_extract_caps_summary_data():
 
 
 def test_caps_summary_json():
-    expected = '{"caps": {"type": "summary", "monitor": ' + mdatajson + ', "data": {"model": "CAF3", "type": "LCD", "vcps": {"vcp_0": [{"feature": ' + feature3json + ', "params": [' + value3json + ']}], "vcp_1": [{"feature": ' + feature4json + ', "params": [' + value4json + ']}]}}}}'
+    expected = '{"caps": {"type": "summary", "monitor": ' + mdata0json + ', "data": {"model": "CAF3", "type": "LCD", "vcps": {"vcp_0": [{"feature": ' + feature3json + ', "params": [' + value3json + ']}], "vcp_1": [{"feature": ' + feature4json + ', "params": [' + value4json + ']}]}}}}'
 
-    assert output.caps_summary_output(mdata, caps, True) == expected
+    assert output.caps_summary_output(mdata0, caps, True) == expected
 
 def test_caps_summary_human():
-    expected = f'{mdata} - model: CAF3, type: LCD\nvcp_0:\n{indentation}* {feature3}: {value3}\nvcp_1:\n{indentation}* {feature4}: {value4}\n'
+    expected = f'{mdata0} - model: CAF3, type: LCD\nvcp_0:\n{indentation}* {feature3}: {value3}\nvcp_1:\n{indentation}* {feature4}: {value4}\n'
 
-    assert output.caps_summary_output(mdata, caps, False) == expected
+    assert output.caps_summary_output(mdata0, caps, False) == expected
