@@ -3,14 +3,13 @@ import textwrap
 from argparse import ArgumentParser
 from collections.abc import Sequence
 from logging import getLogger, DEBUG
-from pprint import PrettyPrinter
 from time import sleep
 
 from monitorboss import MonitorBossError, indentation
 from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
-from monitorboss.info import feature_data, monitor_data, value_data, capability_data, FeatureData, ValueData, \
-    CapabilityData, MonitorData
+from monitorboss.info import feature_data, monitor_data, value_data, capability_data
+from monitorboss.output import caps_summary_output, caps_raw_output, caps_full_output
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -90,46 +89,6 @@ def _list_mons(args, cfg: Config):
             print(mdata)
 
 
-def _extract_caps_summary_data(caps_data: CapabilityData) -> tuple[dict[str, str], dict[str, dict[FeatureData, tuple[ValueData, ...]]]]:
-    desired_attributes = {"type", "model"}
-    attributes = {attr: value for attr, value in caps_data.attributes.items() if attr in desired_attributes}
-    desired_features = {VCPCodes.input_source.value, VCPCodes.image_color_preset.value}
-    vcp_features = {
-    	vcp: {feature: params for feature, params in features.items() if feature.code in desired_features}
-    	for vcp, features in caps_data.vcps.items() if features
-    }
-    return attributes, vcp_features
-
-
-def _caps_summary_json(mon: MonitorData, caps_data: CapabilityData) -> str:
-    attributes, vcp_features = _extract_caps_summary_data(caps_data)
-    vcps = {
-        vcp: [
-            {
-                "feature": feature.serialize(),
-                "params": [param.serialize() for param in params],
-            }
-            for feature, params in features.items()
-        ]
-        for vcp, features in vcp_features.items()
-    }
-    return json.dumps({
-        "caps": {"type": "summary", "monitor": mon.serialize(), "data": {**attributes, "vcps": vcps}}
-    }, indent=_INDENT_LEVEL)
-
-
-def _caps_summary_human(mon: MonitorData, caps_data: CapabilityData) -> str:
-    attributes, vcp_features = _extract_caps_summary_data(caps_data)
-    summary = f"{mon}"
-    attr_str = ", ".join(f"{attr}: {value}" for attr, value in attributes.items())
-    summary += f"{attr_str}\n" if attr_str else "\n"
-    for vcp, features in vcp_features.items():
-        summary += vcp + (":" if features else "") + "\n"
-        for feature, params in features.items():
-            summary += f"{indentation}* {feature}: {', '.join(map(str, params))}\n"
-    return summary
-
-
 def _get_caps(args, cfg: Config):
     _log.debug(f"get capabilities: {args}")
     mon = _check_mon(args.monitor, cfg)
@@ -137,26 +96,17 @@ def _get_caps(args, cfg: Config):
     mdata = monitor_data(mon, cfg)
 
     if args.raw:
-        if args.json:
-            print(json.dumps({"caps": {"type": "raw", "monitor": mdata.serialize(), "data": caps_raw}}, indent=_INDENT_LEVEL))
-        else:
-            print(caps_raw)
+        print(caps_raw_output(mdata, caps_raw, args.json))
         return
 
     caps_dict = parse_capabilities(caps_raw)
     caps_data = capability_data(caps_dict, cfg)
 
     if args.summary:
-        if args.json:
-            print(_caps_summary_json(mdata, caps_data))
-        else:
-            print(_caps_summary_human(mdata, caps_data))
+        print(caps_summary_output(mdata, caps_data, args.json))
         return
 
-    if args.json:
-        print(json.dumps({"caps": {"type": "full", "monitor": mdata.serialize(), "data": caps_data.serialize()}}, indent=_INDENT_LEVEL))
-    else:
-        print(str(mdata) + ":\n" + textwrap.indent(str(caps_data), indentation))
+    print(caps_full_output(mdata, caps_data, args.json))
 
 
 def _get_feature(args, cfg: Config):

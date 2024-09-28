@@ -6,14 +6,18 @@ from pyddc.vcp_codes import VCPCodes
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
-from monitorboss import config, cli, info
+from monitorboss import config, cli, info, output
 
+
+mdata0 = info.MonitorData(0, ("foo",))
+mdata1 = info.MonitorData(1, ("bar", "baz"))
+mdata2 = info.MonitorData(2, ())
 
 def test_list_human(test_conf_file, capsys):
     expected = dedent(f"""\
-    {info.MonitorData(0, ("foo",))}
-    {info.MonitorData(1, ("bar", "baz"))}
-    {info.MonitorData(2, ())}
+    {mdata0}
+    {mdata1}
+    {mdata2}
     """)
     cli.run(f"--config {test_conf_file.as_posix()} list")
     output = capsys.readouterr()
@@ -22,9 +26,6 @@ def test_list_human(test_conf_file, capsys):
     
     
 def test_list_json(test_conf_file, capsys):
-    mdata0 = info.MonitorData(0, ("foo",))
-    mdata1 = info.MonitorData(1, ("bar", "baz"))
-    mdata2 = info.MonitorData(2, ())
     expected = json.dumps({"list": {"monitor": mdata0.serialize()}}) + "\n"
     expected += json.dumps({"list": {"monitor": mdata1.serialize()}}) + "\n"
     expected += json.dumps({"list": {"monitor": mdata2.serialize()}}) + "\n"
@@ -35,31 +36,30 @@ def test_list_json(test_conf_file, capsys):
 
 
 def test_caps_raw_human(test_conf_file, capsys):
-    expected = test.pyddc.CAPS_STR + "\n"
+    expected = output.caps_raw_output(mdata0, test.pyddc.CAPS_STR, False) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} caps --raw 0")
-    output = capsys.readouterr()
-    assert output.out == expected
-    assert output.err == ""
+    capture = capsys.readouterr()
+    assert capture.out == expected
+    assert capture.err == ""
 
 
 def test_caps_raw_json(test_conf_file, test_cfg, capsys):
-    mdata = info.monitor_data(0, test_cfg)
-    expected = json.dumps({"caps": {"type": "raw", "monitor": mdata.serialize(), "data":  test.pyddc.CAPS_STR}}) + "\n"
+    expected = output.caps_raw_output(mdata0, test.pyddc.CAPS_STR, True) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} --json caps --raw 0")
-    output = capsys.readouterr()
-    assert output.out == expected
-    assert output.err == ""
+    capture = capsys.readouterr()
+    assert capture.out == expected
+    assert capture.err == ""
 
 
 # TODO: this is going to be annoying, do it properly later
-def test_caps_dict_human(test_conf_file, capsys):
+def test_caps_full_human(test_conf_file, capsys):
     cli.run(f"--config {test_conf_file.as_posix()} caps 0")
     output = capsys.readouterr()
     assert output.out  # TODO: actually test something meaningful
     assert output.err == ""
     
     
-def test_caps_dict_json(test_conf_file, capsys):
+def test_caps_full_json(test_conf_file, capsys):
     pass  # TODO: stub
 
 
