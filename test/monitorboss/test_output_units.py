@@ -43,7 +43,7 @@ capsjson = json.dumps(caps.serialize())
 
 
 def test_list_mons_json():
-    assert output.list_mons_output([mdata0, mdata1], True) == '{"list": [{"monitor": ' + mdata0json + '}, {"monitor": ' + mdata1json + '}]}'
+    assert output.list_mons_output([mdata0, mdata1], True) == json.dumps({"list": [{"monitor": mdata0.serialize()}, {"monitor": mdata1.serialize()}]})
 
 
 def test_list_mons_human():
@@ -51,7 +51,7 @@ def test_list_mons_human():
 
 
 def test_caps_raw_json():
-    assert output.caps_raw_output(mdata0, "foo", True) == '{"caps": {"type": "raw", "monitor": ' + mdata0json + ', "data": "foo"}}'
+    assert output.caps_raw_output(mdata0, "foo", True) == json.dumps({"caps": {"type": "raw", "monitor": mdata0.serialize(), "data": "foo"}})
 
 
 def test_caps_raw_human():
@@ -59,7 +59,7 @@ def test_caps_raw_human():
 
 
 def test_caps_full_json():
-    assert output.caps_full_output(mdata0, caps, True) == '{"caps": {"type": "full", "monitor": ' + mdata0json + ', "data": ' + capsjson + '}}'
+    assert output.caps_full_output(mdata0, caps, True) == json.dumps({"caps": {"type": "full", "monitor": mdata0.serialize(), "data": caps.serialize()}})
 
 
 def test_caps_full_human():
@@ -73,9 +73,10 @@ def test_extract_caps_summary_data():
 
 
 def test_caps_summary_json():
-    expected = '{"caps": {"type": "summary", "monitor": ' + mdata0json + ', "data": {"model": "CAF3", "type": "LCD", "vcps": {"vcp_0": [{"feature": ' + feature3json + ', "params": [' + value3json + ']}], "vcp_1": [{"feature": ' + feature4json + ', "params": [' + value4json + ']}]}}}}'
+    expected = json.dumps({"caps": {"type": "summary", "monitor": mdata0.serialize(), "data": {"model": "CAF3", "type": "LCD", "vcps": {"vcp_0": [{"feature": feature3.serialize(), "params": [value3.serialize()]}], "vcp_1": [{"feature": feature4.serialize(), "params": [value4.serialize()]}]}}}})
 
     assert output.caps_summary_output(mdata0, caps, True) == expected
+
 
 def test_caps_summary_human():
     expected = f'{mdata0} - model: CAF3, type: LCD\nvcp_0:\n{indentation}* {feature3}: {value3}\nvcp_1:\n{indentation}* {feature4}: {value4}\n'
