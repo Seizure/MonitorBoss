@@ -3,11 +3,11 @@ import sys
 import pytest
 
 from pyddc import get_vcp_com
-from pyddc.vcp_codes import VCPCodes, InputSourceNames, ColorPresetNames
+from pyddc.vcp_codes import VCPCodes
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
-from monitorboss import cli, MonitorBossError, indentation, info
+from monitorboss import cli, MonitorBossError
 
 
 class TestCheckAttribute:

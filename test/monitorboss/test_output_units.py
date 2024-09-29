@@ -1,8 +1,5 @@
 import json
-import sys
 import textwrap
-
-import pytest
 
 from frozendict import frozendict
 
