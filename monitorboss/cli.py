@@ -9,7 +9,8 @@ from monitorboss import MonitorBossError, indentation
 from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
 from monitorboss.info import feature_data, monitor_data, value_data, capability_data
-from monitorboss.output import caps_summary_output, caps_raw_output, caps_full_output, list_mons_output
+from monitorboss.output import caps_summary_output, caps_raw_output, caps_full_output, list_mons_output, \
+    get_feature_output
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -113,20 +114,19 @@ def _get_feature(args, cfg: Config):
     for i, m in enumerate(mons):
         ret = get_feature(m, vcpcom, cfg.wait_internal_time)
         cur_vals.append(ret.value)
+        # TODO: discuss whether we actually want to obscure discrete "maxes"... is there a reason to?
+        #   could be assigned a different name in json/strings for when it's discreet, eg "options"
         max_vals.append(None if vcpcom.discrete else ret.max)
         if i + 1 < len(mons):
             sleep(cfg.wait_get_time)
+    monvalmax_list = []
+    fdata = feature_data(vcpcom.code, cfg)
     for mon, val, maximum in zip(mons, cur_vals, max_vals):
-        fdata = feature_data(vcpcom.code, cfg)
         mdata = monitor_data(mon, cfg)
         vdata = value_data(vcpcom.code, val, cfg)
-        if args.json:
-            data = {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}
-            if maximum:
-                data["max_value"] = maximum
-            print(json.dumps({"get": data}, indent=_INDENT_LEVEL))
-        else:
-            print(f"{fdata} for {mdata} is {vdata}" + (f" (Maximum: {maximum})" if maximum else ""))
+        monvalmax_list.append((mdata, vdata, maximum))
+
+    print(get_feature_output(fdata, monvalmax_list, args.json))
 
 
 def _set_feature(args, cfg: Config):

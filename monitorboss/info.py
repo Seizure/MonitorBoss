@@ -121,15 +121,15 @@ class CapabilityData:
     def _attr_str(self) -> str:
         if not self.attributes:
             return ""
-        return "".join(f"{attr}: {val}\n" for attr, val in self.attributes.items())
+        return "\n".join(f"{attr}: {val}" for attr, val in self.attributes.items())
 
     def _cmds_str(self) -> str:
         if not self.cmds:
             return ""
         cmds = [f"{cmd}: {', '.join(map(str, values))}" for cmd, values in self.cmds.items()]
         if len(cmds) == 1:
-            return cmds[0] + "\n"
-        return "CMDS:\n" + textwrap.indent("\n".join(cmds), indentation) + "\n"
+            return cmds[0]
+        return "CMDS:\n" + textwrap.indent("\n".join(cmds), indentation)
 
     def _vcp_str(self) -> str:
         if not self.vcps:
@@ -142,8 +142,8 @@ class CapabilityData:
             for vcp, features in self.vcps.items()
         ]
         if len(vcps) == 1:
-            return vcps[0] + "\n"
-        return "VCP:\n" + textwrap.indent("\n".join(vcps), indentation) + "\n"
+            return vcps[0]
+        return "VCP:\n" + textwrap.indent("\n".join(vcps), indentation)
 
     def _errata_str(self) -> str:
         if not self.errata:
@@ -157,7 +157,8 @@ class CapabilityData:
         ), indentation)
 
     def __str__(self) -> str:
-        return self._attr_str() + self._cmds_str() + self._vcp_str() + self._errata_str()
+        sections = [self._attr_str(), self._cmds_str(), self._vcp_str(), self._errata_str()]
+        return "\n".join(map(str, sections))
 
 
 def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:

@@ -107,159 +107,136 @@ class TestInfoMonitorData:
 
 class TestInfoCapabilitydata:
 
-    def test_CapabilityData_serialize_no_errata(self, test_cfg):
-        feature1 = info.FeatureData("", 42, ())
-        feature2 = info.FeatureData("", 84, ())
-        value1 = info.ValueData(12, "", ())
-        value2 = info.ValueData(24, "", ())
-        attributes = frozendict({"foo": "bar", "baz": "qux"})
-        cmds = frozendict({"cmds_0": (feature1, feature2), "cmds_1": (feature1, feature2)})
-        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)}),
-                           "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
-        data = info.CapabilityData(attributes, cmds, vcps, frozendict())
+    feature1 = info.FeatureData("", 42, ())
+    feature2 = info.FeatureData("", 84, ())
+    value1 = info.ValueData(12, "", ())
+    value2 = info.ValueData(24, "", ())
+    attributes = frozendict({"foo": "bar", "baz": "qux"})
+    cmds_single = frozendict({"cmds_0": (feature1, feature2)})
+    cmds_multi = frozendict({"cmds_0": (feature1, feature2), "cmds_1": (feature1, feature2)})
+    vcps_single = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
+    vcps_multi = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)}),
+                       "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
+    errata_single_blank = frozendict({"": ("foo", "bar")})
+    errata_single_named = frozendict({"baz": ("qux", "corge")})
+    errata_multi = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
 
+    def test_CapabilityData_serialize_no_errata(self, test_cfg):
+        data = info.CapabilityData(self.attributes, self.cmds_multi, self.vcps_multi, frozendict())
         expected = {"foo": "bar", "baz": "qux",
                     "cmds":
-                        {"cmds_0": [feature1.serialize(), feature2.serialize()],
-                         "cmds_1": [feature1.serialize(), feature2.serialize()]},
+                        {"cmds_0": [self.feature1.serialize(), self.feature2.serialize()],
+                         "cmds_1": [self.feature1.serialize(), self.feature2.serialize()]},
                     "vcps":
                         {"vcp_0": [
-                            {"feature": feature1.serialize(), "params": [value1.serialize(), value2.serialize()]},
-                            {"feature": feature2.serialize(), "params": [value1.serialize(), value2.serialize()]}
+                            {"feature": self.feature1.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]},
+                            {"feature": self.feature2.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]}
                         ],
                             "vcp_1": [
-                                {"feature": feature1.serialize(), "params": [value1.serialize(), value2.serialize()]},
-                            {"feature": feature2.serialize(), "params": [value1.serialize(), value2.serialize()]}
+                                {"feature": self.feature1.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]},
+                            {"feature": self.feature2.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]}
                             ]}}
-
         assert data.serialize() == expected
 
     def test_CapabilityData_serialize_yes_errata(self):
-        feature1 = info.FeatureData("", 42, ())
-        feature2 = info.FeatureData("", 84, ())
-        value1 = info.ValueData(12, "", ())
-        value2 = info.ValueData(24, "", ())
-        attributes = frozendict({"foo": "bar", "baz": "qux"})
-        cmds = frozendict({"cmds_0": (feature1, feature2), "cmds_1": (feature1, feature2)})
-        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)}),
-                           "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
-        errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
-        data = info.CapabilityData(attributes, cmds, vcps, errata)
-
+        data = info.CapabilityData(self.attributes, self.cmds_multi, self.vcps_multi, self.errata_multi)
         expected = {"foo": "bar", "baz": "qux",
                     "cmds":
-                        {"cmds_0": [feature1.serialize(), feature2.serialize()],
-                         "cmds_1": [feature1.serialize(), feature2.serialize()]},
+                        {"cmds_0": [self.feature1.serialize(), self.feature2.serialize()],
+                         "cmds_1": [self.feature1.serialize(), self.feature2.serialize()]},
                     "vcps":
                         {"vcp_0": [
-                            {"feature": feature1.serialize(), "params": [value1.serialize(), value2.serialize()]},
-                            {"feature": feature2.serialize(), "params": [value1.serialize(), value2.serialize()]}
+                            {"feature": self.feature1.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]},
+                            {"feature": self.feature2.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]}
                         ],
                             "vcp_1": [
-                                {"feature": feature1.serialize(), "params": [value1.serialize(), value2.serialize()]},
-                                {"feature": feature2.serialize(), "params": [value1.serialize(), value2.serialize()]}
+                                {"feature": self.feature1.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]},
+                                {"feature": self.feature2.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]}
                             ]},
                     "errata": {"": ("foo", "bar"), "baz": ("qux", "corge")}}
-
         assert data.serialize() == expected
 
     def test_CapabilityData_attr_str_empty(self):
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
-
         assert data._attr_str() == ""
 
     def test_CapabilityData_attr_str_present(self):
-        attributes = frozendict({"foo": "bar", "baz": "qux"})
-        data = info.CapabilityData(attributes, frozendict(), frozendict(), frozendict())
-
-        assert data._attr_str() == "foo: bar\nbaz: qux\n"
+        data = info.CapabilityData(self.attributes, frozendict(), frozendict(), frozendict())
+        expected = "foo: bar\nbaz: qux"
+        assert data._attr_str() == expected
 
     def test_CapabilityData_cmds_str_empty(self):
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
-
         assert data._cmds_str() == ""
 
     def test_CapabilityData_cmds_str_single(self):
-        feature1 = info.FeatureData("", 42, ())
-        feature2 = info.FeatureData("", 84, ())
-        cmds = frozendict({"cmds_0": (feature1, feature2)})
-        data = info.CapabilityData(frozendict(), cmds, frozendict(), frozendict())
-
-        assert data._cmds_str() == f"cmds_0: {feature1}, {feature2}\n"
+        data = info.CapabilityData(frozendict(), self.cmds_single, frozendict(), frozendict())
+        expected = f"cmds_0: {self.feature1}, {self.feature2}"
+        assert data._cmds_str() == expected
 
     def test_CapabilityData_cmds_str_multi(self):
-        feature1 = info.FeatureData("", 42, ())
-        feature2 = info.FeatureData("", 84, ())
-        cmds = frozendict({"cmds_0": (feature1, feature2), "cmds_1": (feature1, feature2)})
-        data = info.CapabilityData(frozendict(), cmds, frozendict(), frozendict())
-
-        assert data._cmds_str() == f"CMDS:\n{indentation}cmds_0: {feature1}, {feature2}\n{indentation}cmds_1: {feature1}, {feature2}\n"
+        data = info.CapabilityData(frozendict(), self.cmds_multi, frozendict(), frozendict())
+        expected = f"CMDS:\n{indentation}cmds_0: {self.feature1}, {self.feature2}\n{indentation}cmds_1: {self.feature1}, {self.feature2}"
+        assert data._cmds_str() == expected
 
     def test_CapabilityData_vcp_str_empty(self):
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
-
         assert data._vcp_str() == ""
 
     def test_CapabilityData_vcp_str_single(self):
-        feature1 = info.FeatureData("", 42, ())
-        feature2 = info.FeatureData("", 84, ())
-        value1 = info.ValueData(12, "", ())
-        value2 = info.ValueData(24, "", ())
-        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
-        data = info.CapabilityData(frozendict(), frozendict(), vcps, frozendict())
-
-        assert data._vcp_str() == f"vcp_0:\n{indentation}* {feature1}: {value1}, {value2}\n{indentation}* {feature2}: {value1}, {value2}\n"
+        data = info.CapabilityData(frozendict(), frozendict(), self.vcps_single, frozendict())
+        expected = f"vcp_0:\n{indentation}* {self.feature1}: {self.value1}, {self.value2}\n{indentation}* {self.feature2}: {self.value1}, {self.value2}"
+        assert data._vcp_str() == expected
 
     def test_CapabilityData_vcp_str_multi(self):
-        feature1 = info.FeatureData("", 42, ())
-        feature2 = info.FeatureData("", 84, ())
-        value1 = info.ValueData(12, "", ())
-        value2 = info.ValueData(24, "", ())
-        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)}),
-                           "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
-        data = info.CapabilityData(frozendict(), frozendict(), vcps, frozendict())
-
-        assert data._vcp_str() == (f"VCP:\n{indentation}vcp_0:\n{indentation}{indentation}* {feature1}: {value1}, {value2}\n" +
-                                   f"{indentation}{indentation}* {feature2}: {value1}, {value2}\n{indentation}vcp_1:\n" +
-                                   f"{indentation}{indentation}* {feature1}: {value1}, {value2}\n{indentation}{indentation}* {feature2}: {value1}, {value2}\n")
+        data = info.CapabilityData(frozendict(), frozendict(), self.vcps_multi, frozendict())
+        expected = (f"VCP:\n{indentation}vcp_0:\n{indentation}{indentation}* {self.feature1}: {self.value1}, {self.value2}\n" +
+                    f"{indentation}{indentation}* {self.feature2}: {self.value1}, {self.value2}\n{indentation}vcp_1:\n" +
+                    f"{indentation}{indentation}* {self.feature1}: {self.value1}, {self.value2}\n{indentation}{indentation}* {self.feature2}: {self.value1}, {self.value2}")
+        assert data._vcp_str() == expected
 
     def test_CapabilityData_errata_str_empty(self):
         data = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
-
         assert data._errata_str() == ""
 
     def test_CapabilityData_errata_str_single_named(self):
-        errata = frozendict({"baz": ("qux", "corge")})
-        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata)
-
-        assert data._errata_str() == f"Errata:\n{indentation}baz: qux, corge"
+        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), self.errata_single_named)
+        expected = f"Errata:\n{indentation}baz: qux, corge"
+        assert data._errata_str() == expected
 
     def test_CapabilityData_errata_str_single_blank(self):
-        errata = frozendict({"": ("foo", "bar")})
-        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata)
-
-        assert data._errata_str() == "Errata: foo, bar"
+        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), self.errata_single_blank)
+        expected = "Errata: foo, bar"
+        assert data._errata_str() == expected
 
     def test_CapabilityData_errata_str_multi(self):
-        errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
-        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata)
+        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), self.errata_multi)
+        expected = f"Errata:\n{indentation}foo, bar\n{indentation}baz: qux, corge"
+        assert data._errata_str() == expected
 
-        assert data._errata_str() == f"Errata:\n{indentation}foo, bar\n{indentation}baz: qux, corge"
+    def test_CapabilityData_str_all(self):
+        data = info.CapabilityData(self.attributes, self.cmds_multi, self.vcps_multi, self.errata_multi)
+        expected = f"{data._attr_str()}\n{data._cmds_str()}\n{data._vcp_str()}\n{data._errata_str()}"
+        assert str(data) == expected
 
-    def test_CapabilityData_str(self):
-        feature1 = info.FeatureData("", 42, ())
-        feature2 = info.FeatureData("", 84, ())
-        value1 = info.ValueData(12, "", ())
-        value2 = info.ValueData(24, "", ())
-        attributes = frozendict({"foo": "bar", "baz": "qux"})
-        cmds = frozendict({"cmds_0": (feature1, feature2), "cmds_1": (feature1, feature2)})
-        vcps = frozendict({"vcp_0": frozendict({feature1: (value1, value2), feature2: (value1, value2)}),
-                           "vcp_1": frozendict({feature1: (value1, value2), feature2: (value1, value2)})})
-        errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
-        data = info.CapabilityData(attributes, cmds, vcps, errata)
+    def test_CapabilityData_str_missing_attr(self):
+        data = info.CapabilityData(frozendict(), self.cmds_multi, self.vcps_multi, self.errata_multi)
+        expected = f"{data._attr_str()}\n{data._cmds_str()}\n{data._vcp_str()}\n{data._errata_str()}"
+        assert str(data) == expected
 
-        expected = f"{data._attr_str()}{data._cmds_str()}{data._vcp_str()}{data._errata_str()}"
+    def test_CapabilityData_str_missing_cmds(self):
+        data = info.CapabilityData(self.attributes, frozendict(), self.vcps_multi, self.errata_multi)
+        expected = f"{data._attr_str()}\n{data._cmds_str()}\n{data._vcp_str()}\n{data._errata_str()}"
+        assert str(data) == expected
 
+    def test_CapabilityData_str_missing_vcp(self):
+        data = info.CapabilityData(self.attributes, self.cmds_multi, frozendict(), self.errata_multi)
+        expected = f"{data._attr_str()}\n{data._cmds_str()}\n{data._vcp_str()}\n{data._errata_str()}"
+        assert str(data) == expected
+
+    def test_CapabilityData_str_missing_errata(self):
+        data = info.CapabilityData(self.attributes, self.cmds_multi, self.vcps_multi, frozendict())
+        expected = f"{data._attr_str()}\n{data._cmds_str()}\n{data._vcp_str()}\n{data._errata_str()}"
         assert str(data) == expected
 
     def test_capability_data(self):
