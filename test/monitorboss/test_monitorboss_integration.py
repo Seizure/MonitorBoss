@@ -2,20 +2,22 @@ import json
 from textwrap import dedent
 
 import test.pyddc
+from pyddc import parse_capabilities
 from pyddc.vcp_codes import VCPCodes
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
-from monitorboss import config, cli, info, output
-
+from monitorboss import config, cli, info, output, impl
 
 mdata0 = info.MonitorData(0, ("foo",))
 mdata1 = info.MonitorData(1, ("bar", "baz"))
 mdata2 = info.MonitorData(2, ())
 
+lum = VCPCodes.image_luminance
+
 
 def test_list_human(test_conf_file, capsys):
-    expected = f"{mdata0}\n{mdata1}\n{mdata2}\n"
+    expected = output.list_mons_output([mdata0, mdata1, mdata2], False) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} list")
     capture = capsys.readouterr()
     assert capture.out == expected
@@ -23,7 +25,7 @@ def test_list_human(test_conf_file, capsys):
     
     
 def test_list_json(test_conf_file, capsys):
-    expected = json.dumps({"list": [{"monitor": mdata0.serialize()}, {"monitor": mdata1.serialize()}, {"monitor": mdata2.serialize()}]}) + "\n"
+    expected = output.list_mons_output([mdata0, mdata1, mdata2], True) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} --json list")
     capture = capsys.readouterr()
     assert capture.out == expected
@@ -46,54 +48,62 @@ def test_caps_raw_json(test_conf_file, test_cfg, capsys):
     assert capture.err == ""
 
 
-# TODO: this is going to be annoying, do it properly later
-def test_caps_full_human(test_conf_file, capsys):
+def test_caps_full_human(test_conf_file, test_cfg, capsys):
+    caps = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
+    expected = output.caps_full_output(mdata0, caps, False) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} caps 0")
     capture = capsys.readouterr()
-    assert capture.out  # TODO: actually test something meaningful
+    assert capture.out == expected
     assert capture.err == ""
     
     
-def test_caps_full_json(test_conf_file, capsys):
-    pass  # TODO: stub
-
-
-# TODO: this is going to be annoying, do it properly later
-def test_caps_summary_human(test_conf_file, capsys):
-    cli.run(f"--config {test_conf_file.as_posix()} caps --summary 0")
-    capture = capsys.readouterr()
-    assert capture.out  # TODO: actually test something meaningful
-    assert capture.err == ""
-    
-
-def test_caps_summary_json(test_conf_file, capsys):
-    pass  # TODO: stub
-
-# TODO: I am setting the feature to what it currently is, because this affects the state of the pyddc tests.
-#   there should be a way to have separate "Sessions" for each test, should figure out later
-
-
-def test_get_feature_human(test_conf_file, capsys):
-    code = VCPCodes.image_luminance
-    cfg = config.get_config(test_conf_file.as_posix())
-    fstring = str(info.feature_data(code.value, cfg))
-    mstring = str(info.monitor_data(1, cfg))
-    vstring = str(info.value_data(code.value, 75, cfg))
-    expected = f"{fstring} for {mstring} is {vstring} (Maximum: 80)\n"
-    cli.run(f"--config {test_conf_file.as_posix()} get 1 lum")
+def test_caps_full_json(test_conf_file, test_cfg, capsys):
+    caps = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
+    expected = output.caps_full_output(mdata0, caps, True) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json caps 0")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
 
 
-def test_get_feature_json(test_conf_file, capsys):
+def test_caps_summary_human(test_conf_file, test_cfg, capsys):
+    caps = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
+    expected = output.caps_summary_output(mdata0, caps, False) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} caps --summary 0")
+    capture = capsys.readouterr()
+    assert capture.out == expected
+    assert capture.err == ""
+    
+
+def test_caps_summary_json(test_conf_file, test_cfg, capsys):
+    caps = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
+    expected = output.caps_summary_output(mdata0, caps, True) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json caps --summary 0")
+    capture = capsys.readouterr()
+    assert capture.out == expected
+    assert capture.err == ""
+
+# TODO: I am setting the feature to what it currently is, because this affects the state of the pyddc tests.
+#   there should be a way to have separate "Sessions" for each test, should figure out later
+
+
+def test_get_feature_human(test_conf_file, test_cfg, capsys):
     code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fdata = info.feature_data(code.value, cfg)
-    mdata = info.monitor_data(1, cfg)
     vdata = info.value_data(code.value, 75, cfg)
-    expected = output.get_feature_output(fdata, [(mdata, vdata, 80)], True) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json get bar lum")
+    expected = output.get_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata, 80)], False) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} get 0 lum")
+    capture = capsys.readouterr()
+    assert capture.out == expected
+    assert capture.err == ""
+
+
+def test_get_feature_json(test_conf_file, test_cfg, capsys):
+    code = VCPCodes.image_luminance
+    cfg = config.get_config(test_conf_file.as_posix())
+    vdata = info.value_data(code.value, 75, cfg)
+    expected = output.get_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata, 80)], True) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json get 0 lum")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
