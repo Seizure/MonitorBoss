@@ -15,12 +15,12 @@ def list_mons_output(mons: list[MonitorData], json_output: bool) -> str:
         monlist = []
         for mon in mons:
             monlist.append({"monitor": mon.serialize()})
-        return json.dumps({"list": monlist})
+        return json.dumps({"list": monlist}, indent=_INDENT_LEVEL)
 
     return "\n".join(map(str, mons))
 
 
-def get_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, ValueData, int | None]], json_output) -> str:
+def get_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, ValueData, int | None]], json_output: bool) -> str:
     if json_output:
         monvalue_list = []
         for mon, value, maximum in monvalues:
@@ -28,17 +28,21 @@ def get_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, 
             if maximum:
                 item["max_value"] = maximum
             monvalue_list.append(item)
-        return json.dumps({"get": {"feature": feature.serialize(), "values": monvalue_list}})
+        return json.dumps({"get": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
 
     return "\n".join(map(str, [f"{feature} for {mon} is {value}" + (f" (Maximum: {maximum})" if maximum else "") for mon, value, maximum in monvalues]))
 
 
-def set_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, ValueData]], json_output) -> str:
+def set_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, ValueData]], json_output: bool) -> str:
     if json_output:
         monvalue_list = [{"monitor": mon.serialize(), "value": value.serialize()} for mon, value in monvalues]
-        return json.dumps({"set": {"feature": feature.serialize(), "values": monvalue_list}})
+        return json.dumps({"set": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
 
     return "\n".join(map(str, [f"set {feature} for {mon} to {value}" for mon, value in monvalues]))
+
+
+def tog_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, ValueData, ValueData]], json_output) -> str:
+    pass
 
 
 def caps_raw_output(mon: MonitorData, caps: str, json_output: bool) -> str:
