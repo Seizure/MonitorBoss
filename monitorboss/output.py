@@ -42,7 +42,11 @@ def set_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, 
 
 
 def tog_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, ValueData, ValueData]], json_output) -> str:
-    pass
+    if json_output:
+        monvalue_list = [{"monitor": mon.serialize(), "original_value": original.serialize(), "new_value": new.serialize()} for mon, original, new in monvalues]
+        return json.dumps({"toggle": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
+
+    return "\n".join(map(str, [f"toggled {feature} for {mon} from {original} to {new}" for mon, original, new in monvalues]))
 
 
 def caps_raw_output(mon: MonitorData, caps: str, json_output: bool) -> str:

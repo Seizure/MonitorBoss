@@ -10,7 +10,7 @@ from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
 from monitorboss.info import feature_data, monitor_data, value_data, capability_data
 from monitorboss.output import caps_summary_output, caps_raw_output, caps_full_output, list_mons_output, \
-    get_feature_output, set_feature_output
+    get_feature_output, set_feature_output, tog_feature_output
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -123,7 +123,7 @@ def _get_feature(args, cfg: Config):
     fdata = feature_data(vcpcom.code, cfg)
     for mon, val, maximum in zip(mons, cur_vals, max_vals):
         mdata = monitor_data(mon, cfg)
-        vdata = value_data(vcpcom.code, val, cfg)
+        vdata = value_data(fdata.code, val, cfg)
         monvalmax_list.append((mdata, vdata, maximum))
 
     print(get_feature_output(fdata, monvalmax_list, args.json))
@@ -144,7 +144,7 @@ def _set_feature(args, cfg: Config):
     fdata = feature_data(vcpcom.code, cfg)
     for mon, new_val in zip(mons, new_vals):
         mdata = monitor_data(mon, cfg)
-        vdata = value_data(vcpcom.code, new_val, cfg)
+        vdata = value_data(fdata.code, new_val, cfg)
         monval_list.append((mdata, vdata))
 
     print(set_feature_output(fdata, monval_list, args.json))
@@ -161,16 +161,15 @@ def _tog_feature(args, cfg: Config):
         tog_vals.append(toggle_feature(m, vcpcom, val1, val2, cfg.wait_internal_time))
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
+    monvals_list = []
+    fdata = feature_data(vcpcom.code, cfg)
     for mon, tog_val in zip(mons, tog_vals):
-        fdata = feature_data(vcpcom.code, cfg)
         mdata = monitor_data(mon, cfg)
-        vdata_new = value_data(vcpcom.code, tog_val.new, cfg)
-        vdata_original = value_data(vcpcom.code, tog_val.old, cfg)
-        if args.json:
-            print(json.dumps({"toggle": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "original_value": vdata_original.serialize(), "new_value": vdata_new.serialize()}}, indent=_INDENT_LEVEL))
-            pass
-        else:
-            print(f"toggled {fdata} for {mdata} from {vdata_original} to {vdata_new}")
+        vdata_old = value_data(fdata.code, tog_val.old, cfg)
+        vdata_new = value_data(fdata.code, tog_val.new, cfg)
+        monvals_list.append((mdata, vdata_old, vdata_new))
+
+    print(tog_feature_output(fdata, monvals_list, args.json))
 
 
 text = "Commands for manipulating and polling your monitors"

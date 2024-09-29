@@ -131,29 +131,27 @@ def test_set_feature_json(test_conf_file, test_cfg, capsys):
     assert capture.err == ""
 
 
-def test_tog_feature_human(test_conf_file, capsys):
+def test_tog_feature_human(test_conf_file, test_cfg, capsys):
     code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fstring = str(info.feature_data(code.value, cfg))
-    mstring = str(info.monitor_data(1, cfg))
-    vstring = str(info.value_data(code.value, 75, cfg))
-    expected = f"toggled {fstring} for {mstring} from {vstring} to {vstring}\n"
+    vdata = info.value_data(code.value, 75, cfg)
+    expected = output.tog_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata, vdata)], False) + "\n"
     # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
     #   there should be a way to have separate "Sessions" for each test, should figure out later
-    cli.run(f"--config {test_conf_file.as_posix()} tog bar lum 75 75")
+    cli.run(f"--config {test_conf_file.as_posix()} tog 0 lum 75 75")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
 
 
-def test_tog_feature_json(test_conf_file, capsys):
+def test_tog_feature_json(test_conf_file, test_cfg, capsys):
     code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fdata = info.feature_data(code.value, cfg)
-    mdata = info.monitor_data(1, cfg)
     vdata = info.value_data(code.value, 75, cfg)
-    expected = json.dumps({"toggle": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "original_value": vdata.serialize(), "new_value": vdata.serialize()}}) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json tog bar lum 75 75")
+    expected = output.tog_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata, vdata)], True) + "\n"
+    # TODO: I am setting it to the same thing it was, because this affects the state of the pyddc tests.
+    #   there should be a way to have separate "Sessions" for each test, should figure out later
+    cli.run(f"--config {test_conf_file.as_posix()} --json tog 0 lum 75 75")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""

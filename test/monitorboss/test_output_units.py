@@ -50,7 +50,9 @@ def test_list_mons_human():
 
 
 def test_get_feature_json():
-    expected = json.dumps({"get": {"feature": feature1.serialize(), "values": [{"monitor": mdata0.serialize(), "value": value0.serialize()}, {"monitor": mdata1.serialize(), "value": value1.serialize(), "max_value": 100}]}})
+    expected = json.dumps({"get": {"feature": feature1.serialize(),
+                                   "values": [{"monitor": mdata0.serialize(), "value": value0.serialize()},
+                                              {"monitor": mdata1.serialize(), "value": value1.serialize(), "max_value": 100}]}})
     assert output.get_feature_output(feature1, [(mdata0, value0, None), (mdata1, value1, 100)], True) == expected
 
 
@@ -60,13 +62,27 @@ def test_get_feature_human():
 
 
 def test_set_feature_json():
-    expected = json.dumps({"set": {"feature": feature1.serialize(), "values": [{"monitor": mdata0.serialize(), "value": value0.serialize()}, {"monitor": mdata1.serialize(), "value": value1.serialize()}]}})
+    expected = json.dumps({"set": {"feature": feature1.serialize(),
+                                   "values": [{"monitor": mdata0.serialize(), "value": value0.serialize()},
+                                              {"monitor": mdata1.serialize(), "value": value1.serialize()}]}})
     assert output.set_feature_output(feature1, [(mdata0, value0), (mdata1, value1)], True) == expected
 
 
 def test_set_feature_human():
     expected = f"set {feature1} for {mdata0} to {value0}\nset {feature1} for {mdata1} to {value1}"
     assert output.set_feature_output(feature1, [(mdata0, value0), (mdata1, value1)], False) == expected
+
+
+def test_tog_feature_json():
+    expected = json.dumps({"toggle": {"feature": feature1.serialize(), "values": [
+        {"monitor": mdata0.serialize(), "original_value": value0.serialize(), "new_value": value1.serialize()},
+        {"monitor": mdata1.serialize(), "original_value": value2.serialize(), "new_value": value3.serialize()}]}})
+    assert output.tog_feature_output(feature1, [(mdata0, value0, value1), (mdata1, value2, value3)], True) == expected
+
+
+def test_tog_feature_human():
+    expected = f"toggled {feature1} for {mdata0} from {value0} to {value1}\ntoggled {feature1} for {mdata1} from {value2} to {value3}"
+    assert output.tog_feature_output(feature1, [(mdata0, value0, value1), (mdata1, value2, value3)], False) == expected
 
 
 def test_caps_raw_json():
