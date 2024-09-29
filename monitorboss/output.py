@@ -33,6 +33,14 @@ def get_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, 
     return "\n".join(map(str, [f"{feature} for {mon} is {value}" + (f" (Maximum: {maximum})" if maximum else "") for mon, value, maximum in monvalues]))
 
 
+def set_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, ValueData]], json_output) -> str:
+    if json_output:
+        monvalue_list = [{"monitor": mon.serialize(), "value": value.serialize()} for mon, value in monvalues]
+        return json.dumps({"set": {"feature": feature.serialize(), "values": monvalue_list}})
+
+    return "\n".join(map(str, [f"set {feature} for {mon} to {value}" for mon, value in monvalues]))
+
+
 def caps_raw_output(mon: MonitorData, caps: str, json_output: bool) -> str:
     if json_output:
         return json.dumps({"caps": {"type": "raw", "monitor": mon.serialize(), "data": caps}}, indent=_INDENT_LEVEL)

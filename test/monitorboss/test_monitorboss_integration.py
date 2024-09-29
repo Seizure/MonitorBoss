@@ -83,8 +83,8 @@ def test_caps_summary_json(test_conf_file, test_cfg, capsys):
     assert capture.out == expected
     assert capture.err == ""
 
-# TODO: I am setting the feature to what it currently is, because this affects the state of the pyddc tests.
-#   there should be a way to have separate "Sessions" for each test, should figure out later
+# TODO: I am setting the feature to what it currently is in below functions, because this affects the state of the
+#  pyddc tests. there should be a way to have separate "Sessions" for each test, should figure out later
 
 
 def test_get_feature_human(test_conf_file, test_cfg, capsys):
@@ -109,27 +109,23 @@ def test_get_feature_json(test_conf_file, test_cfg, capsys):
     assert capture.err == ""
 
 
-def test_set_feature_human(test_conf_file, capsys):
+def test_set_feature_human(test_conf_file, test_cfg, capsys):
     code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fstring = str(info.feature_data(code.value, cfg))
-    mstring = str(info.monitor_data(1, cfg))
-    vstring = str(info.value_data(code.value, 75, cfg))
-    expected = f"set {fstring} for {mstring} to {vstring}\n"
-    cli.run(f"--config {test_conf_file.as_posix()} set bar lum 75")
+    vdata = info.value_data(code.value, 75, cfg)
+    expected = output.set_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata)], False) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} set 0 lum 75")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
 
 
-def test_set_feature_json(test_conf_file, capsys):
+def test_set_feature_json(test_conf_file, test_cfg, capsys):
     code = VCPCodes.image_luminance
     cfg = config.get_config(test_conf_file.as_posix())
-    fdata = info.feature_data(code.value, cfg)
-    mdata = info.monitor_data(1, cfg)
     vdata = info.value_data(code.value, 75, cfg)
-    expected = json.dumps({"set": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json set bar lum 75")
+    expected = output.set_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata)], True) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json set 0 lum 75")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""

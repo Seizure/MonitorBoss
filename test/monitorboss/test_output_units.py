@@ -59,6 +59,16 @@ def test_get_feature_human():
     assert output.get_feature_output(feature1, [(mdata0, value0, None), (mdata1, value1, 100)], False) == expected
 
 
+def test_set_feature_json():
+    expected = json.dumps({"set": {"feature": feature1.serialize(), "values": [{"monitor": mdata0.serialize(), "value": value0.serialize()}, {"monitor": mdata1.serialize(), "value": value1.serialize()}]}})
+    assert output.set_feature_output(feature1, [(mdata0, value0), (mdata1, value1)], True) == expected
+
+
+def test_set_feature_human():
+    expected = f"set {feature1} for {mdata0} to {value0}\nset {feature1} for {mdata1} to {value1}"
+    assert output.set_feature_output(feature1, [(mdata0, value0), (mdata1, value1)], False) == expected
+
+
 def test_caps_raw_json():
     expected = json.dumps({"caps": {"type": "raw", "monitor": mdata0.serialize(), "data": "foo"}})
     assert output.caps_raw_output(mdata0, "foo", True) == expected

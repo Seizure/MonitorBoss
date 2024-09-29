@@ -10,7 +10,7 @@ from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
 from monitorboss.info import feature_data, monitor_data, value_data, capability_data
 from monitorboss.output import caps_summary_output, caps_raw_output, caps_full_output, list_mons_output, \
-    get_feature_output
+    get_feature_output, set_feature_output
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -140,14 +140,14 @@ def _set_feature(args, cfg: Config):
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
     new_vals = [set_feature(m, vcpcom, val, cfg.wait_internal_time) for m in mons]
+    monval_list = []
+    fdata = feature_data(vcpcom.code, cfg)
     for mon, new_val in zip(mons, new_vals):
-        fdata = feature_data(vcpcom.code, cfg)
         mdata = monitor_data(mon, cfg)
         vdata = value_data(vcpcom.code, new_val, cfg)
-        if args.json:
-            print(json.dumps({"set": {"monitor": mdata.serialize(), "feature": fdata.serialize(), "value": vdata.serialize()}}, indent=_INDENT_LEVEL))
-        else:
-            print(f"set {fdata} for {mdata} to {vdata}")
+        monval_list.append((mdata, vdata))
+
+    print(set_feature_output(fdata, monval_list, args.json))
 
 
 def _tog_feature(args, cfg: Config):
