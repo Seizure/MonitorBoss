@@ -54,11 +54,6 @@ class Config:
                 aliases = Array([aliases], Trivia())
             for alias in aliases:
                 self.feature_aliases[alias] = int(val) if val.isdigit else val
-        # for val, aliases in doc[TomlCategories.inputs.value].items():
-        #     if isinstance(aliases, String):
-        #         aliases = Array([aliases], Trivia())
-        #     for alias in aliases:
-        #         self.input_source_names[alias] = int(val) if val.isdigit() else val
         _log.debug(f"reading feature keys for value aliases from TOML doc: {doc[TomlCategories.values.value]}")
         if TomlCategories.values.value in doc.keys():
             for feature_key, alias_table in doc[TomlCategories.values.value].items():
