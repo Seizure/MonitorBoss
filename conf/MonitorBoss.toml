@@ -5,16 +5,24 @@
 1 = "left"
 
 [feature_aliases]
-16 = ['lum', 'luminance', 'brightness']
-18 = ['cnt', 'contrast']
-20 = ['clr', 'color', 'clrpreset']
-96 = ['src', 'source', 'input']
-214 = ['pwr', 'power', 'powermode']
+16 = ["lum", "luminance", "brightness"]
+18 = ["cnt", "contrast"]
+20 = ["clr", "color", "clrpreset"]
+96 = ["src", "source", "input"]
+214 = ["pwr", "power", "powermode"]
 
-[input_names]
+[value_aliases]
+[value_aliases.input_source]
 27 = ["usbc", "usb_c", "usb-c"] # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
 17 = "hdmi"
 15 = "dp"
+
+[value_aliases.display_power_mode]
+3 = "sleep"
+
+[value_aliases.image_luminance]
+25 = "night"
+75 = ["day", "bright"]
 
 [settings]
 wait_get = 0.05

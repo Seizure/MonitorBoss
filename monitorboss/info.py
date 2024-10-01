@@ -84,9 +84,8 @@ def value_data(code: int, value: int, cfg: Config) -> ValueData:
             if value == val:
                 param = key
                 break
-        # TODO: This will need to be generalized when we allow for arbitrary value aliases
-        if com.code == VCPCodes.input_source:
-            aliases = [alias for alias, val in cfg.input_source_names.items() if value == val]
+        if com.code.name in cfg.value_aliases:
+            aliases = [alias for alias, val in cfg.value_aliases[com.code.name].items() if value == val]
     return ValueData(value, param, tuple(aliases))
 
 

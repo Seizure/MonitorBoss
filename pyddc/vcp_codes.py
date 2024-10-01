@@ -75,7 +75,7 @@ class VCPCommand:
         return f"VCPCommand: {self.name} ({self.code})"
 
 
-# TODO: 'name' can probably be based off the VCPCode, if we set `value` first?
+# TODO: 'name' can probably be removed, i's just a copy of code.name anyways.
 # TODO: does 'desc' provide any meaningful utility?
 # TODO: VCPCommand probably needs to store int, not VCPCode as the value, so we can support custom VCPCommands
 _VCP_COMMANDS = [

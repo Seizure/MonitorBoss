@@ -77,12 +77,18 @@ class TestCheckValue:
         assert "CONFIG ALIASES" not in output.err
 
     def test_check_val_invalid_noparam_yesalias(self, capsys, test_cfg):
-        # TODO: this will become relevant when we allow for aliases on all feature values
-        pass
+        try:
+            cli._check_val(get_vcp_com(VCPCodes.image_luminance), "foo", test_cfg)
+        except MonitorBossError as err:
+            print(err, file=sys.stderr)
+        output = capsys.readouterr()
+        assert output.out == ""
+        assert "PARAM NAMES" not in output.err
+        assert "CONFIG ALIASES" in output.err
 
     def test_check_val_invalid_noparam_noalias(self, capsys, test_cfg):
         try:
-            cli._check_val(get_vcp_com(VCPCodes.image_luminance), "foo", test_cfg)
+            cli._check_val(get_vcp_com(VCPCodes.image_contrast), "foo", test_cfg)
         except MonitorBossError as err:
             print(err, file=sys.stderr)
         output = capsys.readouterr()

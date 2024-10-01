@@ -20,9 +20,13 @@ TEST_TOML_CONTENTS = """
 96 = ['src', 'source', 'input']
 214 = ['pwr', 'power', 'powermode']
 
-[input_names]
+[value_aliases.input_source]
 27 = ["usbc", "usb-c"] # 27 seems to be the "standard non-standard" ID for USB-C among manufacturers
 17 = "hdmi"
+
+[value_aliases.image_luminance]
+25 = "night"
+75 = ["day", "bright"]
 
 [settings]
 wait_get = 0
