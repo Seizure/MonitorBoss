@@ -18,7 +18,6 @@ DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.toml"
 class TomlCategories(Enum):
     monitors = "monitor_names"
     features = "feature_aliases"
-    # inputs = "input_names"
     settings = "settings"
     values = "value_aliases"
 
@@ -34,10 +33,10 @@ class Config:
     monitor_names: dict[str, int] = field(default_factory=dict)
     feature_aliases: dict[str, int] = field(default_factory=dict)
     value_aliases: dict[str, dict[str, int]] = field(default_factory=dict)
-    # input_source_names: dict[str, int] = field(default_factory=dict)
     wait_get_time: float = field(default_factory=float)
     wait_set_time: float = field(default_factory=float)
     wait_internal_time: float = field(default_factory=float)
+
 
     # TODO: why are we allowing for non-numeric keys? We're also not making sure aliases are strings
     def read(self, doc: TOMLDocument):
