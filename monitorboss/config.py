@@ -37,7 +37,6 @@ class Config:
     wait_set_time: float = field(default_factory=float)
     wait_internal_time: float = field(default_factory=float)
 
-
     # TODO: why are we allowing for non-numeric keys? We're also not making sure aliases are strings
     def read(self, doc: TOMLDocument):
         _log.debug(f"read Config from TOML doc: {doc}")
@@ -69,6 +68,7 @@ class Config:
         self.wait_get_time = doc[TomlCategories.settings.value][TomlSettingsKeys.wait_get.value]
         self.wait_set_time = doc[TomlCategories.settings.value][TomlSettingsKeys.wait_set.value]
         self.wait_internal_time = doc[TomlCategories.settings.value][TomlSettingsKeys.wait_internal.value]
+
 
     def validate(self):
         # TODO: we should check whether assigned alliases conflict with other aliases, or an existing parameter/feature name
