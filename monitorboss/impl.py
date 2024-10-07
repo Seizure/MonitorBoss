@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from logging import getLogger
 from time import sleep
 
-from pyddc import VCP, VCPCommand, get_vcp_com, VCPError
+from pyddc import VCP, VCPCommand, get_vcp_com, VCPError, VCPFeatureReturn
 from pyddc.vcp_codes import VCPCodes
 
 from monitorboss import MonitorBossError
@@ -71,7 +71,7 @@ def get_vcp_capabilities(mon: int) -> str:
             raise MonitorBossError(f"Could not list information for monitor {mon}") from err
 
 
-def get_feature(mon: int, feature: VCPCommand, timeout: float) -> (int, int):
+def get_feature(mon: int, feature: VCPCommand, timeout: float) -> VCPFeatureReturn:
     _log.debug(f"get feature: {feature.name} (for monitor #{mon})")
     with get_monitor(mon) as monitor:
         try:
