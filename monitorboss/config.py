@@ -109,8 +109,8 @@ def default_toml() -> TOMLDocument:
     display_power_names = table()
     display_power_names.add("3", "sleep")
     value_aliases = table()
-    value_aliases.add(get_vcp_com(VCPCodes.input_source).code.name, input_names)
-    value_aliases.add(get_vcp_com(VCPCodes.display_power_mode).code.name, display_power_names)
+    value_aliases.add(get_vcp_com(VCPCodes.input_source).name, input_names)
+    value_aliases.add(get_vcp_com(VCPCodes.display_power_mode).name, display_power_names)
 
     settings = table()
     settings.add(TomlSettingsKeys.wait_get.value, 0.05)

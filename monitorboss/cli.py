@@ -62,14 +62,14 @@ def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
         if val in com.param_names:
             return com.param_names[val]
         # ... and if not, check if there is a matching alias table for this feature and if so alias for this value...
-        if com.code.name in cfg.value_aliases and val in cfg.value_aliases[com.code.name]:
-            return cfg.value_aliases[com.code.name][val]
+        if com.name in cfg.value_aliases and val in cfg.value_aliases[com.name]:
+            return cfg.value_aliases[com.name][val]
     # If we got here, an invalid value was provided
     error_text = f"{val} is not a valid value for feature \"{com.name}\".\nValid values are:\n"
     if com.param_names:
         error_text += f"{indentation}- [PARAM NAMES]: {', '.join(com.param_names.keys())}\n"
-    if com.code.name in cfg.value_aliases:
-        error_text += f"{indentation}- [CONFIG ALIASES]: {', '.join(cfg.value_aliases[com.code.name].keys())}\n"
+    if com.name in cfg.value_aliases:
+        error_text += f"{indentation}- [CONFIG ALIASES]: {', '.join(cfg.value_aliases[com.name].keys())}\n"
     error_text += f"{indentation}- a code number (non-negative integer)\n"
     error_text += f"NOTE: A particular monitor may only support some of these values. Check your monitor's specs for the inputs it accepts."
     raise MonitorBossError(error_text)

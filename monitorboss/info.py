@@ -31,7 +31,7 @@ def feature_data(code: int, cfg: Config) -> FeatureData:
     com = get_vcp_com(code)
     if com:
         name = com.name
-        aliases = [alias for alias, val in cfg.feature_aliases.items() if val == com.code.value]
+        aliases = [alias for alias, val in cfg.feature_aliases.items() if val == com.code]
     else:
         name = ""
         aliases = []
@@ -84,8 +84,8 @@ def value_data(code: int, value: int, cfg: Config) -> ValueData:
             if value == val:
                 param = key
                 break
-        if com.code.name in cfg.value_aliases:
-            aliases = [alias for alias, val in cfg.value_aliases[com.code.name].items() if value == val]
+        if com.name in cfg.value_aliases:
+            aliases = [alias for alias, val in cfg.value_aliases[com.name].items() if value == val]
     return ValueData(value, param, tuple(aliases))
 
 

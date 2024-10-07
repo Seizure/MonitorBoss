@@ -64,8 +64,8 @@ class ColorPresetNames(IntEnum):
 @dataclass(frozen=True)
 class VCPCommand:
     name: str
-    desc: str
-    code: VCPCodes
+    desc: str  # TODO: does 'desc' provide any meaningful utility?
+    code: int
     readable: bool
     writeable: bool
     discrete: bool
@@ -75,69 +75,67 @@ class VCPCommand:
         return f"VCPCommand: {self.name} ({self.code})"
 
 
-# TODO: does 'desc' provide any meaningful utility?
-# TODO: VCPCommand probably needs to store int, not VCPCode as the value, so we can support custom VCPCommands
 _VCP_COMMANDS = [
     VCPCommand(
-        name="restore_factory_default",
+        name=VCPCodes.restore_factory_default.name,
         desc="restore factory default image",
-        code=VCPCodes.restore_factory_default,
+        code=VCPCodes.restore_factory_default.value,
         readable=False,
         writeable=True,
         discrete=True,
         param_names={}),
     VCPCommand(
-        name="image_luminance",
+        name=VCPCodes.image_luminance.name,
         desc="image luminance",
-        code=VCPCodes.image_luminance,
+        code=VCPCodes.image_luminance.value,
         readable=True,
         writeable=True,
         discrete=False,
         param_names={}),
     VCPCommand(
-        name="image_contrast",
+        name=VCPCodes.image_contrast.name,
         desc="image contrast",
-        code=VCPCodes.image_contrast,
+        code=VCPCodes.image_contrast.value,
         readable=True,
         writeable=True,
         discrete=False,
         param_names={}),
     VCPCommand(
-        name="image_color_preset",
+        name=VCPCodes.image_color_preset.name,
         desc="image color preset",
-        code=VCPCodes.image_color_preset,
+        code=VCPCodes.image_color_preset.value,
         readable=True,
         writeable=True,
         discrete=False,
         param_names=dict(ColorPresetNames.__members__)),
     VCPCommand(
-        name="active_control",
+        name=VCPCodes.active_control.name,
         desc="active control",
-        code=VCPCodes.active_control,
+        code=VCPCodes.active_control.value,
         readable=True,
         writeable=False,
         discrete=True,
         param_names={}),
     VCPCommand(
-        name="input_source",
+        name=VCPCodes.input_source.name,
         desc="input source",
-        code=VCPCodes.input_source,
+        code=VCPCodes.input_source.value,
         readable=True,
         writeable=True,
         discrete=True,
         param_names=dict(InputSourceNames.__members__)),
     VCPCommand(
-        name="image_orientation",
+        name=VCPCodes.image_orientation.name,
         desc="image orientation",
-        code=VCPCodes.image_orientation,
+        code=VCPCodes.image_orientation.value,
         readable=True,
         writeable=False,
         discrete=True,
         param_names={}),
     VCPCommand(
-        name="display_power_mode",
+        name=VCPCodes.display_power_mode.name,
         desc="display power mode",
-        code=VCPCodes.display_power_mode,
+        code=VCPCodes.display_power_mode.value,
         readable=True,
         writeable=False,
         discrete=True,

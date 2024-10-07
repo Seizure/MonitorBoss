@@ -96,19 +96,19 @@ class VCP(abc.ABC):
     def _get_vcp_capabilities_str(self, timeout: float) -> str:
         pass
 
-    def get_vcp_feature_max(self, code: VCPCommand, timeout: float = VCP_TIMEOUT) -> int:
+    def get_vcp_feature_max(self, com: VCPCommand, timeout: float = VCP_TIMEOUT) -> int:
         assert self._in_ctx, "This function must be run within the context manager"
-        if not code.readable:
-            raise TypeError(f"code must be readable: {code.name}")
+        if not com.readable:
+            raise TypeError(f"code must be readable: {com.name}")
         # code.value.value seems awkward, but we do NOT want to store max keys as VCPCodes, so that we can
         # support non_specification feature codes. Though...
         # TODO: that might mean VCPCommand needs to store int, not
         #   VCPCode as the value
-        feature_code = code.code.value
+        feature_code = com.code
         if feature_code in self.code_maximum:
             return self.code_maximum[feature_code]
         else:
-            maximum = self.get_vcp_feature(code, timeout).max
+            maximum = self.get_vcp_feature(com, timeout).max
             self.code_maximum[feature_code] = maximum
             return maximum
 
