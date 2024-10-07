@@ -22,13 +22,13 @@ supported_codes = {
     ORIENT: [1, 2, 4]  # image orientation (RO/discreet); with params for who knows what
 }
 
-current_values = {LUM: 75, CNT: 75, INPUT: 257, ORIENT: 2}  # input is 1 (analog) with high byte set
 unknown_max_values = {LUM: 80, CNT: 100}
 
 
 class DummyVCP(ABCVCP):
     def __init__(self):
         super().__init__()
+        self.current_values = {LUM: 75, CNT: 75, INPUT: 257, ORIENT: 2}  # input is 1 (analog) with high byte set
 
     def __enter__(self):
         super().__enter__()
@@ -56,11 +56,11 @@ class DummyVCP(ABCVCP):
                 # Therefor is it probably not worth testing against this result.
                 raise ValueError(f"value of {value} exceeds code maximum of {unknown_max_values[code]} for {VCPCommand.name}")
             else:
-                current_values[code] = value
+                self.current_values[code] = value
         else:  # pragma: no cover - tautological code / not testable in practice
             if value in supported_codes[code]:
                 # this is just for the sake of proper implementation, but no point testing it
-                current_values[code] = value
+                self.current_values[code] = value
             else:
                 # This is not defined behavior in practice, some monitors don't complain.
                 # Therefor it is probably not worth testing against this result.
@@ -79,7 +79,7 @@ class DummyVCP(ABCVCP):
             # The max value on discrete features is the number of options, but there's nothing meaningful to
             #   test in that regard, and MonitorBoss doesn't use that info, so not worth worrying about
             maxv = 0
-        return VCPFeatureReturn(current_values[code], maxv)
+        return VCPFeatureReturn(self.current_values[code], maxv)
 
     def _get_vcp_capabilities_str(self, timeout: float) -> str:
         del timeout  # unused
