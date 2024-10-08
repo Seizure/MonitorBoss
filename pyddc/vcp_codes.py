@@ -131,7 +131,7 @@ _VCP_COMMANDS = [
         readable=True,
         writeable=False,
         discrete=True,
-        param_names={}),
+        param_names={}),  # TODO: This is supposed to have params
     VCPCommand(
         name=VCPCodes.display_power_mode.name,
         desc="display power mode",
