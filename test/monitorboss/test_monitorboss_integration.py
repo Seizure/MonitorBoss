@@ -4,6 +4,7 @@ from textwrap import dedent
 import test.pyddc
 from pyddc import parse_capabilities
 from pyddc.vcp_codes import VCPCodes
+from test.pyddc import vcp_dummy
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
@@ -33,7 +34,7 @@ def test_list_json(test_conf_file, capsys):
 
 
 def test_caps_raw_human(test_conf_file, capsys):
-    expected = output.caps_raw_output(mdata0, test.pyddc.CAPS_STR, False) + "\n"
+    expected = output.caps_raw_output(mdata0, vcp_dummy.DEFAULT_VCP_TEMPLATE.caps_str, False) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} caps --raw 0")
     capture = capsys.readouterr()
     assert capture.out == expected
@@ -41,7 +42,7 @@ def test_caps_raw_human(test_conf_file, capsys):
 
 
 def test_caps_raw_json(test_conf_file, test_cfg, capsys):
-    expected = output.caps_raw_output(mdata0, test.pyddc.CAPS_STR, True) + "\n"
+    expected = output.caps_raw_output(mdata0, vcp_dummy.DEFAULT_VCP_TEMPLATE.caps_str, True) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} --json caps --raw 0")
     capture = capsys.readouterr()
     assert capture.out == expected

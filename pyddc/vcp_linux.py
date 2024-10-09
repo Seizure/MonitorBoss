@@ -44,6 +44,8 @@ class LinuxVCP(VCP):
         1: "Unsupported VCP code",
     }
 
+    # TODO: maybe generalize this into general VCP functionality, as it will become relevant when we
+    #  create macOS driver, and make Windows driver low level
     CHECKSUM_ERRORS: str = "ignore"
 
     def __init__(self, bus_number: int):

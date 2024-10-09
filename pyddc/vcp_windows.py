@@ -49,8 +49,8 @@ class WindowsVCP(VCP):
             raise VCPError("no physical monitor found")
         elif num_physical.value > 1:
             # TODO: Figure out a clever way around the Windows API since
-            # it does not allow opening and closing of individual physical
-            # monitors without their hmonitors.
+            #   it does not allow opening and closing of individual physical
+            #   monitors without their hmonitors.
             raise VCPError("more than one physical monitor per hmonitor")
         physical_monitors = (PhysicalMonitor * num_physical.value)()
         self.logger.debug("GetPhysicalMonitorsFromHMONITOR")
