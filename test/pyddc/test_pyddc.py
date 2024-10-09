@@ -40,7 +40,7 @@ class TestGetFeature:
     def test_get_masked_high_byte(self):
         with self.vcp as vcp:
             result = vcp.get_vcp_feature(input_command)
-            assert (result.value, result.max) == (1, 0)
+            assert (result.value, result.max) == (1, 4)
 
 
 class TestGetMax:
