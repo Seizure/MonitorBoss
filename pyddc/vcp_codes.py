@@ -82,7 +82,7 @@ _VCP_COMMANDS = [
         code=VCPCodes.restore_factory_default.value,
         readable=False,
         writeable=True,
-        discrete=True,
+        discrete=True,  # TODO: this is defined as discrete in VESA specs, but in practice it's basically continuous?
         param_names={}),
     VCPCommand(
         name=VCPCodes.image_luminance.name,

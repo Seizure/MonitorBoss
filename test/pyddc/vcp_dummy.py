@@ -6,32 +6,68 @@ from typing import List, Optional, Type
 from copy import deepcopy
 
 from pyddc import VCPCommand, VCPFeatureReturn, ABCVCP, VCPError
-from pyddc.vcp_codes import VCPCodes
+from pyddc.vcp_codes import VCPCodes, get_vcp_com
 
 
 @dataclass
+class SupportedCodeTemplate:
+    code: int
+    supported_params: list[int] | None
+    initial_value: int | None
+    max_value: int | None
+
+    def __post_init__(self):
+        com = get_vcp_com(self.code)
+        if com:
+            if com.discrete and self.supported_params is None:
+                raise ValueError(f"Feature {self.code}/{com} is known to be discrete, supported_params can not be 'None'")
+            elif not com.discrete and self.supported_params is not None:
+                raise ValueError(f"Feature {self.code}/{com} is known to be continuous, supported_params must be 'None'")
+            if not com.readable and self.initial_value is not None:
+                raise ValueError(f"Feature {self.code}/{com} is known to be write-only, initial_value must be 'None'")
+            elif com.readable and self.initial_value is None:
+                raise ValueError(f"Feature {self.code}/{com} is known to be readable, initial_value can not be 'None'")
+
+        if self.max_value is None:
+            if self.supported_params is None:
+                raise ValueError(f"Feature {self.code}: supported_params is 'None', implying a continuous feature, but max_value was 'None'")
+            if self.initial_value and self.initial_value not in self.supported_params:
+                raise ValueError(f"Feature {self.code}: initial_value ({self.initial_value}) not in params ({self.supported_params})")
+        else:
+            if self.supported_params is not None:
+                raise ValueError(f"Feature {self.code}: supported_params is not 'None', implying a discrete feature, but max_value was not 'None'")
+            if isinstance(self.initial_value, int) and self.initial_value > self.max_value:
+                raise ValueError(f"Feature {self.code}: initial_value is greater than max_value on a continuous, readable feature")
+
+
 class VCPTemplate:
-    supported_codes: dict[int, list[int] | None]
-    current_values: dict[int, int]
-    unknown_max_values: dict[int, int]
+    supported_codes: dict[int, list[int] | None] = {}
+    current_values: dict[int, int] = {}
+    unknown_max_values: dict[int, int] = {}
     caps_str: str
     faulty: bool  # for tests where you want the VCP operations to fail with a VCPError
 
-    def __post_init__(self):
-        pass
+    def __init__(self, supported_codes: list[SupportedCodeTemplate], caps_str: str, faulty: bool):
+        for code in supported_codes:
+            self.supported_codes[code.code] = code.supported_params
+            self.current_values[code.code] = code.initial_value
+            if code.max_value:
+                self.unknown_max_values[code.code] = code.max_value
+        self.caps_str = caps_str
+        self.faulty = faulty
 
 
-DEFAULT_VCP_TEMPLATE = VCPTemplate({
-            VCPCodes.restore_factory_default.value: [],  # factory reset code (WO) TODO: should find a better WO command (with actual values)
-            VCPCodes.image_luminance.value: None,  # luminance (RW/continuous)
-            VCPCodes.image_contrast.value: None,  # contrast (RW/continuous)
-            VCPCodes.input_source.value: [27, 15, 17, 257],  # input source code (RW/discreet); with params for USBC, dp1, and hdm1
-            VCPCodes.image_orientation.value: [1, 2, 4]  # image orientation (RO/discreet); with params for who knows what
-        },
-        {VCPCodes.image_luminance.value: 75, VCPCodes.image_contrast.value: 75, VCPCodes.input_source.value: 257, VCPCodes.image_orientation.value: 2},  # input is 1 (analog) with high byte set)
-        {VCPCodes.image_luminance.value: 80, VCPCodes.image_contrast.value: 100},
-        "(prot(monitor)type(LCD)model(DUMM13)cmds(04)vcp(10 12 60(1B 0F 11 ) AA(01 02 04 ) )mccs_ver(2.1))",
-        False)
+DEFAULT_VCP_TEMPLATE = VCPTemplate(
+    [
+        SupportedCodeTemplate(VCPCodes.restore_factory_default.value, [], None, None),
+        SupportedCodeTemplate(VCPCodes.image_luminance.value, None, 75, 80),
+        SupportedCodeTemplate(VCPCodes.image_contrast.value, None, 75, 100),
+        SupportedCodeTemplate(VCPCodes.input_source, [27, 15, 17, 257], 257, None),
+        SupportedCodeTemplate(VCPCodes.image_orientation.value, [1, 2, 4], 2, None),
+    ],
+    "(prot(monitor)type(LCD)model(DUMM13)cmds(04)vcp(10 12 60(1B 0F 11 ) AA(01 02 04 ) )mccs_ver(2.1))",
+    False
+)
 
 
 vcp_template_list: list[VCPTemplate] = [DEFAULT_VCP_TEMPLATE, DEFAULT_VCP_TEMPLATE, DEFAULT_VCP_TEMPLATE]
