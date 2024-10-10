@@ -2,7 +2,7 @@ import pytest
 
 from pyddc import get_vcp_com, parse_capabilities, vcp_codes
 from pyddc.vcp_codes import VCPCodes
-from .vcp_dummy import DummyVCP as VCP
+from .vcp_dummy import DEFAULT_VCP_TEMPLATE, DummyVCP as VCP
 
 input_command = get_vcp_com(VCPCodes.input_source)
 lum_command = get_vcp_com(VCPCodes.image_luminance)
@@ -12,7 +12,7 @@ active_control = get_vcp_com(VCPCodes.active_control)
 
 class TestGetFeature:
 
-    vcp = VCP.get_vcps()[0]
+    vcp = VCP(DEFAULT_VCP_TEMPLATE)
 
     def test_get_cm_assertion(self):
         with pytest.raises(AssertionError):
@@ -45,7 +45,7 @@ class TestGetFeature:
 
 class TestGetMax:
 
-    vcp = VCP.get_vcps()[0]
+    vcp = VCP(DEFAULT_VCP_TEMPLATE)
 
     def test_getmax_cm_assertion(self):
         with pytest.raises(AssertionError):
@@ -73,7 +73,7 @@ class TestGetMax:
 
 class TestSetFeature:
 
-    vcp = VCP.get_vcps()[0]
+    vcp = VCP(DEFAULT_VCP_TEMPLATE)
 
     def test_set_cm_assertion(self):
         with pytest.raises(AssertionError):
@@ -105,7 +105,7 @@ class TestSetFeature:
 
 class TestCapabilitiesFunctions:
 
-    vcp = VCP.get_vcps()[0]
+    vcp = VCP(DEFAULT_VCP_TEMPLATE)
 
     def test_caps_cm_assertion(self):
         with pytest.raises(AssertionError):
@@ -118,8 +118,10 @@ class TestCapabilitiesFunctions:
     # TODO: test different string formats/edge cases
     def test_caps_parsing(self):
         with self.vcp as vcp:
-            caps = parse_capabilities(vcp.get_vcp_capabilities())
-            assert str(caps) == "{'prot': 'monitor', 'type': 'LCD', 'model': 'DUMM13', 'cmds': [Capability(cap=4, values=None)], 'vcp': [Capability(cap=16, values=None), Capability(cap=18, values=None), Capability(cap=96, values=[27, 15, 17]), Capability(cap=170, values=[1, 2, 4])], 'mccs_ver': '2.1'}"
+            caps_str = vcp.get_vcp_capabilities()
+
+        caps = parse_capabilities(caps_str)
+        assert str(caps) == "{'prot': 'monitor', 'type': 'LCD', 'model': 'DUMM13', 'cmds': [Capability(cap=4, values=None)], 'vcp': [Capability(cap=16, values=None), Capability(cap=18, values=None), Capability(cap=96, values=[27, 15, 17]), Capability(cap=170, values=[1, 2, 4])], 'mccs_ver': '2.1'}"
 
 
 class TestVCPCommands:
@@ -139,7 +141,7 @@ class TestVCPCommands:
         assert get_vcp_com("rawr") is None
 
     def test_get_com_by_int(self):
-        assert get_vcp_com(16).code == 16
+        assert get_vcp_com(VCPCodes.image_luminance.value).code == VCPCodes.image_luminance.value
 
     def test_get_com_by_str(self):
-        assert get_vcp_com("image_luminance").code == 16
+        assert get_vcp_com(VCPCodes.image_luminance.name).code == VCPCodes.image_luminance.value

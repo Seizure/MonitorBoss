@@ -9,6 +9,10 @@ from pyddc import VCPCommand, VCPFeatureReturn, ABCVCP, VCPError
 from pyddc.vcp_codes import VCPCodes, get_vcp_com
 
 
+# TODO: do we want to write test units for the template classes and added functionality within DummyVCP?
+#   eg, the "faulty" behavior
+
+
 @dataclass
 class SupportedCodeTemplate:
     code: int
@@ -50,7 +54,8 @@ class VCPTemplate:
     def __init__(self, supported_codes: list[SupportedCodeTemplate], caps_str: str, faulty: bool):
         for code in supported_codes:
             self.supported_codes[code.code] = code.supported_params
-            self.current_values[code.code] = code.initial_value
+            if code.initial_value:
+                self.current_values[code.code] = code.initial_value
             if code.max_value:
                 self.unknown_max_values[code.code] = code.max_value
         self.caps_str = caps_str
