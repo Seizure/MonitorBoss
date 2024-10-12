@@ -158,7 +158,7 @@ class CapabilityData:
 
     def __str__(self) -> str:
         sections = [self._attr_str(), self._cmds_str(), self._vcp_str(), self._errata_str()]
-        return "\n".join(map(str, [section for section in sections if section]))
+        return "\n".join(map(str, [s for s in sections if s]))
 
 
 def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
@@ -181,7 +181,7 @@ def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
         name: cap
         for name, cap in caps.items() if name not in cmds and name not in vcps
     })
-    errata: dict[str, list[str]] = frozendict()  # TODO: not sure how to find/parse out errata rn
+    errata: frozendict[str, tuple[str]] = frozendict()  # TODO: not sure how to find/parse out errata rn
     return CapabilityData(info_fields, cmds, vcps, errata)
 
 
