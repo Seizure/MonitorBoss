@@ -48,7 +48,7 @@ def list_monitors() -> list[VCP]:
     _log.debug("list monitors")
     try:
         return VCP.get_vcps()
-    except VCPError as err:  # pragma: no cover - relevant VCP code is not tested
+    except VCPError as err:
         # this can only happen on Windows
         raise MonitorBossError(f"Failed to list VCPs.") from err
 
@@ -67,7 +67,7 @@ def get_vcp_capabilities(mon: int) -> str:
     with get_monitor(mon) as monitor:
         try:
             return monitor.get_vcp_capabilities()
-        except VCPError as err:  # pragma: no cover - relevant VCP code is not tested
+        except VCPError as err:
             raise MonitorBossError(f"Could not list information for monitor {mon}") from err
 
 
@@ -78,7 +78,7 @@ def get_feature(mon: int, feature: VCPCommand, timeout: float) -> VCPFeatureRetu
             val = monitor.get_vcp_feature(feature, timeout)
             _log.debug(f"get_vcp_feature for {feature.name} on monitor #{mon} returned {val.value} (max {val.max})")
             return val
-        except VCPError as err:  # pragma: no cover - relevant VCP code is not tested
+        except VCPError as err:
             raise MonitorBossError(f"could not get {feature.name} for monitor #{mon}.") from err
         except TypeError as err:
             raise MonitorBossError(f"{feature.name} is not a readable feature.") from err
@@ -89,7 +89,7 @@ def set_feature(mon: int, feature: VCPCommand, val: int, timeout: float) -> int:
     with get_monitor(mon) as monitor:
         try:
             monitor.set_vcp_feature(feature, val, timeout)
-        except VCPError as err:  # pragma: no cover - relevant VCP code is not tested
+        except VCPError as err:
             raise MonitorBossError(f"could not set {feature.name} for monitor #{mon} to {val}.") from err
         except TypeError as err:
             raise MonitorBossError(f"{feature.name} is not a writeable feature.") from err
