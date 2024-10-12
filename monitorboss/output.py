@@ -3,7 +3,7 @@ import textwrap
 from logging import getLogger, DEBUG
 
 from monitorboss import indentation
-from monitorboss.info import CapabilityData, FeatureData, ValueData, MonitorData, capability_summary_data
+from monitorboss.info import CapabilityData, FeatureData, ValueData, MonitorData
 
 _log = getLogger(__name__)
 _INDENT_LEVEL = 4 if _log.level >= DEBUG else None
