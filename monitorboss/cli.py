@@ -6,8 +6,8 @@ from time import sleep
 from monitorboss import MonitorBossError, indentation
 from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
-from monitorboss.info import feature_data, monitor_data, value_data, capability_data
-from monitorboss.output import caps_summary_output, caps_raw_output, caps_full_output, list_mons_output, \
+from monitorboss.info import feature_data, monitor_data, value_data, capability_data, capability_summary_data
+from monitorboss.output import caps_raw_output, caps_parsed_output, list_mons_output, \
     get_feature_output, set_feature_output, tog_feature_output
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
@@ -82,22 +82,35 @@ def _list_mons(args, cfg: Config):
 
 def _get_caps(args, cfg: Config):
     _log.debug(f"get capabilities: {args}")
-    mon = _check_mon(args.monitor, cfg)
-    caps_raw = get_vcp_capabilities(mon)
-    mdata = monitor_data(mon, cfg)
+    mons = [_check_mon(m, cfg) for m in args.monitor]
+    rawcaps_list = []
+    for i, m in enumerate(mons):
+        rawcaps_list.append(get_vcp_capabilities(m))
 
     if args.raw:
-        print(caps_raw_output(mdata, caps_raw, args.json))
+        moncaps_list = []
+        for mon, caps in zip(mons, rawcaps_list):
+            mdata = monitor_data(mon, cfg)
+            moncaps_list.append((mdata, caps))
+        print(caps_raw_output(moncaps_list, args.json))
         return
 
-    caps_dict = parse_capabilities(caps_raw)
-    caps_data = capability_data(caps_dict, cfg)
+    fullcaps_list = [capability_data(parse_capabilities(rawcap), cfg) for rawcap in rawcaps_list]
 
     if args.summary:
-        print(caps_summary_output(mdata, caps_data, args.json))
+        summarycaps_list = [capability_summary_data(fullcap) for fullcap in fullcaps_list]
+        moncaps_list = []
+        for mon, caps in zip(mons, summarycaps_list):
+            mdata = monitor_data(mon, cfg)
+            moncaps_list.append((mdata, caps))
+        print(caps_parsed_output(moncaps_list, args.json))
         return
 
-    print(caps_full_output(mdata, caps_data, args.json))
+    moncaps_list = []
+    for mon, caps in zip(mons, fullcaps_list):
+        mdata = monitor_data(mon, cfg)
+        moncaps_list.append((mdata, caps))
+    print(caps_parsed_output(moncaps_list, args.json))
 
 
 def _get_feature(args, cfg: Config):
@@ -183,7 +196,7 @@ description = ("Get the capabilities of a monitor. If no flags are used, the ent
                "a structured format with human-readable names provided for known VCP codes and their defined options.")
 caps_parser = mon_subparsers.add_parser("caps", help=text, description=description)
 caps_parser.set_defaults(func=_get_caps)
-caps_parser.add_argument("monitor", type=str, help="the monitor to retrieve capabilities from")
+caps_parser.add_argument("monitor", type=str, nargs="+", help="the monitor to retrieve capabilities from")
 caps_exclusive_flags = caps_parser.add_mutually_exclusive_group()
 caps_exclusive_flags.add_argument("-r", "--raw", action='store_true', help="return the original, unparsed capabilities string")
 caps_exclusive_flags.add_argument("-s", "--summary", action='store_true', help="return a highly formatted and abridged summary of the capabilities")

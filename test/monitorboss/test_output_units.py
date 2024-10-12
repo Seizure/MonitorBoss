@@ -3,6 +3,7 @@ import textwrap
 
 from frozendict import frozendict
 
+import monitorboss.info
 from pyddc.vcp_codes import VCPCodes, InputSourceNames, ColorPresetNames
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
@@ -31,12 +32,14 @@ value2json = json.dumps(value2.serialize())
 value3 = info.ValueData(ColorPresetNames.ct5000k.value, "", ())
 value3json = json.dumps(value3.serialize())
 attributes = frozendict({"model": "CAF3", "foo": "bar", "baz": "qux", "type": "LCD"})
+attributes_summary = frozendict({"model": "CAF3", "type": "LCD"})
 cmds = frozendict({"cmds_0": (feature1, feature2, feature3), "cmds_1": (feature1, feature2, feature4)})
 vcps = frozendict({"vcp_0": frozendict({feature1: (value0, value1), feature2: (value0, value1), feature3: (value2,)}),
                    "vcp_1": frozendict({feature1: (value0, value1), feature2: (value0, value1), feature4: (value3,)})})
+vcps_summary = frozendict({"vcp_0": frozendict({feature3: (value2,)}), "vcp_1": frozendict({feature4: (value3,)})})
 errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
 caps = info.CapabilityData(attributes, cmds, vcps, errata)
-capsjson = json.dumps(caps.serialize())
+caps_summary = info.CapabilityData(attributes_summary, frozendict(), vcps_summary, frozendict())
 
 
 def test_list_mons_json():
@@ -86,38 +89,30 @@ def test_tog_feature_human():
 
 
 def test_caps_raw_json():
-    expected = json.dumps({"caps": {"type": "raw", "monitor": mdata0.serialize(), "data": "foo"}})
-    assert output.caps_raw_output(mdata0, "foo", True) == expected
+    expected = json.dumps({"caps": [
+                {"monitor": mdata0.serialize(), "data": "foo"},
+                {"monitor": mdata1.serialize(), "data": "bar"}],
+            "type": "raw"})
+    assert output.caps_raw_output([(mdata0, "foo"), (mdata1, "bar")], True) == expected
 
 
 def test_caps_raw_human():
-    expected = f"Capability string for {mdata0}:\nfoo"
-    assert output.caps_raw_output(mdata0, "foo", False) == expected
+    expected = f"Capability string for {mdata0}:\n{indentation}foo\nCapability string for {mdata1}:\n{indentation}bar"
+    assert output.caps_raw_output([(mdata0, "foo"), (mdata1, "bar")], False) == expected
 
 
-def test_caps_full_json():
-    expected = json.dumps({"caps": {"type": "full", "monitor": mdata0.serialize(), "data": caps.serialize()}})
-    assert output.caps_full_output(mdata0, caps, True) == expected
+def test_caps_parsed_json():
+    expected = json.dumps({"caps": [
+                {"monitor": mdata0.serialize(), "data": caps.serialize()},
+                {"monitor": mdata1.serialize(), "data": caps.serialize()}],
+            "type": "full"})
+    assert output.caps_parsed_output([(mdata0, caps), (mdata1, caps)], True) == expected
 
 
-def test_caps_full_human():
-    expected = f"{mdata0}:\n{textwrap.indent(str(caps), indentation)}"
-    assert output.caps_full_output(mdata0, caps, False) == expected
+def test_caps_parsed_human():
+    expected = f"{mdata0}:\n{textwrap.indent(str(caps), indentation)}\n{mdata1}:\n{textwrap.indent(str(caps), indentation)}"
+    assert output.caps_parsed_output([(mdata0, caps), (mdata1, caps)], False) == expected
 
 
 def test_extract_caps_summary_data():
-    expected = ({'model': 'CAF3', 'type': 'LCD'}, {'vcp_0': {feature3: (value2,)}, 'vcp_1': {feature4: (value3,)}})
-    assert output.extract_caps_summary_data(caps) == expected
-
-
-def test_caps_summary_json():
-    expected = json.dumps({"caps": {"type": "summary", "monitor": mdata0.serialize(),
-                                    "data": {"model": "CAF3", "type": "LCD",
-                                             "vcps": {"vcp_0": [{"feature": feature3.serialize(), "params": [value2.serialize()]}],
-                                                      "vcp_1": [{"feature": feature4.serialize(), "params": [value3.serialize()]}]}}}})
-    assert output.caps_summary_output(mdata0, caps, True) == expected
-
-
-def test_caps_summary_human():
-    expected = f'{mdata0} - model: CAF3, type: LCD\nvcp_0:\n{indentation}* {feature3}: {value2}\nvcp_1:\n{indentation}* {feature4}: {value3}\n'
-    assert output.caps_summary_output(mdata0, caps, False) == expected
+    assert monitorboss.info.capability_summary_data(caps) == caps_summary

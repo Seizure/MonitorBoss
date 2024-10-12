@@ -34,7 +34,7 @@ def test_list_json(test_conf_file, capsys):
 
 
 def test_caps_raw_human(test_conf_file, capsys):
-    expected = output.caps_raw_output(mdata0, vcp_dummy.DEFAULT_VCP_TEMPLATE.caps_str, False) + "\n"
+    expected = output.caps_raw_output([(mdata0, impl.get_vcp_capabilities(0))], False) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} caps --raw 0")
     capture = capsys.readouterr()
     assert capture.out == expected
@@ -42,7 +42,7 @@ def test_caps_raw_human(test_conf_file, capsys):
 
 
 def test_caps_raw_json(test_conf_file, test_cfg, capsys):
-    expected = output.caps_raw_output(mdata0, vcp_dummy.DEFAULT_VCP_TEMPLATE.caps_str, True) + "\n"
+    expected = output.caps_raw_output([(mdata0, impl.get_vcp_capabilities(0))], True) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} --json caps --raw 0")
     capture = capsys.readouterr()
     assert capture.out == expected
@@ -51,7 +51,7 @@ def test_caps_raw_json(test_conf_file, test_cfg, capsys):
 
 def test_caps_full_human(test_conf_file, test_cfg, capsys):
     caps = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
-    expected = output.caps_full_output(mdata0, caps, False) + "\n"
+    expected = output.caps_parsed_output([(mdata0, caps)], False) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} caps 0")
     capture = capsys.readouterr()
     assert capture.out == expected
@@ -60,7 +60,7 @@ def test_caps_full_human(test_conf_file, test_cfg, capsys):
     
 def test_caps_full_json(test_conf_file, test_cfg, capsys):
     caps = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
-    expected = output.caps_full_output(mdata0, caps, True) + "\n"
+    expected = output.caps_parsed_output([(mdata0, caps)], True) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} --json caps 0")
     capture = capsys.readouterr()
     assert capture.out == expected
@@ -68,8 +68,8 @@ def test_caps_full_json(test_conf_file, test_cfg, capsys):
 
 
 def test_caps_summary_human(test_conf_file, test_cfg, capsys):
-    caps = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
-    expected = output.caps_summary_output(mdata0, caps, False) + "\n"
+    caps = info.capability_summary_data(info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg))
+    expected = output.caps_parsed_output([(mdata0, caps)], False) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} caps --summary 0")
     capture = capsys.readouterr()
     assert capture.out == expected
@@ -77,8 +77,8 @@ def test_caps_summary_human(test_conf_file, test_cfg, capsys):
     
 
 def test_caps_summary_json(test_conf_file, test_cfg, capsys):
-    caps = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
-    expected = output.caps_summary_output(mdata0, caps, True) + "\n"
+    caps = info.capability_summary_data(info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg))
+    expected = output.caps_parsed_output([(mdata0, caps)], True) + "\n"
     cli.run(f"--config {test_conf_file.as_posix()} --json caps --summary 0")
     capture = capsys.readouterr()
     assert capture.out == expected

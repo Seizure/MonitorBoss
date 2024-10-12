@@ -221,22 +221,22 @@ class TestInfoCapabilitydata:
 
     def test_CapabilityData_str_missing_attr(self):
         data = info.CapabilityData(frozendict(), self.cmds_multi, self.vcps_multi, self.errata_multi)
-        expected = f"{data._attr_str()}\n{data._cmds_str()}\n{data._vcp_str()}\n{data._errata_str()}"
+        expected = f"{data._cmds_str()}\n{data._vcp_str()}\n{data._errata_str()}"
         assert str(data) == expected
 
     def test_CapabilityData_str_missing_cmds(self):
         data = info.CapabilityData(self.attributes, frozendict(), self.vcps_multi, self.errata_multi)
-        expected = f"{data._attr_str()}\n{data._cmds_str()}\n{data._vcp_str()}\n{data._errata_str()}"
+        expected = f"{data._attr_str()}\n{data._vcp_str()}\n{data._errata_str()}"
         assert str(data) == expected
 
     def test_CapabilityData_str_missing_vcp(self):
         data = info.CapabilityData(self.attributes, self.cmds_multi, frozendict(), self.errata_multi)
-        expected = f"{data._attr_str()}\n{data._cmds_str()}\n{data._vcp_str()}\n{data._errata_str()}"
+        expected = f"{data._attr_str()}\n{data._cmds_str()}\n{data._errata_str()}"
         assert str(data) == expected
 
     def test_CapabilityData_str_missing_errata(self):
         data = info.CapabilityData(self.attributes, self.cmds_multi, self.vcps_multi, frozendict())
-        expected = f"{data._attr_str()}\n{data._cmds_str()}\n{data._vcp_str()}\n{data._errata_str()}"
+        expected = f"{data._attr_str()}\n{data._cmds_str()}\n{data._vcp_str()}"
         assert str(data) == expected
 
     def test_capability_data(self):

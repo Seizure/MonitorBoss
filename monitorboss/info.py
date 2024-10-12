@@ -98,6 +98,7 @@ class CapabilityData:
     errata: frozendict[str, tuple[str, ...]]  # TODO: not sure how to find/parse out errata rn
 
     def serialize(self) -> dict:
+        # TODO: can we please unoptimize this? It makes my head hurt
         return {
             **self.attributes,
             "cmds": {
@@ -157,7 +158,7 @@ class CapabilityData:
 
     def __str__(self) -> str:
         sections = [self._attr_str(), self._cmds_str(), self._vcp_str(), self._errata_str()]
-        return "\n".join(map(str, sections))
+        return "\n".join(map(str, [section for section in sections if section]))
 
 
 def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
@@ -182,3 +183,15 @@ def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
     })
     errata: dict[str, list[str]] = frozendict()  # TODO: not sure how to find/parse out errata rn
     return CapabilityData(info_fields, cmds, vcps, errata)
+
+
+# TODO: could possibly be merged with capability_data, and just include a boolean on whether to be full or summary?
+def capability_summary_data(caps_data: CapabilityData) -> CapabilityData:
+    desired_attributes = {"type", "model"}
+    attributes = {attr: value for attr, value in caps_data.attributes.items() if attr in desired_attributes}
+    desired_features = {VCPCodes.input_source.value, VCPCodes.image_color_preset.value}
+    vcp_features = {
+        vcp: {feature: params for feature, params in features.items() if feature.code in desired_features}
+        for vcp, features in caps_data.vcps.items() if features
+    }
+    return CapabilityData(frozendict(attributes), frozendict(), frozendict(vcp_features), frozendict())
