@@ -2,7 +2,7 @@ import pytest
 
 from pyddc import get_vcp_com, parse_capabilities, vcp_codes
 from pyddc.vcp_codes import VCPCodes
-from .vcp_dummy import VCPTemplate, SupportedCodeTemplate, DEFAULT_VCP_TEMPLATE, DummyVCP as VCP
+from .vcp_dummy import VCPTemplate, SupportedCodeTemplate, DummyVCP as VCP
 
 input_command = get_vcp_com(VCPCodes.input_source)
 lum_command = get_vcp_com(VCPCodes.image_luminance)
