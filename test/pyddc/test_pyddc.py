@@ -2,17 +2,24 @@ import pytest
 
 from pyddc import get_vcp_com, parse_capabilities, vcp_codes
 from pyddc.vcp_codes import VCPCodes
-from .vcp_dummy import DEFAULT_VCP_TEMPLATE, DummyVCP as VCP
+from .vcp_dummy import VCPTemplate, SupportedCodeTemplate, DEFAULT_VCP_TEMPLATE, DummyVCP as VCP
 
 input_command = get_vcp_com(VCPCodes.input_source)
 lum_command = get_vcp_com(VCPCodes.image_luminance)
 reset_command = get_vcp_com(VCPCodes.restore_factory_default)
 active_control = get_vcp_com(VCPCodes.active_control)
 
+lum_template = SupportedCodeTemplate(VCPCodes.image_luminance.value, None, 75, 80)
+source_template = SupportedCodeTemplate(VCPCodes.input_source.value, [15, 17, 257], 257, None)
+
+vcp_template = VCPTemplate([lum_template, source_template],
+                           "(prot(monitor)type(LCD)model(DUMM13)cmds(04)vcp(10 60(01 0F 11 ) )mccs_ver(2.1))",
+                           False)
+
 
 class TestGetFeature:
 
-    vcp = VCP(DEFAULT_VCP_TEMPLATE)
+    vcp = VCP(vcp_template)
 
     def test_get_cm_assertion(self):
         with pytest.raises(AssertionError):
@@ -40,12 +47,12 @@ class TestGetFeature:
     def test_get_masked_high_byte(self):
         with self.vcp as vcp:
             result = vcp.get_vcp_feature(input_command)
-            assert (result.value, result.max) == (1, 4)
+            assert (result.value, result.max) == (1, 3)
 
 
 class TestGetMax:
 
-    vcp = VCP(DEFAULT_VCP_TEMPLATE)
+    vcp = VCP(vcp_template)
 
     def test_getmax_cm_assertion(self):
         with pytest.raises(AssertionError):
@@ -73,7 +80,7 @@ class TestGetMax:
 
 class TestSetFeature:
 
-    vcp = VCP(DEFAULT_VCP_TEMPLATE)
+    vcp = VCP(vcp_template)
 
     def test_set_cm_assertion(self):
         with pytest.raises(AssertionError):
@@ -88,6 +95,7 @@ class TestSetFeature:
         with self.vcp as vcp:
             with pytest.raises(ValueError):
                 vcp.set_vcp_feature(lum_command, 85)
+            assert vcp.get_vcp_feature(lum_command).value == 75
 
     # def test_unsupported_code(self):
     #   # behavior for unsupported codes is undefined in practice, so not worth testing
@@ -105,7 +113,7 @@ class TestSetFeature:
 
 class TestCapabilitiesFunctions:
 
-    vcp = VCP(DEFAULT_VCP_TEMPLATE)
+    vcp = VCP(vcp_template)
 
     def test_caps_cm_assertion(self):
         with pytest.raises(AssertionError):
@@ -121,7 +129,7 @@ class TestCapabilitiesFunctions:
             caps_str = vcp.get_vcp_capabilities()
 
         caps = parse_capabilities(caps_str)
-        assert str(caps) == "{'prot': 'monitor', 'type': 'LCD', 'model': 'DUMM13', 'cmds': [Capability(cap=4, values=None)], 'vcp': [Capability(cap=16, values=None), Capability(cap=18, values=None), Capability(cap=96, values=[27, 15, 17]), Capability(cap=170, values=[1, 2, 4])], 'mccs_ver': '2.1'}"
+        assert str(caps) == "{'prot': 'monitor', 'type': 'LCD', 'model': 'DUMM13', 'cmds': [Capability(cap=4, values=None)], 'vcp': [Capability(cap=16, values=None), Capability(cap=96, values=[1, 15, 17])], 'mccs_ver': '2.1'}"
 
 
 class TestVCPCommands:
