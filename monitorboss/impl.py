@@ -19,6 +19,7 @@ class FeatureData:
 
 
 # TODO: I'm not sure we need a short_desc var? Seems redundant to VCPCommand's "desc" or "name".
+#   besides, this would probably all be moved to VCPCommands once we expand to all/custom commands?
 Feature = {
     VCPCodes.image_luminance:
         FeatureData("luminance",
