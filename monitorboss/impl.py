@@ -96,7 +96,6 @@ def set_feature(mon: int, feature: VCPCommand, val: int, timeout: float) -> int:
             raise MonitorBossError(f"{feature.name} is not a writeable feature.") from err
         except ValueError as err:
             raise MonitorBossError(f"Provided value ({val}) is above the max for this feature ({feature.name})") from err
-        # TODO: make this return val from a getter, it didn't work when we first tried this
         return val
 
 
