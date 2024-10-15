@@ -185,7 +185,9 @@ def capability_data(caps: dict[str, Capabilities], cfg) -> CapabilityData:
     return CapabilityData(info_fields, cmds, vcps, errata)
 
 
-# TODO: could possibly be merged with capability_data, and just include a boolean on whether to be full or summary?
+# TODO: could possibly be merged with capability_data, and just include an argument for desired attributes
+#   and features each, where 'None' means all (equivalent to capability_data) and supplying relevant lists
+#   tells it what to filter
 def capability_summary_data(caps_data: CapabilityData) -> CapabilityData:
     desired_attributes = {"type", "model"}
     attributes = {attr: value for attr, value in caps_data.attributes.items() if attr in desired_attributes}
