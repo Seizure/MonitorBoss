@@ -122,8 +122,8 @@ def _get_feature(args, cfg: Config):
     for i, m in enumerate(mons):
         ret = get_feature(m, vcpcom, cfg.wait_internal_time)
         cur_vals.append(ret.value)
-        # TODO: discuss whether we actually want to obscure discrete "maxes"... is there a reason to?
-        #   could be assigned a different name in json/strings for when it's discreet, eg "options"
+        # The "max" value for discrete features actually represents the number of valid values.
+        # We don't report this to the user because there's nothing they can do with the information.
         max_vals.append(None if vcpcom.discrete else ret.max)
         if i + 1 < len(mons):
             sleep(cfg.wait_get_time)
