@@ -8,7 +8,7 @@ from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
 from monitorboss.info import feature_data, monitor_data, value_data, capability_data, capability_summary_data
 from monitorboss.output import caps_raw_output, caps_parsed_output, list_mons_output, \
-    get_feature_output, set_feature_output, tog_feature_output, FeatureInputList
+    get_feature_output, set_feature_output, tog_feature_output, GetFeatureInputList
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -115,6 +115,7 @@ def _get_caps(args, cfg: Config):
 
 def _get_feature(args, cfg: Config):
     _log.debug(f"get feature: {args}")
+    # TODO: if args.feature is invalid, will return error; might want to jsonify if applicable
     vcpcom = _check_feature(args.feature, cfg)
     fdata = feature_data(vcpcom.code, cfg)
 
@@ -126,7 +127,8 @@ def _get_feature(args, cfg: Config):
             mon = _check_mon(m, cfg)
             mon_data = monitor_data(mon, cfg)
         except MonitorBossError as err:
-            mon_data = str(err)
+            mon_values.append((None, None, None, err))
+            continue
         try:
             ret = get_feature(mon, vcpcom, cfg.wait_internal_time)
             cur_val = value_data(fdata.code, ret.value, cfg)
@@ -143,6 +145,8 @@ def _get_feature(args, cfg: Config):
 def _set_feature(args, cfg: Config):
     _log.debug(f"set feature: {args}")
     vcpcom = _check_feature(args.feature, cfg)
+    fdata = feature_data(vcpcom.code)
+
     mons = [_check_mon(m, cfg) for m in args.monitor]
     val = _check_val(vcpcom, args.value, cfg)
     new_vals = []

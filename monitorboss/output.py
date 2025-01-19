@@ -18,9 +18,9 @@ def list_mons_output(mons: list[MonitorData], json_output: bool) -> str:
 
     return "\n".join(map(str, mons))
 
-FeatureInputList = list[tuple[MonitorData, ValueData, int | None, Exception]]
+GetFeatureInputList = list[tuple[MonitorData, ValueData, int | None, Exception]]
 
-def get_feature_output(feature: FeatureData, monvalues: FeatureInputList, json_output: bool) -> str:
+def get_feature_output(feature: FeatureData, monvalues: GetFeatureInputList, json_output: bool) -> str:
     if json_output:
         monvalue_list = []
         for mon, value, maximum, e in monvalues:
@@ -36,10 +36,19 @@ def get_feature_output(feature: FeatureData, monvalues: FeatureInputList, json_o
 
     return "\n".join(map(str, [f"{feature} for {mon} is {value if not e else 'ERROR: ' + str(e)}" + (f" (Maximum: {maximum})" if maximum else "") for mon, value, maximum, e in monvalues]))
 
+SetFeatureInputList = list[tuple[MonitorData, ValueData, Exception]]
 
-def set_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, ValueData]], json_output: bool) -> str:
+def set_feature_output(feature: FeatureData, monvalues: SetFeatureInputList, json_output: bool) -> str:
     if json_output:
-        monvalue_list = [{"monitor": mon.serialize(), "value": value.serialize()} for mon, value in monvalues]
+        monvalue_list = []
+        for mon, value, e in monvalues:
+            item = {"monitor": mon.serialize()}
+            if e:
+                item["error"] = str(e)
+            else:
+                item["value"] = value.serialize()
+            monvalue_list.append(item)
+
         return json.dumps({"set": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
 
     return "\n".join(map(str, [f"set {feature} for {mon} to {value}" for mon, value in monvalues]))

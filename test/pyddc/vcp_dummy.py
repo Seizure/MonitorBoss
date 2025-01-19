@@ -74,8 +74,17 @@ DEFAULT_VCP_TEMPLATE = VCPTemplate(
     False
 )
 
-FAULTY = DEFAULT_VCP_TEMPLATE
-FAULTY.faulty = True
+FAULTY = VCPTemplate(
+    [
+        SupportedCodeTemplate(VCPCodes.restore_factory_default.value, [], None, None),
+        SupportedCodeTemplate(VCPCodes.image_luminance.value, None, 75, 80),
+        SupportedCodeTemplate(VCPCodes.image_contrast.value, None, 75, 100),
+        SupportedCodeTemplate(VCPCodes.input_source, [27, 15, 17, 257], 257, None),
+        SupportedCodeTemplate(VCPCodes.image_orientation.value, [1, 2, 4], 2, None),
+    ],
+    "(prot(monitor)type(LCD)model(DUMM13)cmds(04)vcp(10 12 60(1B 0F 11 ) AA(01 02 04 ) )mccs_ver(2.1))",
+    True
+)
 
 vcp_template_list: list[VCPTemplate] = [DEFAULT_VCP_TEMPLATE, FAULTY, DEFAULT_VCP_TEMPLATE]
 

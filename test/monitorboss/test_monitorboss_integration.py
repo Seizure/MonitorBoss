@@ -88,8 +88,8 @@ def test_caps_summary_json(test_conf_file, test_cfg, capsys):
 def test_get_feature_human(test_conf_file, test_cfg, capsys):
     cfg = config.get_config(test_conf_file.as_posix())
     vdata = info.value_data(lum.value, 75, cfg)
-    expected = output.get_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata, 80, None), (mdata1, vdata, 80, "I am a broken monitor, beep boop"), (mdata2, vdata, 80, None)], False) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} get 0 lum")
+    expected = output.get_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata, 80, None), (mdata1, None, None, "I am a broken monitor, beep boop"), (mdata2, vdata, 80, None)], False) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} get 0 1 2 lum")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
@@ -98,8 +98,8 @@ def test_get_feature_human(test_conf_file, test_cfg, capsys):
 def test_get_feature_json(test_conf_file, test_cfg, capsys):
     cfg = config.get_config(test_conf_file.as_posix())
     vdata = info.value_data(lum.value, 75, cfg)
-    expected = output.get_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata, 80, None), (mdata1, vdata, 80, "I am a broken monitor, beep boop"), (mdata2, vdata, 80, None)], True) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json get 0 lum")
+    expected = output.get_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata, 80, None), (mdata1, None, None, "I am a broken monitor, beep boop"), (mdata2, vdata, 80, None)], True) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json get 0 1 2 lum")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
