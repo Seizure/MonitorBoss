@@ -69,7 +69,7 @@ def get_vcp_capabilities(mon: int) -> str:
         try:
             return monitor.get_vcp_capabilities()
         except VCPError as err:
-            raise MonitorBossError(f"Could not list information for monitor {mon}") from err
+            raise MonitorBossError(str(err)) from err
 
 
 def get_feature(mon: int, feature: VCPCommand, timeout: float) -> VCPFeatureReturn:
@@ -80,7 +80,7 @@ def get_feature(mon: int, feature: VCPCommand, timeout: float) -> VCPFeatureRetu
             _log.debug(f"get_vcp_feature for {feature.name} on monitor #{mon} returned {val.value} (max {val.max})")
             return val
         except VCPError as err:
-            raise MonitorBossError(f"could not get {feature.name} for monitor #{mon}.") from err
+            raise MonitorBossError(str(err)) from err
         except TypeError as err:
             raise MonitorBossError(f"{feature.name} is not a readable feature.") from err
 
@@ -91,7 +91,7 @@ def set_feature(mon: int, feature: VCPCommand, val: int, timeout: float) -> int:
         try:
             monitor.set_vcp_feature(feature, val, timeout)
         except VCPError as err:
-            raise MonitorBossError(f"could not set {feature.name} for monitor #{mon} to {val}.") from err
+            raise MonitorBossError(str(err)) from err
         except TypeError as err:
             raise MonitorBossError(f"{feature.name} is not a writeable feature.") from err
         except ValueError as err:

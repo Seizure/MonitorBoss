@@ -116,26 +116,28 @@ def _get_caps(args, cfg: Config):
 def _get_feature(args, cfg: Config):
     _log.debug(f"get feature: {args}")
     vcpcom = _check_feature(args.feature, cfg)
-    mons = [_check_mon(m, cfg) for m in args.monitor]
-    cur_vals = []
-    max_vals = []
-    exceptions = [None] * len(mons)
-    for i, m in enumerate(mons):
-        ret = get_feature(m, vcpcom, cfg.wait_internal_time)
-        cur_vals.append(ret.value)
-        # The "max" value for discrete features actually represents the number of valid values.
-        # We don't report this to the user because there's nothing they can do with the information.
-        max_vals.append(None if vcpcom.discrete else ret.max)
-        if i + 1 < len(mons):
-            sleep(cfg.wait_get_time)
-    monvalmax_list = []
     fdata = feature_data(vcpcom.code, cfg)
-    for mon, val, maximum, e in zip(mons, cur_vals, max_vals, exceptions):
-        mdata = monitor_data(mon, cfg)
-        vdata = value_data(fdata.code, val, cfg)
-        monvalmax_list.append((mdata, vdata, maximum, e))
 
-    print(get_feature_output(fdata, monvalmax_list, args.json))
+    mon_values = []
+    for i, m in enumerate(args.monitor):
+        if i > 0:
+            sleep(cfg.wait_get_time)
+        try:
+            mon = _check_mon(m, cfg)
+            mon_data = monitor_data(mon, cfg)
+        except MonitorBossError as err:
+            mon_data = str(err)
+        try:
+            ret = get_feature(mon, vcpcom, cfg.wait_internal_time)
+            cur_val = value_data(fdata.code, ret.value, cfg)
+            # The "max" value for discrete features actually represents the number of valid values.
+            # We don't report this to the user because there's nothing they can do with the information.
+            max_val = None if vcpcom.discrete else ret.max
+            mon_values.append((mon_data, cur_val, max_val, None))
+        except Exception as err:
+            mon_values.append((mon_data, None, None, err))
+
+    print(get_feature_output(fdata, mon_values, args.json))
 
 
 def _set_feature(args, cfg: Config):

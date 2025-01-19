@@ -74,8 +74,10 @@ DEFAULT_VCP_TEMPLATE = VCPTemplate(
     False
 )
 
+FAULTY = DEFAULT_VCP_TEMPLATE
+FAULTY.faulty = True
 
-vcp_template_list: list[VCPTemplate] = [DEFAULT_VCP_TEMPLATE, DEFAULT_VCP_TEMPLATE, DEFAULT_VCP_TEMPLATE]
+vcp_template_list: list[VCPTemplate] = [DEFAULT_VCP_TEMPLATE, FAULTY, DEFAULT_VCP_TEMPLATE]
 
 
 class DummyVCP(ABCVCP):
