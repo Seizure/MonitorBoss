@@ -51,17 +51,19 @@ def test_list_mons_human():
     expected = f"{mdata0}\n{mdata1}"
     assert output.list_mons_output([mdata0, mdata1], False) == expected
 
+monvalues = [(mdata0, value0, None, None), (mdata0, None, None, Exception("Dummy exception")) ,(mdata1, value1, 100, None)]
 
 def test_get_feature_json():
     expected = json.dumps({"get": {"feature": feature1.serialize(),
                                    "values": [{"monitor": mdata0.serialize(), "value": value0.serialize()},
+                                              {"monitor": mdata0.serialize(), "error": "Dummy exception"},
                                               {"monitor": mdata1.serialize(), "value": value1.serialize(), "max_value": 100}]}})
-    assert output.get_feature_output(feature1, [(mdata0, value0, None), (mdata1, value1, 100)], True) == expected
+    assert output.get_feature_output(feature1, monvalues, True) == expected
 
 
 def test_get_feature_human():
-    expected = f"{feature1} for {mdata0} is {value0}\n{feature1} for {mdata1} is {value1} (Maximum: 100)"
-    assert output.get_feature_output(feature1, [(mdata0, value0, None), (mdata1, value1, 100)], False) == expected
+    expected = f"{feature1} for {mdata0} is {value0}\n{feature1} for {mdata0} is ERROR: Dummy exception\n{feature1} for {mdata1} is {value1} (Maximum: 100)"
+    assert output.get_feature_output(feature1, monvalues, False) == expected
 
 
 def test_set_feature_json():

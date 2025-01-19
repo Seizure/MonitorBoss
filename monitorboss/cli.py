@@ -8,7 +8,7 @@ from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
 from monitorboss.info import feature_data, monitor_data, value_data, capability_data, capability_summary_data
 from monitorboss.output import caps_raw_output, caps_parsed_output, list_mons_output, \
-    get_feature_output, set_feature_output, tog_feature_output
+    get_feature_output, set_feature_output, tog_feature_output, FeatureInputList
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -119,6 +119,7 @@ def _get_feature(args, cfg: Config):
     mons = [_check_mon(m, cfg) for m in args.monitor]
     cur_vals = []
     max_vals = []
+    exceptions = [None] * len(mons)
     for i, m in enumerate(mons):
         ret = get_feature(m, vcpcom, cfg.wait_internal_time)
         cur_vals.append(ret.value)
@@ -129,10 +130,10 @@ def _get_feature(args, cfg: Config):
             sleep(cfg.wait_get_time)
     monvalmax_list = []
     fdata = feature_data(vcpcom.code, cfg)
-    for mon, val, maximum in zip(mons, cur_vals, max_vals):
+    for mon, val, maximum, e in zip(mons, cur_vals, max_vals, exceptions):
         mdata = monitor_data(mon, cfg)
         vdata = value_data(fdata.code, val, cfg)
-        monvalmax_list.append((mdata, vdata, maximum))
+        monvalmax_list.append((mdata, vdata, maximum, e))
 
     print(get_feature_output(fdata, monvalmax_list, args.json))
 
