@@ -40,7 +40,8 @@ vcps_summary = frozendict({"vcp_0": frozendict({feature3: (value2,)}), "vcp_1": 
 errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
 caps = info.CapabilityData(attributes, cmds, vcps, errata)
 caps_summary = info.CapabilityData(attributes_summary, frozendict(), vcps_summary, frozendict())
-
+get_monvalues = [(mdata0, value0, None, None), (mdata0, None, None, Exception("Dummy exception")) ,(mdata1, value1, 100, None)]
+set_monvalues = [(mdata0, value0, None), (mdata0, None, Exception("Dummy exception")) ,(mdata1, value1, None)]
 
 def test_list_mons_json():
     expected = json.dumps({"list": [{"monitor": mdata0.serialize()}, {"monitor": mdata1.serialize()}]})
@@ -51,31 +52,32 @@ def test_list_mons_human():
     expected = f"{mdata0}\n{mdata1}"
     assert output.list_mons_output([mdata0, mdata1], False) == expected
 
-monvalues = [(mdata0, value0, None, None), (mdata0, None, None, Exception("Dummy exception")) ,(mdata1, value1, 100, None)]
 
 def test_get_feature_json():
     expected = json.dumps({"get": {"feature": feature1.serialize(),
                                    "values": [{"monitor": mdata0.serialize(), "value": value0.serialize()},
                                               {"monitor": mdata0.serialize(), "error": "Dummy exception"},
                                               {"monitor": mdata1.serialize(), "value": value1.serialize(), "max_value": 100}]}})
-    assert output.get_feature_output(feature1, monvalues, True) == expected
+    assert output.get_feature_output(feature1, get_monvalues, True) == expected
 
 
 def test_get_feature_human():
     expected = f"{feature1} for {mdata0} is {value0}\n{feature1} for {mdata0} is ERROR: Dummy exception\n{feature1} for {mdata1} is {value1} (Maximum: 100)"
-    assert output.get_feature_output(feature1, monvalues, False) == expected
+    assert output.get_feature_output(feature1, get_monvalues, False) == expected
+
 
 
 def test_set_feature_json():
     expected = json.dumps({"set": {"feature": feature1.serialize(),
                                    "values": [{"monitor": mdata0.serialize(), "value": value0.serialize()},
+                                              {"monitor": mdata0.serialize(), "error": "Dummy exception"},
                                               {"monitor": mdata1.serialize(), "value": value1.serialize()}]}})
-    assert output.set_feature_output(feature1, [(mdata0, value0), (mdata1, value1)], True) == expected
+    assert output.set_feature_output(feature1, set_monvalues, True) == expected
 
 
 def test_set_feature_human():
-    expected = f"set {feature1} for {mdata0} to {value0}\nset {feature1} for {mdata1} to {value1}"
-    assert output.set_feature_output(feature1, [(mdata0, value0), (mdata1, value1)], False) == expected
+    expected = f"set {feature1} for {mdata0} to {value0}\nset {feature1} for {mdata0} to ERROR: Dummy exception\nset {feature1} for {mdata1} to {value1}"
+    assert output.set_feature_output(feature1, set_monvalues, False) == expected
 
 
 def test_tog_feature_json():

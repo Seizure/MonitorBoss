@@ -144,25 +144,29 @@ def _get_feature(args, cfg: Config):
 
 def _set_feature(args, cfg: Config):
     _log.debug(f"set feature: {args}")
+    # TODO: if args.feature or args.value is invalid, will return error; might want to jsonify if applicable
     vcpcom = _check_feature(args.feature, cfg)
-    fdata = feature_data(vcpcom.code)
-
-    mons = [_check_mon(m, cfg) for m in args.monitor]
-    val = _check_val(vcpcom, args.value, cfg)
-    new_vals = []
-    for i, m in enumerate(mons):
-        new_vals.append(set_feature(m, vcpcom, val, cfg.wait_internal_time))
-        if i + 1 < len(mons):
-            sleep(cfg.wait_set_time)
-    new_vals = [set_feature(m, vcpcom, val, cfg.wait_internal_time) for m in mons]
-    monval_list = []
     fdata = feature_data(vcpcom.code, cfg)
-    for mon, new_val in zip(mons, new_vals):
-        mdata = monitor_data(mon, cfg)
-        vdata = value_data(fdata.code, new_val, cfg)
-        monval_list.append((mdata, vdata))
+    val = _check_val(vcpcom, args.value, cfg)
 
-    print(set_feature_output(fdata, monval_list, args.json))
+    mon_values = []
+    for i, m in enumerate(args.monitor):
+        if i > 0:
+            sleep(cfg.wait_get_time)
+        try:
+            mon = _check_mon(m, cfg)
+            mon_data = monitor_data(mon, cfg)
+        except MonitorBossError as err:
+            mon_values.append((None, None, None, err))
+            continue
+        try:
+            ret = set_feature(mon, vcpcom, val, cfg.wait_internal_time)
+            new_value = value_data(fdata.code, ret, cfg)
+            mon_values.append((mon_data, new_value, None))
+        except Exception as err:
+            mon_values.append((mon_data, None, err))
+
+    print(set_feature_output(fdata, mon_values, args.json))
 
 
 def _tog_feature(args, cfg: Config):
