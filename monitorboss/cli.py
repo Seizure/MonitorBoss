@@ -8,7 +8,7 @@ from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
 from monitorboss.info import feature_data, monitor_data, value_data, capability_data, capability_summary_data
 from monitorboss.output import caps_raw_output, caps_parsed_output, list_mons_output, \
-    get_feature_output, set_feature_output, tog_feature_output, GetFeatureInputList
+    get_feature_output, set_feature_output, tog_feature_output, GetFeatureInputList, SetFeatureInputList
 from pyddc import parse_capabilities, get_vcp_com
 from pyddc.vcp_codes import VCPCodes, VCPCommand
 
@@ -119,7 +119,7 @@ def _get_feature(args, cfg: Config):
     vcpcom = _check_feature(args.feature, cfg)
     fdata = feature_data(vcpcom.code, cfg)
 
-    mon_values = []
+    mon_values : GetFeatureInputList = []
     for i, m in enumerate(args.monitor):
         if i > 0:
             sleep(cfg.wait_get_time)
@@ -149,7 +149,7 @@ def _set_feature(args, cfg: Config):
     fdata = feature_data(vcpcom.code, cfg)
     val = _check_val(vcpcom, args.value, cfg)
 
-    mon_values = []
+    mon_values : SetFeatureInputList = []
     for i, m in enumerate(args.monitor):
         if i > 0:
             sleep(cfg.wait_get_time)
@@ -157,7 +157,7 @@ def _set_feature(args, cfg: Config):
             mon = _check_mon(m, cfg)
             mon_data = monitor_data(mon, cfg)
         except MonitorBossError as err:
-            mon_values.append((None, None, None, err))
+            mon_values.append((None, None, err))
             continue
         try:
             ret = set_feature(mon, vcpcom, val, cfg.wait_internal_time)
@@ -171,24 +171,31 @@ def _set_feature(args, cfg: Config):
 
 def _tog_feature(args, cfg: Config):
     _log.debug(f"toggle feature: {args}")
+    # TODO: if args.feature, args.value2, or args.value2 is invalid, will return error; might want to jsonify if applicable
     vcpcom = _check_feature(args.feature, cfg)
-    mons = [_check_mon(m, cfg) for m in args.monitor]
+    fdata = feature_data(vcpcom.code, cfg)
     val1 = _check_val(vcpcom, args.value1, cfg)
     val2 = _check_val(vcpcom, args.value2, cfg)
-    tog_vals = []
-    for i, m in enumerate(mons):
-        tog_vals.append(toggle_feature(m, vcpcom, val1, val2, cfg.wait_internal_time))
-        if i + 1 < len(mons):
-            sleep(cfg.wait_set_time)
-    monvals_list = []
-    fdata = feature_data(vcpcom.code, cfg)
-    for mon, tog_val in zip(mons, tog_vals):
-        mdata = monitor_data(mon, cfg)
-        vdata_old = value_data(fdata.code, tog_val.old, cfg)
-        vdata_new = value_data(fdata.code, tog_val.new, cfg)
-        monvals_list.append((mdata, vdata_old, vdata_new))
 
-    print(tog_feature_output(fdata, monvals_list, args.json))
+    mon_values = []
+    for i, m in enumerate(args.monitor):
+        if i > 0:
+            sleep(cfg.wait_get_time)
+        try:
+            mon = _check_mon(m, cfg)
+            mon_data = monitor_data(mon, cfg)
+        except MonitorBossError as err:
+            mon_values.append((None, None, None, err))
+            continue
+        try:
+            ret = toggle_feature(mon, vcpcom, val1, val2, cfg.wait_internal_time)
+            original_value = value_data(fdata.code, ret.old, cfg)
+            new_value = value_data(fdata.code, ret.new, cfg)
+            mon_values.append((mon_data, original_value, new_value, None))
+        except Exception as err:
+            mon_values.append((mon_data, None, None, err))
+
+    print(tog_feature_output(fdata, mon_values, args.json))
 
 
 text = "Commands for manipulating and polling your monitors"

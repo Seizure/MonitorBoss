@@ -40,8 +40,32 @@ vcps_summary = frozendict({"vcp_0": frozendict({feature3: (value2,)}), "vcp_1": 
 errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
 caps = info.CapabilityData(attributes, cmds, vcps, errata)
 caps_summary = info.CapabilityData(attributes_summary, frozendict(), vcps_summary, frozendict())
-get_monvalues = [(mdata0, value0, None, None), (mdata0, None, None, Exception("Dummy exception")) ,(mdata1, value1, 100, None)]
-set_monvalues = [(mdata0, value0, None), (mdata0, None, Exception("Dummy exception")) ,(mdata1, value1, None)]
+
+# Potential argument perms for _get_feature are:
+#     - None, None, None, err
+#     - mon, cur, None, None
+#     - mon, cur, max, None
+#     - mon, None, None, err
+get_monvalues = [(None, None, None, Exception("Dummy exception")),
+                 (mdata0, value0, None, None),
+                 (mdata1, value1, 100, None),
+                 (mdata0, None, None, Exception("Dummy exception"))]
+
+# Potential argument perms for _set_feature are:
+#     - None, None, err
+#     - mon, new, None
+#     - mon, None, err
+set_monvalues = [(None, None, Exception("Dummy exception")),
+                 (mdata0, value0, None),
+                 (mdata0, None, Exception("Dummy exception"))]
+
+# Potential argument perms for _tog_feature are:
+#     - None, None, None, err
+#     - mon, original, new, None
+#     - mon, None, None, err
+tog_monvalues = [(None, None, None, Exception("Dummy exception")),
+                 (mdata0, value0, value1, None),
+                 (mdata1, None, None, Exception("Dummy exception"))]
 
 def test_list_mons_json():
     expected = json.dumps({"list": [{"monitor": mdata0.serialize()}, {"monitor": mdata1.serialize()}]})
@@ -55,9 +79,10 @@ def test_list_mons_human():
 
 def test_get_feature_json():
     expected = json.dumps({"get": {"feature": feature1.serialize(),
-                                   "values": [{"monitor": mdata0.serialize(), "value": value0.serialize()},
-                                              {"monitor": mdata0.serialize(), "error": "Dummy exception"},
-                                              {"monitor": mdata1.serialize(), "value": value1.serialize(), "max_value": 100}]}})
+                                   "values": [{"error": "Dummy exception"},
+                                              {"monitor": mdata0.serialize(), "value": value0.serialize()},
+                                              {"monitor": mdata1.serialize(), "value": value1.serialize(), "max_value": 100},
+                                              {"monitor": mdata0.serialize(), "error": "Dummy exception"}]}})
     assert output.get_feature_output(feature1, get_monvalues, True) == expected
 
 
@@ -69,7 +94,8 @@ def test_get_feature_human():
 
 def test_set_feature_json():
     expected = json.dumps({"set": {"feature": feature1.serialize(),
-                                   "values": [{"monitor": mdata0.serialize(), "value": value0.serialize()},
+                                   "values": [{},
+                                              {"monitor": mdata0.serialize(), "value": value0.serialize()},
                                               {"monitor": mdata0.serialize(), "error": "Dummy exception"},
                                               {"monitor": mdata1.serialize(), "value": value1.serialize()}]}})
     assert output.set_feature_output(feature1, set_monvalues, True) == expected
@@ -84,7 +110,7 @@ def test_tog_feature_json():
     expected = json.dumps({"toggle": {"feature": feature1.serialize(), "values": [
         {"monitor": mdata0.serialize(), "original_value": value0.serialize(), "new_value": value1.serialize()},
         {"monitor": mdata1.serialize(), "original_value": value2.serialize(), "new_value": value3.serialize()}]}})
-    assert output.tog_feature_output(feature1, [(mdata0, value0, value1), (mdata1, value2, value3)], True) == expected
+    assert output.tog_feature_output(feature1, tog_monvalues, True) == expected
 
 
 def test_tog_feature_human():
