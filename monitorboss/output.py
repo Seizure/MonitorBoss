@@ -24,14 +24,16 @@ def get_feature_output(feature: FeatureData, monvalues: GetFeatureInputList, jso
     if json_output:
         monvalue_list = []
         for mon, value, maximum, e in monvalues:
-            if not mon:
-                monvalue_list.append({"error": str(e)})
-            elif not value:
-                monvalue_list.append({"monitor": mon.serialize(), "error": str(e)})
-            elif not maximum:
-                monvalue_list.append({"monitor": mon.serialize(), "value": value.serialize()})
-            else:
-                monvalue_list.append({"monitor": mon.serialize(), "value": value.serialize(), "max_value": maximum})
+            item = {}
+            if mon:
+                item["monitor"] = mon.serialize()
+            if value:
+                item["value"] = value.serialize()
+            if maximum:
+                item["max_value"] = maximum
+            if e:
+                item["error"] = str(e)
+            monvalue_list.append(item)
         return json.dumps({"get": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
 
     return "\n".join(map(str, [f"{feature} for {mon} is {value if not e else 'ERROR: ' + str(e)}" + (f" (Maximum: {maximum})" if maximum else "") for mon, value, maximum, e in monvalues]))
@@ -42,12 +44,14 @@ def set_feature_output(feature: FeatureData, monvalues: SetFeatureInputList, jso
     if json_output:
         monvalue_list = []
         for mon, value, e in monvalues:
-            if not mon:
-                monvalue_list.append({"error": str(e)})
-            elif not value:
-                monvalue_list.append({"monitor": mon.serialize(), "error": str(e)})
-            else:
-                monvalue_list.append({"monitor": mon.serialize(), "value": value.serialize()})
+            item = {}
+            if mon:
+                item["monitor"] = mon.serialize()
+            if value:
+                item["value"] = value.serialize()
+            if e:
+                item["error"] = str(e)
+            monvalue_list.append(item)
         return json.dumps({"set": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
 
     return "\n".join(map(str, [f"set {feature} for {mon} to {value if not e else 'ERROR: ' + str(e)}" for mon, value, e in monvalues]))
@@ -58,12 +62,16 @@ def tog_feature_output(feature: FeatureData, monvalues: TogFeatureInputList, jso
     if json_output:
         monvalue_list = []
         for mon, original, new, e in monvalues:
-            if not mon:
-                monvalue_list.append({"error": str(e)})
-            elif not original:
-                monvalue_list.append({"monitor": mon.serialize(), "error": str(e)})
-            else:
-                monvalue_list.append({"monitor": mon.serialize(), "original_value": original.serialize(), "new_value": new.serialize()})
+            item = {}
+            if mon:
+                item["monitor"] = mon.serialize()
+            if original:
+                item["original_value"] = original.serialize()
+            if new:
+                item["new_value"] = new.serialize()
+            if e:
+                item["error"] = str(e)
+            monvalue_list.append(item)
         return json.dumps({"toggle": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
 
     return "\n".join(map(str, [f"toggled {feature} for {mon} from {original} to {new}" for mon, original, new in monvalues]))
