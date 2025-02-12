@@ -36,7 +36,18 @@ def get_feature_output(feature: FeatureData, monvalues: GetFeatureInputList, jso
             monvalue_list.append(item)
         return json.dumps({"get": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
 
-    return "\n".join(map(str, [f"{feature} for {mon} is {value if not e else 'ERROR: ' + str(e)}" + (f" (Maximum: {maximum})" if maximum else "") for mon, value, maximum, e in monvalues]))
+    lines = []
+    for mon, value, maximum, e in monvalues:
+        line: str
+        if e:
+            line = f"ERROR: {str(e)}"
+            if mon:
+                line += f" | monitor: {mon}"
+        else:
+            line = f"{feature} for {mon} is {value}" + (f" (Maximum: {maximum})" if maximum else "")
+        lines.append(line)
+
+    return "\n".join(map(str, lines))
 
 SetFeatureInputList = list[tuple[MonitorData | None, ValueData | None, Exception | None]]
 
@@ -54,7 +65,18 @@ def set_feature_output(feature: FeatureData, monvalues: SetFeatureInputList, jso
             monvalue_list.append(item)
         return json.dumps({"set": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
 
-    return "\n".join(map(str, [f"set {feature} for {mon} to {value if not e else 'ERROR: ' + str(e)}" for mon, value, e in monvalues]))
+    lines = []
+    for mon, value, e in monvalues:
+        line: str
+        if e:
+            line = f"ERROR: {str(e)}"
+            if mon:
+                line += f" | monitor: {mon}"
+        else:
+            line = f"set {feature} for {mon} to {value}"
+        lines.append(line)
+
+    return "\n".join(map(str, lines))
 
 TogFeatureInputList = list[tuple[MonitorData | None, ValueData | None, ValueData | None, Exception | None]]
 
@@ -74,7 +96,18 @@ def tog_feature_output(feature: FeatureData, monvalues: TogFeatureInputList, jso
             monvalue_list.append(item)
         return json.dumps({"toggle": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
 
-    return "\n".join(map(str, [f"toggled {feature} for {mon} from {original} to {new}" for mon, original, new in monvalues]))
+    lines = []
+    for mon, original, new, e in monvalues:
+        line: str
+        if e:
+            line = f"ERROR: {str(e)}"
+            if mon:
+                line += f" | monitor: {mon}"
+        else:
+            line = f"toggled {feature} for {mon} from {original} to {new}"
+        lines.append(line)
+
+    return "\n".join(map(str, lines))
 
 
 def caps_raw_output(moncaps: list[tuple[MonitorData, str]], json_output: bool) -> str:

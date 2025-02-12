@@ -87,7 +87,10 @@ def test_get_feature_json():
 
 
 def test_get_feature_human():
-    expected = f"{feature1} for {mdata0} is {value0}\n{feature1} for {mdata0} is ERROR: Dummy exception\n{feature1} for {mdata1} is {value1} (Maximum: 100)"
+    expected = (f"ERROR: Dummy exception\n"
+                f"{feature1} for {mdata0} is {value0}\n"
+                f"{feature1} for {mdata1} is {value1} (Maximum: 100)\n"
+                f"ERROR: Dummy exception | monitor: {mdata0}")
     assert output.get_feature_output(feature1, get_monvalues, False) == expected
 
 
@@ -101,7 +104,9 @@ def test_set_feature_json():
 
 
 def test_set_feature_human():
-    expected = f"set {feature1} for {mdata0} to {value0}\nset {feature1} for {mdata0} to ERROR: Dummy exception\nset {feature1} for {mdata1} to {value1}"
+    expected = (f"ERROR: Dummy exception\n" +
+    f"set {feature1} for {mdata0} to {value0}\n"
+    f"ERROR: Dummy exception | monitor: {mdata1}")
     assert output.set_feature_output(feature1, set_monvalues, False) == expected
 
 
@@ -114,7 +119,9 @@ def test_tog_feature_json():
 
 
 def test_tog_feature_human():
-    expected = f"toggled {feature1} for {mdata0} from {value0} to {value1}\ntoggled {feature1} for {mdata1} from {value2} to {value3}"
+    expected = (f"ERROR: Dummy exception\n" +
+                f"toggled {feature1} for {mdata0} from {value0} to {value1}\n" +
+                f"ERROR: Dummy exception | monitor: {mdata1}")
     assert output.tog_feature_output(feature1, tog_monvalues, False) == expected
 
 
