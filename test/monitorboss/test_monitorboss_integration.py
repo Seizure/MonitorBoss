@@ -33,17 +33,21 @@ def test_list_json(test_conf_file, capsys):
     assert capture.err == ""
 
 
+# TODO: include "bad" monitor name and/or ID in tests
+
 def test_caps_raw_human(test_conf_file, capsys):
-    expected = output.caps_raw_output([(mdata0, impl.get_vcp_capabilities(0))], False) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} caps --raw 0")
+    caps = impl.get_vcp_capabilities(0)
+    expected = output.caps_raw_output([(mdata0, caps, None), (mdata1, None, "I am a broken monitor, beep boop"), (mdata2, caps, None)], False) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} caps --raw 0 1 2")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
 
 
 def test_caps_raw_json(test_conf_file, test_cfg, capsys):
-    expected = output.caps_raw_output([(mdata0, impl.get_vcp_capabilities(0))], True) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json caps --raw 0")
+    caps = impl.get_vcp_capabilities(0)
+    expected = output.caps_raw_output([(mdata0, caps, None), (mdata1, None, "I am a broken monitor, beep boop"), (mdata2, caps, None)], True) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json caps --raw 0 1 2")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
@@ -51,8 +55,8 @@ def test_caps_raw_json(test_conf_file, test_cfg, capsys):
 
 def test_caps_full_human(test_conf_file, test_cfg, capsys):
     caps = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
-    expected = output.caps_parsed_output([(mdata0, caps)], False) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} caps 0")
+    expected = output.caps_parsed_output([(mdata0, caps, None), (mdata1, None, "I am a broken monitor, beep boop"), (mdata2, caps, None)], False) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} caps 0 1 2")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
@@ -60,8 +64,8 @@ def test_caps_full_human(test_conf_file, test_cfg, capsys):
     
 def test_caps_full_json(test_conf_file, test_cfg, capsys):
     caps = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
-    expected = output.caps_parsed_output([(mdata0, caps)], True) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json caps 0")
+    expected = output.caps_parsed_output([(mdata0, caps, None), (mdata1, None, "I am a broken monitor, beep boop"), (mdata2, caps, None)], True) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json caps 0 1 2")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
@@ -69,8 +73,8 @@ def test_caps_full_json(test_conf_file, test_cfg, capsys):
 
 def test_caps_summary_human(test_conf_file, test_cfg, capsys):
     caps = info.capability_summary_data(info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg))
-    expected = output.caps_parsed_output([(mdata0, caps)], False) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} caps --summary 0")
+    expected = output.caps_parsed_output([(mdata0, caps, None), (mdata1, None, "I am a broken monitor, beep boop"), (mdata2, caps, None)], False) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} caps --summary 0 1 2")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
@@ -78,8 +82,8 @@ def test_caps_summary_human(test_conf_file, test_cfg, capsys):
 
 def test_caps_summary_json(test_conf_file, test_cfg, capsys):
     caps = info.capability_summary_data(info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg))
-    expected = output.caps_parsed_output([(mdata0, caps)], True) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json caps --summary 0")
+    expected = output.caps_parsed_output([(mdata0, caps, None), (mdata1, None, "I am a broken monitor, beep boop"), (mdata2, caps, None)], True) + "\n"
+    cli.run(f"--config {test_conf_file.as_posix()} --json caps --summary 0 1 2")
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""

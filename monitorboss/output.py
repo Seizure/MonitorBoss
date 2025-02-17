@@ -109,19 +109,59 @@ def tog_feature_output(feature: FeatureData, monvalues: TogFeatureInputList, jso
 
     return "\n".join(map(str, lines))
 
+CapsRawInputList = list[tuple[MonitorData | None, str | None, Exception | None]]
 
-def caps_raw_output(moncaps: list[tuple[MonitorData, str]], json_output: bool) -> str:
+def caps_raw_output(moncaps: CapsRawInputList, json_output: bool) -> str:
     if json_output:
-        moncaps_list = [{"monitor": mon.serialize(), "data": caps} for mon, caps in moncaps]
+        moncaps_list = []
+        for mon, caps, e in moncaps:
+            item = {}
+            if mon:
+                item["monitor"] = mon.serialize()
+            if caps:
+                item["data"] = caps
+            if e:
+                item["error"] = str(e)
+            moncaps_list.append(item)
         return json.dumps({"caps": moncaps_list, "type": "raw"}, indent=_INDENT_LEVEL)
 
-    return "\n".join(map(str, [f"Capability string for {mon}:\n{indentation}{caps}" for mon, caps in moncaps]))
+    lines = []
+    for mon, caps, e in moncaps:
+        line: str
+        if e:
+            line = f"ERROR: {str(e)}"
+            if mon:
+                line += f" | monitor: {mon}"
+        else:
+            line = f"Capability string for {mon}:\n{indentation}{caps}"
+        lines.append(line)
+    return "\n".join(map(str, lines))
 
+CapsParsedInputList = list[tuple[MonitorData | None, CapabilityData | None, Exception | None]]
 
-def caps_parsed_output(moncaps: list[tuple[MonitorData, CapabilityData]], json_output: bool) -> str:
+def caps_parsed_output(moncaps: CapsParsedInputList, json_output: bool) -> str:
     if json_output:
-        moncaps_list = [{"monitor": mon.serialize(), "data": caps.serialize()} for mon, caps in moncaps]
+        moncaps_list = []
+        for mon, caps, e in moncaps:
+            item = {}
+            if mon:
+                item["monitor"] = mon.serialize()
+            if caps:
+                item["data"] = caps.serialize()
+            if e:
+                item["error"] = str(e)
+            moncaps_list.append(item)
         return json.dumps({"caps": moncaps_list, "type": "full"}, indent=_INDENT_LEVEL)
 
-    return "\n".join(map(str, [f"{mon}:\n{textwrap.indent(str(caps), indentation)}" for mon, caps in moncaps]))
+    lines = []
+    for mon, caps, e in moncaps:
+        line: str
+        if e:
+            line = f"ERROR: {str(e)}"
+            if mon:
+                line += f" | monitor: {mon}"
+        else:
+            line = f"{mon}:\n{textwrap.indent(str(caps), indentation)}"
+        lines.append(line)
+    return "\n".join(map(str, lines))
 

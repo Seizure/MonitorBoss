@@ -67,6 +67,17 @@ tog_monvalues = [(None, None, None, Exception("Dummy exception")),
                  (mdata0, value0, value1, None),
                  (mdata1, None, None, Exception("Dummy exception"))]
 
+# Potential argument perms for _get_caps are:
+#     - None, None, err
+#     - mon, caps, None
+#     - mon, None, err
+capsraw_monvalues = [(None, None, Exception("Dummy exception")),
+                     (mdata0, "foo", None),
+                     (mdata1, None, Exception("Dummy exception"))]
+capsparsed_monvalues = [(None, None, Exception("Dummy exception")),
+                     (mdata0, caps, None),
+                     (mdata1, None, Exception("Dummy exception"))]
+
 def test_list_mons_json():
     expected = json.dumps({"list": [{"monitor": mdata0.serialize()}, {"monitor": mdata1.serialize()}]})
     assert output.list_mons_output([mdata0, mdata1], True) == expected
@@ -126,29 +137,33 @@ def test_tog_feature_human():
 
 
 def test_caps_raw_json():
-    expected = json.dumps({"caps": [
-                {"monitor": mdata0.serialize(), "data": "foo"},
-                {"monitor": mdata1.serialize(), "data": "bar"}],
-            "type": "raw"})
-    assert output.caps_raw_output([(mdata0, "foo"), (mdata1, "bar")], True) == expected
+    expected = json.dumps({"caps": [{"error": "Dummy exception"},
+                                    {"monitor": mdata0.serialize(), "data": "foo"},
+                                    {"monitor": mdata1.serialize(), "error": "Dummy exception"}],
+                           "type": "raw"})
+    assert output.caps_raw_output(capsraw_monvalues, True) == expected
 
 
 def test_caps_raw_human():
-    expected = f"Capability string for {mdata0}:\n{indentation}foo\nCapability string for {mdata1}:\n{indentation}bar"
-    assert output.caps_raw_output([(mdata0, "foo"), (mdata1, "bar")], False) == expected
+    expected = (f"ERROR: Dummy exception\n" +
+                f"Capability string for {mdata0}:\n{indentation}foo\n" +
+                f"ERROR: Dummy exception | monitor: {mdata1}")
+    assert output.caps_raw_output(capsraw_monvalues, False) == expected
 
 
 def test_caps_parsed_json():
-    expected = json.dumps({"caps": [
-                {"monitor": mdata0.serialize(), "data": caps.serialize()},
-                {"monitor": mdata1.serialize(), "data": caps.serialize()}],
-            "type": "full"})
-    assert output.caps_parsed_output([(mdata0, caps), (mdata1, caps)], True) == expected
+    expected = json.dumps({"caps": [{"error": "Dummy exception"},
+                                    {"monitor": mdata0.serialize(), "data": caps.serialize()},
+                                    {"monitor": mdata1.serialize(), "error": "Dummy exception"}],
+                           "type": "full"})
+    assert output.caps_parsed_output(capsparsed_monvalues, True) == expected
 
 
 def test_caps_parsed_human():
-    expected = f"{mdata0}:\n{textwrap.indent(str(caps), indentation)}\n{mdata1}:\n{textwrap.indent(str(caps), indentation)}"
-    assert output.caps_parsed_output([(mdata0, caps), (mdata1, caps)], False) == expected
+    expected = (f"ERROR: Dummy exception\n" +
+                f"{mdata0}:\n{textwrap.indent(str(caps), indentation)}\n" +
+                f"ERROR: Dummy exception | monitor: {mdata1}")
+    assert output.caps_parsed_output(capsparsed_monvalues, False) == expected
 
 
 def test_extract_caps_summary_data():
