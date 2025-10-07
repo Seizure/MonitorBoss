@@ -24,7 +24,9 @@ Either Windows or Linux. Other systems are ***not*** supported at the moment, in
 * Python version ???
 
 ## Usage
-For help with running MonitorBoss in the command line, see [USAGE.md](USAGE.md)
+For help with setting up MonitorBoss on the command line, see [INSTALL.md](INSTALL.md).
+
+For help with running MonitorBoss on the command line, see [USAGE.md](USAGE.md).
 
 ## Authors
 * [@Rangi42](https://github.com/Rangi42)
