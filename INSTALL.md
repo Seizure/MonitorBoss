@@ -5,8 +5,8 @@
 ```bat
 python -m venv .venv
 .venv\Scripts\activate.bat
-python -m pip install poetry
-poetry install
+python -m pip install uv
+uv sync
 ```
 
 ## Linux
@@ -14,6 +14,6 @@ poetry install
 ```sh
 python -m venv .venv
 source .venv/bin/activate
-python -m pip install poetry
-poetry install
+python -m pip install uv
+uv sync
 ```
