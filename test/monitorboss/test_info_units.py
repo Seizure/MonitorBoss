@@ -1,5 +1,7 @@
 from frozendict import frozendict
 
+import pytest
+
 from monitorboss import info, indentation
 from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes
@@ -7,21 +9,21 @@ from pyddc.vcp_codes import VCPCodes
 
 class TestInfoFeatureData:
 
-    def test_FeatureData_serialize_yesname_yesaliases(self):
-        data = info.FeatureData("foo", 42, ('foo', 'bar', 'baz'))
-        assert data.serialize() == {"name": "foo", "code": 42, "aliases": ('foo', 'bar', 'baz')}
+    @pytest.mark.parametrize("name, aliases, expected", [
+        ("foo", ('foo', 'bar', 'baz'), {"name": "foo", "code": 42, "aliases": ('foo', 'bar', 'baz')}),
+        ("", (), {"code": 42}),
+    ])
+    def test_FeatureData_serialize(self, name, aliases, expected):
+        data = info.FeatureData(name, 42, aliases)
+        assert data.serialize() == expected
 
-    def test_FeatureData_serialize_noname_noaliases(self):
-        data = info.FeatureData("", 42, ())
-        assert data.serialize() == {"code": 42}
-
-    def test_FeatureData_str_yesname(self):
-        data = info.FeatureData("foo", 42, ())
-        assert str(data) == "foo (42)"
-
-    def test_FeatureData_str_noname(self):
-        data = info.FeatureData("", 42, ())
-        assert str(data) == "42"
+    @pytest.mark.parametrize("name, expected", [
+        ("foo", "foo (42)"),
+        ("", "42"),
+    ])
+    def test_FeatureData_str(self, name, expected):
+        data = info.FeatureData(name, 42, ())
+        assert str(data) == expected
 
     def test_feature_data_found_com(self, test_cfg):
         code = VCPCodes.input_source
@@ -36,37 +38,25 @@ class TestInfoFeatureData:
 
 class TestInfoValueData:
 
-    def test_ValueData_serialize_yesparam_yesaliases(self):
-        data = info.ValueData(75, 'foo', ('bar', 'baz'))
-        assert data.serialize() == {"value": 75, "param": 'foo', "aliases": ('bar', 'baz')}
+    @pytest.mark.parametrize("param, aliases, expected", [
+        ('foo', ('bar', 'baz'), {"value": 75, "param": 'foo', "aliases": ('bar', 'baz')}),
+        ('', ('bar', 'baz'), {"value": 75, "aliases": ('bar', 'baz')}),
+        ('foo', (), {"value": 75, "param": 'foo'}),
+        ('', (), {"value": 75}),
+    ])
+    def test_ValueData_serialize(self, param, aliases, expected):
+        data = info.ValueData(75, param, aliases)
+        assert data.serialize() == expected
 
-    def test_ValueData_serialize_noparam_yesaliases(self):
-        data = info.ValueData(75, '', ('bar', 'baz'))
-        assert data.serialize() == {"value": 75, "aliases": ('bar', 'baz')}
-
-    def test_ValueData_serialize_yesparam_noaliases(self):
-        data = info.ValueData(75, 'foo', ())
-        assert data.serialize() == {"value": 75, "param": 'foo'}
-
-    def test_ValueData_serialize_noparam_noaliases(self):
-        data = info.ValueData(75, '', ())
-        assert data.serialize() == {"value": 75}
-
-    def test_ValueData_str_noparam_noalias(self):
-        data = info.ValueData(24, "", ())
-        assert str(data) == "24"
-
-    def test_ValueData_str_yesparam_noalias(self):
-        data = info.ValueData(24, "foo", ())
-        assert str(data) == "24 (PARAM: foo)"
-
-    def test_ValueData_str_noparam_yesalias(self):
-        data = info.ValueData(24, "", ('foo', 'bar'))
-        assert str(data) == "24 (ALIASES: foo, bar)"
-
-    def test_ValueData_str_yesparam_yesalias(self):
-        data = info.ValueData(24, "foo", ("bar", "baz"))
-        assert str(data) == "24 (PARAM: foo | ALIASES: bar, baz)"
+    @pytest.mark.parametrize("param, aliases, expected", [
+        ("", (), "24"),
+        ("foo", (), "24 (PARAM: foo)"),
+        ("", ('foo', 'bar'), "24 (ALIASES: foo, bar)"),
+        ("foo", ("bar", "baz"), "24 (PARAM: foo | ALIASES: bar, baz)"),
+    ])
+    def test_ValueData_str(self, param, aliases, expected):
+        data = info.ValueData(24, param, aliases)
+        assert str(data) == expected
 
     def test_value_data_found_com(self, test_cfg):
         code = VCPCodes.input_source
@@ -80,25 +70,22 @@ class TestInfoValueData:
 
 class TestInfoMonitorData:
 
-    def test_MonitorData_yesserialize(self):
-        data = info.MonitorData(1, ('foo', 'bar', 'baz'))
-        assert data.serialize() == {"id": 1, "aliases": ('foo', 'bar', 'baz')}
+    @pytest.mark.parametrize("aliases, expected", [
+        (('foo', 'bar', 'baz'), {"id": 1, "aliases": ('foo', 'bar', 'baz')}),
+        ((), {"id": 1}),
+    ])
+    def test_MonitorData_serialize(self, aliases, expected):
+        data = info.MonitorData(1, aliases)
+        assert data.serialize() == expected
 
-    def test_MonitorData_serialize_noaliases(self):
-        data = info.MonitorData(1, ())
-        assert data.serialize() == {"id": 1}
-
-    def test_MonitorData_str_noalias(self):
-        data = info.MonitorData(2, ())
-        assert str(data) == "monitor #2"
-
-    def test_MonitorData_str_onealias(self):
-        data = info.MonitorData(0, ("foo",))
-        assert str(data) == "monitor #0 (foo)"
-
-    def test_MonitorData_str_multialias(self):
-        data = info.MonitorData(1, ("bar", "baz"))
-        assert str(data) == "monitor #1 (bar, baz)"
+    @pytest.mark.parametrize("id, aliases, expected", [
+        (2, (), "monitor #2"),
+        (0, ("foo",), "monitor #0 (foo)"),
+        (1, ("bar", "baz"), "monitor #1 (bar, baz)"),
+    ])
+    def test_MonitorData_str(self, id, aliases, expected):
+        data = info.MonitorData(id, aliases)
+        assert str(data) == expected
 
     def test_monitor_data(self, test_cfg):
         data = info.MonitorData(1, ("bar", "baz"))

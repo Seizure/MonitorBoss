@@ -1,6 +1,8 @@
 import json
 from textwrap import dedent
 
+import pytest
+
 import test.pyddc
 from pyddc import parse_capabilities
 from pyddc.vcp_codes import VCPCodes
@@ -17,131 +19,83 @@ mdata2 = info.MonitorData(2, ())
 lum = VCPCodes.image_luminance
 
 
-def test_list_human(test_conf_file, capsys):
-    expected = output.list_mons_output([mdata0, mdata1, mdata2], False) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} list")
-    capture = capsys.readouterr()
-    assert capture.out == expected
-    assert capture.err == ""
-    
-    
-def test_list_json(test_conf_file, capsys):
-    expected = output.list_mons_output([mdata0, mdata1, mdata2], True) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json list")
+@pytest.mark.parametrize("json_flag", [False, True])
+def test_list(json_flag, test_conf_file, capsys):
+    expected = output.list_mons_output([mdata0, mdata1, mdata2], json_flag) + "\n"
+    cmd = f"--config {test_conf_file.as_posix()} {'--json' if json_flag else ''} list".strip()
+    cli.run(cmd)
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
 
 
-def test_caps_raw_human(test_conf_file, capsys):
-    expected = output.caps_raw_output([(mdata0, impl.get_vcp_capabilities(0))], False) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} caps --raw 0")
+@pytest.mark.parametrize("json_flag", [False, True])
+def test_caps_raw(json_flag, test_conf_file, capsys):
+    expected = output.caps_raw_output([(mdata0, impl.get_vcp_capabilities(0))], json_flag) + "\n"
+    cmd = f"--config {test_conf_file.as_posix()} {'--json' if json_flag else ''} caps --raw 0".strip()
+    cli.run(cmd)
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
 
 
-def test_caps_raw_json(test_conf_file, test_cfg, capsys):
-    expected = output.caps_raw_output([(mdata0, impl.get_vcp_capabilities(0))], True) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json caps --raw 0")
-    capture = capsys.readouterr()
-    assert capture.out == expected
-    assert capture.err == ""
-
-
-def test_caps_full_human(test_conf_file, test_cfg, capsys):
+@pytest.mark.parametrize("json_flag", [False, True])
+def test_caps_full(json_flag, test_conf_file, test_cfg, capsys):
     caps = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
-    expected = output.caps_parsed_output([(mdata0, caps)], False) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} caps 0")
-    capture = capsys.readouterr()
-    assert capture.out == expected
-    assert capture.err == ""
-    
-    
-def test_caps_full_json(test_conf_file, test_cfg, capsys):
-    caps = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
-    expected = output.caps_parsed_output([(mdata0, caps)], True) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json caps 0")
+    expected = output.caps_parsed_output([(mdata0, caps)], json_flag) + "\n"
+    cmd = f"--config {test_conf_file.as_posix()} {'--json' if json_flag else ''} caps 0".strip()
+    cli.run(cmd)
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
 
 
-def test_caps_summary_human(test_conf_file, test_cfg, capsys):
+@pytest.mark.parametrize("json_flag", [False, True])
+def test_caps_summary(json_flag, test_conf_file, test_cfg, capsys):
     caps = info.capability_summary_data(info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg))
-    expected = output.caps_parsed_output([(mdata0, caps)], False) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} caps --summary 0")
-    capture = capsys.readouterr()
-    assert capture.out == expected
-    assert capture.err == ""
-    
-
-def test_caps_summary_json(test_conf_file, test_cfg, capsys):
-    caps = info.capability_summary_data(info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg))
-    expected = output.caps_parsed_output([(mdata0, caps)], True) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json caps --summary 0")
+    expected = output.caps_parsed_output([(mdata0, caps)], json_flag) + "\n"
+    cmd = f"--config {test_conf_file.as_posix()} {'--json' if json_flag else ''} caps --summary 0".strip()
+    cli.run(cmd)
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
 
 
-def test_get_feature_human(test_conf_file, test_cfg, capsys):
+@pytest.mark.parametrize("json_flag", [False, True])
+def test_get_feature(json_flag, test_conf_file, test_cfg, capsys):
     cfg = config.get_config(test_conf_file.as_posix())
     vdata = info.value_data(lum.value, 75, cfg)
-    expected = output.get_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata, 80)], False) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} get 0 lum")
+    expected = output.get_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata, 80)], json_flag) + "\n"
+    cmd = f"--config {test_conf_file.as_posix()} {'--json' if json_flag else ''} get 0 lum".strip()
+    cli.run(cmd)
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
 
 
-def test_get_feature_json(test_conf_file, test_cfg, capsys):
+@pytest.mark.parametrize("json_flag, value", [
+    (False, 24),
+    (True, 35),
+])
+def test_set_feature(json_flag, value, test_conf_file, test_cfg, capsys):
     cfg = config.get_config(test_conf_file.as_posix())
-    vdata = info.value_data(lum.value, 75, cfg)
-    expected = output.get_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata, 80)], True) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json get 0 lum")
+    vdata = info.value_data(lum.value, value, cfg)
+    expected = output.set_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata)], json_flag) + "\n"
+    cmd = f"--config {test_conf_file.as_posix()} {'--json' if json_flag else ''} set 0 lum {value}".strip()
+    cli.run(cmd)
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""
 
 
-def test_set_feature_human(test_conf_file, test_cfg, capsys):
-    cfg = config.get_config(test_conf_file.as_posix())
-    vdata = info.value_data(lum.value, 24, cfg)
-    expected = output.set_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata)], False) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} set 0 lum 24")
-    capture = capsys.readouterr()
-    assert capture.out == expected
-    assert capture.err == ""
-
-
-def test_set_feature_json(test_conf_file, test_cfg, capsys):
-    cfg = config.get_config(test_conf_file.as_posix())
-    vdata = info.value_data(lum.value, 35, cfg)
-    expected = output.set_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata)], True) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json set 0 lum 35")
-    capture = capsys.readouterr()
-    assert capture.out == expected
-    assert capture.err == ""
-
-
-def test_tog_feature_human(test_conf_file, test_cfg, capsys):
+@pytest.mark.parametrize("json_flag", [False, True])
+def test_tog_feature(json_flag, test_conf_file, test_cfg, capsys):
     cfg = config.get_config(test_conf_file.as_posix())
     vdata1 = info.value_data(lum.value, 75, cfg)
     vdata2 = info.value_data(lum.value, 42, cfg)
-    expected = output.tog_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata1, vdata2)], False) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} tog 0 lum 42 21")
-    capture = capsys.readouterr()
-    assert capture.out == expected
-    assert capture.err == ""
-
-
-def test_tog_feature_json(test_conf_file, test_cfg, capsys):
-    cfg = config.get_config(test_conf_file.as_posix())
-    vdata1 = info.value_data(lum.value, 75, cfg)
-    vdata2 = info.value_data(lum.value, 42, cfg)
-    expected = output.tog_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata1, vdata2)], True) + "\n"
-    cli.run(f"--config {test_conf_file.as_posix()} --json tog 0 lum 42 21")
+    expected = output.tog_feature_output(info.feature_data(lum, test_cfg), [(mdata0, vdata1, vdata2)], json_flag) + "\n"
+    cmd = f"--config {test_conf_file.as_posix()} {'--json' if json_flag else ''} tog 0 lum 42 21".strip()
+    cli.run(cmd)
     capture = capsys.readouterr()
     assert capture.out == expected
     assert capture.err == ""

@@ -142,14 +142,17 @@ class TestVCPCommands:
         with pytest.raises(TypeError):
             get_vcp_com(1.3)
 
-    def test_get_com_none_by_int(self):
-        assert get_vcp_com(1048) is None
+    @pytest.mark.parametrize("input", [
+        1048,
+        "rawr",
+    ])
+    def test_get_com_none(self, input):
+        assert get_vcp_com(input) is None
 
-    def test_get_com_none_by_str(self):
-        assert get_vcp_com("rawr") is None
-
-    def test_get_com_by_int(self):
-        assert get_vcp_com(VCPCodes.image_luminance.value).code == VCPCodes.image_luminance.value
-
-    def test_get_com_by_str(self):
-        assert get_vcp_com(VCPCodes.image_luminance.name).code == VCPCodes.image_luminance.value
+    @pytest.mark.parametrize("input", [
+        VCPCodes.image_luminance.value,
+        VCPCodes.image_luminance.name,
+    ])
+    def test_get_com_valid(self, input):
+        expected = get_vcp_com(VCPCodes.image_luminance.value)
+        assert get_vcp_com(input).code == expected.code
