@@ -3,18 +3,7 @@ import pytest
 from pyddc import get_vcp_com, parse_capabilities, vcp_codes
 from pyddc.vcp_codes import VCPCodes
 from .vcp_dummy import VCPTemplate, SupportedCodeTemplate, DummyVCP as VCP
-
-input_command = get_vcp_com(VCPCodes.input_source)
-lum_command = get_vcp_com(VCPCodes.image_luminance)
-reset_command = get_vcp_com(VCPCodes.restore_factory_default)
-active_control = get_vcp_com(VCPCodes.active_control)
-
-lum_template = SupportedCodeTemplate(VCPCodes.image_luminance.value, None, 75, 80)
-source_template = SupportedCodeTemplate(VCPCodes.input_source.value, [15, 17, 257], 257, None)
-
-vcp_template = VCPTemplate([lum_template, source_template],
-                           "(prot(monitor)type(LCD)model(DUMM13)cmds(04)vcp(10 60(01 0F 11 ) )mccs_ver(2.1))",
-                           False)
+from ..testdata import input_command, lum_command, reset_command, active_control, lum_template, source_template, vcp_template
 
 
 class TestGetFeature:

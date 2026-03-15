@@ -24,6 +24,7 @@ class FeatureData:
         }
 
     def __str__(self) -> str:
+        # TODO: did we mean to exclude aliases from the string?
         return f"{self.name} ({self.code})" if self.name else str(self.code)
 
 

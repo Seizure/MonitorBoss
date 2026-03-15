@@ -11,99 +11,69 @@ from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
 from monitorboss import indentation, info, output
-
-
-mdata0 = info.MonitorData(42, ())
-mdata0json = json.dumps(mdata0.serialize())
-mdata1 = info.MonitorData(43, ())
-mdata1json = json.dumps(mdata1.serialize())
-feature1 = info.FeatureData("", 42, ())
-feature1json = json.dumps(feature1.serialize())
-feature2 = info.FeatureData("", 84, ())
-feature2json = json.dumps(feature2.serialize())
-feature3 = info.FeatureData("", VCPCodes.input_source.value, ())
-feature3json = json.dumps(feature3.serialize())
-feature4 = info.FeatureData("", VCPCodes.image_color_preset.value, ())
-feature4json = json.dumps(feature4.serialize())
-value0 = info.ValueData(12, "", ())
-value0json = json.dumps(value0.serialize())
-value1 = info.ValueData(34, "", ())
-value1json = json.dumps(value1.serialize())
-value2 = info.ValueData(InputSourceNames.hdmi2.value, "", ())
-value2json = json.dumps(value2.serialize())
-value3 = info.ValueData(ColorPresetNames.ct5000k.value, "", ())
-value3json = json.dumps(value3.serialize())
-attributes = frozendict({"model": "CAF3", "foo": "bar", "baz": "qux", "type": "LCD"})
-attributes_summary = frozendict({"model": "CAF3", "type": "LCD"})
-cmds = frozendict({"cmds_0": (feature1, feature2, feature3), "cmds_1": (feature1, feature2, feature4)})
-vcps = frozendict({"vcp_0": frozendict({feature1: (value0, value1), feature2: (value0, value1), feature3: (value2,)}),
-                   "vcp_1": frozendict({feature1: (value0, value1), feature2: (value0, value1), feature4: (value3,)})})
-vcps_summary = frozendict({"vcp_0": frozendict({feature3: (value2,)}), "vcp_1": frozendict({feature4: (value3,)})})
-errata = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
-caps = info.CapabilityData(attributes, cmds, vcps, errata)
-caps_summary = info.CapabilityData(attributes_summary, frozendict(), vcps_summary, frozendict())
+from ..testdata import *
 
 
 @pytest.mark.parametrize("json_flag, expected", [
-    (True, json.dumps({"list": [{"monitor": mdata0.serialize()}, {"monitor": mdata1.serialize()}]})),
-    (False, f"{mdata0}\n{mdata1}")
+    (True, json.dumps({"list": [{"monitor": m_data_0_foo.serialize()}, {"monitor": m_data_1_barbaz.serialize()}]})),
+    (False, f"{m_data_0_foo}\n{m_data_1_barbaz}")
 ])
 def test_list_mons(json_flag, expected):
-    assert output.list_mons_output([mdata0, mdata1], json_flag) == expected
+    assert output.list_mons_output([m_data_0_foo, m_data_1_barbaz], json_flag) == expected
 
 
 @pytest.mark.parametrize("json_flag, expected", [
-    (True, json.dumps({"get": {"feature": feature1.serialize(),
-                               "values": [{"monitor": mdata0.serialize(), "value": value0.serialize()},
-                                          {"monitor": mdata1.serialize(), "value": value1.serialize(), "max_value": 100}]}})),
-    (False, f"{feature1} for {mdata0} is {value0}\n{feature1} for {mdata1} is {value1} (Maximum: 100)")
+    (True, json.dumps({"get": {"feature": f_data_noname_42_noalias.serialize(),
+                               "values": [{"monitor": m_data_0_foo.serialize(), "value": value_data_12.serialize()},
+                                          {"monitor": m_data_1_barbaz.serialize(), "value": value_data_34.serialize(), "max_value": 100}]}})),
+    (False, f"{f_data_noname_42_noalias} for {m_data_0_foo} is {value_data_12}\n{f_data_noname_42_noalias} for {m_data_1_barbaz} is {value_data_34} (Maximum: 100)")
 ])
 def test_get_feature(json_flag, expected):
-    assert output.get_feature_output(feature1, [(mdata0, value0, None), (mdata1, value1, 100)], json_flag) == expected
+    assert output.get_feature_output(f_data_noname_42_noalias, [(m_data_0_foo, value_data_12, None), (m_data_1_barbaz, value_data_34, 100)], json_flag) == expected
 
 
 @pytest.mark.parametrize("json_flag, expected", [
-    (True, json.dumps({"set": {"feature": feature1.serialize(),
-                               "values": [{"monitor": mdata0.serialize(), "value": value0.serialize()},
-                                          {"monitor": mdata1.serialize(), "value": value1.serialize()}]}})),
-    (False, f"set {feature1} for {mdata0} to {value0}\nset {feature1} for {mdata1} to {value1}")
+    (True, json.dumps({"set": {"feature": f_data_noname_42_noalias.serialize(),
+                               "values": [{"monitor": m_data_0_foo.serialize(), "value": value_data_12.serialize()},
+                                          {"monitor": m_data_1_barbaz.serialize(), "value": value_data_34.serialize()}]}})),
+    (False, f"set {f_data_noname_42_noalias} for {m_data_0_foo} to {value_data_12}\nset {f_data_noname_42_noalias} for {m_data_1_barbaz} to {value_data_34}")
 ])
 def test_set_feature(json_flag, expected):
-    assert output.set_feature_output(feature1, [(mdata0, value0), (mdata1, value1)], json_flag) == expected
+    assert output.set_feature_output(f_data_noname_42_noalias, [(m_data_0_foo, value_data_12), (m_data_1_barbaz, value_data_34)], json_flag) == expected
 
 
 @pytest.mark.parametrize("json_flag, expected", [
-    (True, json.dumps({"toggle": {"feature": feature1.serialize(), "values": [
-        {"monitor": mdata0.serialize(), "original_value": value0.serialize(), "new_value": value1.serialize()},
-        {"monitor": mdata1.serialize(), "original_value": value2.serialize(), "new_value": value3.serialize()}
+    (True, json.dumps({"toggle": {"feature": f_data_noname_42_noalias.serialize(), "values": [
+        {"monitor": m_data_0_foo.serialize(), "original_value": value_data_12.serialize(), "new_value": value_data_34.serialize()},
+        {"monitor": m_data_1_barbaz.serialize(), "original_value": value_data_hdmi2.serialize(), "new_value": value_data_ct5000k.serialize()}
     ]}})),
-    (False, f"toggled {feature1} for {mdata0} from {value0} to {value1}\ntoggled {feature1} for {mdata1} from {value2} to {value3}")
+    (False, f"toggled {f_data_noname_42_noalias} for {m_data_0_foo} from {value_data_12} to {value_data_34}\ntoggled {f_data_noname_42_noalias} for {m_data_1_barbaz} from {value_data_hdmi2} to {value_data_ct5000k}")
 ])
 def test_tog_feature(json_flag, expected):
-    assert output.tog_feature_output(feature1, [(mdata0, value0, value1), (mdata1, value2, value3)], json_flag) == expected
+    assert output.tog_feature_output(f_data_noname_42_noalias, [(m_data_0_foo, value_data_12, value_data_34), (m_data_1_barbaz, value_data_hdmi2, value_data_ct5000k)], json_flag) == expected
 
 
 @pytest.mark.parametrize("json_flag, expected", [
     (True, json.dumps({"caps": [
-                {"monitor": mdata0.serialize(), "data": "foo"},
-                {"monitor": mdata1.serialize(), "data": "bar"}],
+                {"monitor": m_data_0_foo.serialize(), "data": "foo"},
+                {"monitor": m_data_1_barbaz.serialize(), "data": "bar"}],
             "type": "raw"})),
-    (False, f"Capability string for {mdata0}:\n{indentation}foo\nCapability string for {mdata1}:\n{indentation}bar")
+    (False, f"Capability string for {m_data_0_foo}:\n{indentation}foo\nCapability string for {m_data_1_barbaz}:\n{indentation}bar")
 ])
 def test_caps_raw(json_flag, expected):
-    assert output.caps_raw_output([(mdata0, "foo"), (mdata1, "bar")], json_flag) == expected
+    assert output.caps_raw_output([(m_data_0_foo, "foo"), (m_data_1_barbaz, "bar")], json_flag) == expected
 
 
 @pytest.mark.parametrize("json_flag, expected", [
     (True, json.dumps({"caps": [
-                {"monitor": mdata0.serialize(), "data": caps.serialize()},
-                {"monitor": mdata1.serialize(), "data": caps.serialize()}],
+                {"monitor": m_data_0_foo.serialize(), "data": capability_data_full.serialize()},
+                {"monitor": m_data_1_barbaz.serialize(), "data": capability_data_full.serialize()}],
             "type": "full"})),
-    (False, f"{mdata0}:\n{textwrap.indent(str(caps), indentation)}\n{mdata1}:\n{textwrap.indent(str(caps), indentation)}")
+    (False, f"{m_data_0_foo}:\n{textwrap.indent(str(capability_data_full), indentation)}\n{m_data_1_barbaz}:\n{textwrap.indent(str(capability_data_full), indentation)}")
 ])
 def test_caps_parsed(json_flag, expected):
-    assert output.caps_parsed_output([(mdata0, caps), (mdata1, caps)], json_flag) == expected
+    assert output.caps_parsed_output([(m_data_0_foo, capability_data_full), (m_data_1_barbaz, capability_data_full)], json_flag) == expected
 
 
 def test_extract_caps_summary_data():
-    assert monitorboss.info.capability_summary_data(caps) == caps_summary
+    assert monitorboss.info.capability_summary_data(capability_data_full) == capability_data_summary
