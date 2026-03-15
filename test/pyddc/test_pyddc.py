@@ -154,5 +154,6 @@ class TestVCPCommands:
         VCPCodes.image_luminance.name,
     ])
     def test_get_com_valid(self, input):
+        # TODO: lol this is dumb, we need to hardcode the expected value here
         expected = get_vcp_com(VCPCodes.image_luminance.value)
         assert get_vcp_com(input).code == expected.code
