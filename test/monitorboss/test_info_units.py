@@ -3,29 +3,31 @@ from frozendict import frozendict
 import pytest
 
 from monitorboss import info, indentation
+from monitorboss.info import MonitorData
 from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes
-from ..testdata import value_data_24_empty, value_data_24_foo, value_data_24_aliases, value_data_24_full, \
-    f_data_noname_42_noalias, f_data_noname_84_noalias
+from ..testdata import *
 
 
 class TestInfoFeatureData:
 
-    @pytest.mark.parametrize("name, aliases, expected", [
-        ("foo", ('foo', 'bar', 'baz'), {"name": "foo", "code": 42, "aliases": ('foo', 'bar', 'baz')}),
-        ("", (), {"code": 42}),
+    @pytest.mark.parametrize("feature, expected", [
+        (f_data_noname_242_noalias, {"code": 242}),
+        (f_data_noname_27_alias, {"code": 27, "aliases": ('usbc', 'usb-c')}),
+        (f_data_imageorientation_170_noalias, {"name": "image_orientation", "code": 170}),
+        (f_data_inputsource_96_alias, {"name": "input_source", "code": 96, "aliases": ('src', 'source', 'input')}),
     ])
-    def test_FeatureData_serialize(self, name, aliases, expected):
-        data = info.FeatureData(name, 42, aliases)
-        assert data.serialize() == expected
+    def test_FeatureData_serialize(self, feature, expected):
+        assert feature.serialize() == expected
 
-    @pytest.mark.parametrize("name, expected", [
-        ("foo", "foo (42)"),
-        ("", "42"),
+    @pytest.mark.parametrize("feature, expected", [
+        (f_data_noname_242_noalias, "242"),
+        (f_data_noname_27_alias, "27"),
+        (f_data_imageorientation_170_noalias, "image_orientation (170)"),
+        (f_data_inputsource_96_alias, "input_source (96)"),
     ])
-    def test_FeatureData_str(self, name, expected):
-        data = info.FeatureData(name, 42, ())
-        assert str(data) == expected
+    def test_FeatureData_str(self, feature, expected):
+        assert str(feature) == expected
 
     def test_feature_data_found_com(self, test_cfg):
         code = VCPCodes.input_source
@@ -51,10 +53,10 @@ class TestInfoValueData:
         assert data.serialize() == expected
 
     @pytest.mark.parametrize("data, expected", [
-        (value_data_24_empty, "24"),
-        (value_data_24_foo, "24 (PARAM: foo)"),
-        (value_data_24_aliases, "24 (ALIASES: foo, bar)"),
-        (value_data_24_full, "24 (PARAM: foo | ALIASES: bar, baz)"),
+        (value_data_24_noname_noalias, "24"),
+        (value_data_24_foo_noalias, "24 (PARAM: foo)"),
+        (value_data_24_noname_alias, "24 (ALIASES: foo, bar)"),
+        (value_data_24_foo_alias, "24 (PARAM: foo | ALIASES: bar, baz)"),
     ])
     def test_ValueData_str(self, data, expected):
         assert str(data) == expected
@@ -71,26 +73,24 @@ class TestInfoValueData:
 
 class TestInfoMonitorData:
 
-    @pytest.mark.parametrize("aliases, expected", [
-        (('foo', 'bar', 'baz'), {"id": 1, "aliases": ('foo', 'bar', 'baz')}),
-        ((), {"id": 1}),
+    @pytest.mark.parametrize("mon, expected", [
+        (m_data_0_foo, {"id": 0, "aliases": ('foo',)}),
+        (m_data_1_barbaz, {"id": 1, "aliases": ('bar', 'baz')}),
+        (m_data_2_noalias, {"id": 2})
     ])
-    def test_MonitorData_serialize(self, aliases, expected):
-        data = info.MonitorData(1, aliases)
-        assert data.serialize() == expected
+    def test_MonitorData_serialize(self, mon: MonitorData, expected):
+        assert mon.serialize() == expected
 
-    @pytest.mark.parametrize("m_id, aliases, expected", [
-        (2, (), "monitor #2"),
-        (0, ("foo",), "monitor #0 (foo)"),
-        (1, ("bar", "baz"), "monitor #1 (bar, baz)"),
+    @pytest.mark.parametrize("mon, expected", [
+        (m_data_2_noalias, "monitor #2"),
+        (m_data_0_foo, "monitor #0 (foo)"),
+        (m_data_1_barbaz, "monitor #1 (bar, baz)"),
     ])
-    def test_MonitorData_str(self, m_id, aliases, expected):
-        data = info.MonitorData(m_id, aliases)
-        assert str(data) == expected
+    def test_MonitorData_str(self, mon, expected):
+        assert str(mon) == expected
 
     def test_monitor_data(self, test_cfg):
-        data = info.MonitorData(1, ("bar", "baz"))
-        assert info.monitor_data(1, test_cfg) == data
+        assert info.monitor_data(1, test_cfg) == m_data_1_barbaz
 
 
 class TestInfoCapabilitydata:
@@ -98,28 +98,28 @@ class TestInfoCapabilitydata:
     value1 = info.ValueData(12, "", ())
     value2 = info.ValueData(24, "", ())
     attributes = frozendict({"foo": "bar", "baz": "qux"})
-    cmds_single = frozendict({"cmds_0": (f_data_noname_42_noalias, f_data_noname_84_noalias)})
-    cmds_multi = frozendict({"cmds_0": (f_data_noname_42_noalias, f_data_noname_84_noalias), "cmds_1": (f_data_noname_42_noalias, f_data_noname_84_noalias)})
-    vcps_single = frozendict({"vcp_0": frozendict({f_data_noname_42_noalias: (value1, value2), f_data_noname_84_noalias: (value1, value2)})})
-    vcps_multi = frozendict({"vcp_0": frozendict({f_data_noname_42_noalias: (value1, value2), f_data_noname_84_noalias: (value1, value2)}),
-                       "vcp_1": frozendict({f_data_noname_42_noalias: (value1, value2), f_data_noname_84_noalias: (value1, value2)})})
+    cmds_single = frozendict({"cmds_0": (f_data_noname_242_noalias, f_data_noname_84_noalias)})
+    cmds_multi = frozendict({"cmds_0": (f_data_noname_242_noalias, f_data_noname_84_noalias), "cmds_1": (f_data_noname_242_noalias, f_data_noname_84_noalias)})
+    vcps_single = frozendict({"vcp_0": frozendict({f_data_noname_242_noalias: (value1, value2), f_data_noname_84_noalias: (value1, value2)})})
+    vcps_multi = frozendict({"vcp_0": frozendict({f_data_noname_242_noalias: (value1, value2), f_data_noname_84_noalias: (value1, value2)}),
+                       "vcp_1": frozendict({f_data_noname_242_noalias: (value1, value2), f_data_noname_84_noalias: (value1, value2)})})
     errata_single_blank = frozendict({"": ("foo", "bar")})
     errata_single_named = frozendict({"baz": ("qux", "corge")})
     errata_multi = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
 
-    def test_CapabilityData_serialize_no_errata(self, test_cfg):
+    def test_CapabilityData_serialize_no_errata(self):
         data = info.CapabilityData(self.attributes, self.cmds_multi, self.vcps_multi, frozendict())
         expected = {"foo": "bar", "baz": "qux",
                     "cmds":
-                        {"cmds_0": [f_data_noname_42_noalias.serialize(), f_data_noname_84_noalias.serialize()],
-                         "cmds_1": [f_data_noname_42_noalias.serialize(), f_data_noname_84_noalias.serialize()]},
+                        {"cmds_0": [f_data_noname_242_noalias.serialize(), f_data_noname_84_noalias.serialize()],
+                         "cmds_1": [f_data_noname_242_noalias.serialize(), f_data_noname_84_noalias.serialize()]},
                     "vcps":
                         {"vcp_0": [
-                            {"feature": f_data_noname_42_noalias.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]},
+                            {"feature": f_data_noname_242_noalias.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]},
                             {"feature": f_data_noname_84_noalias.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]}
                         ],
                             "vcp_1": [
-                                {"feature": f_data_noname_42_noalias.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]},
+                                {"feature": f_data_noname_242_noalias.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]},
                             {"feature": f_data_noname_84_noalias.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]}
                             ]}}
         assert data.serialize() == expected
@@ -128,15 +128,15 @@ class TestInfoCapabilitydata:
         data = info.CapabilityData(self.attributes, self.cmds_multi, self.vcps_multi, self.errata_multi)
         expected = {"foo": "bar", "baz": "qux",
                     "cmds":
-                        {"cmds_0": [f_data_noname_42_noalias.serialize(), f_data_noname_84_noalias.serialize()],
-                         "cmds_1": [f_data_noname_42_noalias.serialize(), f_data_noname_84_noalias.serialize()]},
+                        {"cmds_0": [f_data_noname_242_noalias.serialize(), f_data_noname_84_noalias.serialize()],
+                         "cmds_1": [f_data_noname_242_noalias.serialize(), f_data_noname_84_noalias.serialize()]},
                     "vcps":
                         {"vcp_0": [
-                            {"feature": f_data_noname_42_noalias.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]},
+                            {"feature": f_data_noname_242_noalias.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]},
                             {"feature": f_data_noname_84_noalias.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]}
                         ],
                             "vcp_1": [
-                                {"feature": f_data_noname_42_noalias.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]},
+                                {"feature": f_data_noname_242_noalias.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]},
                                 {"feature": f_data_noname_84_noalias.serialize(), "params": [self.value1.serialize(), self.value2.serialize()]}
                             ]},
                     "errata": {"": ("foo", "bar"), "baz": ("qux", "corge")}}
@@ -152,8 +152,8 @@ class TestInfoCapabilitydata:
 
     @pytest.mark.parametrize("cmds_val, expected", [
         (frozendict(), ""),
-        (cmds_single, f"cmds_0: {f_data_noname_42_noalias}, {f_data_noname_84_noalias}"),
-        (cmds_multi, f"CMDS:\n{indentation}cmds_0: {f_data_noname_42_noalias}, {f_data_noname_84_noalias}\n{indentation}cmds_1: {f_data_noname_42_noalias}, {f_data_noname_84_noalias}"),
+        (cmds_single, f"cmds_0: {f_data_noname_242_noalias}, {f_data_noname_84_noalias}"),
+        (cmds_multi, f"CMDS:\n{indentation}cmds_0: {f_data_noname_242_noalias}, {f_data_noname_84_noalias}\n{indentation}cmds_1: {f_data_noname_242_noalias}, {f_data_noname_84_noalias}"),
     ])
     def test_CapabilityData_cmds_str(self, cmds_val, expected):
         data = info.CapabilityData(frozendict(), cmds_val, frozendict(), frozendict())
@@ -161,10 +161,10 @@ class TestInfoCapabilitydata:
 
     @pytest.mark.parametrize("vcps_val, expected", [
         (frozendict(), ""),
-        (vcps_single, f"vcp_0:\n{indentation}* {f_data_noname_42_noalias}: {value1}, {value2}\n{indentation}* {f_data_noname_84_noalias}: {value1}, {value2}"),
-        (vcps_multi, (f"VCP:\n{indentation}vcp_0:\n{indentation}{indentation}* {f_data_noname_42_noalias}: {value1}, {value2}\n" +
+        (vcps_single, f"vcp_0:\n{indentation}* {f_data_noname_242_noalias}: {value1}, {value2}\n{indentation}* {f_data_noname_84_noalias}: {value1}, {value2}"),
+        (vcps_multi, (f"VCP:\n{indentation}vcp_0:\n{indentation}{indentation}* {f_data_noname_242_noalias}: {value1}, {value2}\n" +
                      f"{indentation}{indentation}* {f_data_noname_84_noalias}: {value1}, {value2}\n{indentation}vcp_1:\n" +
-                     f"{indentation}{indentation}* {f_data_noname_42_noalias}: {value1}, {value2}\n{indentation}{indentation}* {f_data_noname_84_noalias}: {value1}, {value2}")),
+                     f"{indentation}{indentation}* {f_data_noname_242_noalias}: {value1}, {value2}\n{indentation}{indentation}* {f_data_noname_84_noalias}: {value1}, {value2}")),
     ])
     def test_CapabilityData_vcp_str(self, vcps_val, expected):
         data = info.CapabilityData(frozendict(), frozendict(), vcps_val, frozendict())
