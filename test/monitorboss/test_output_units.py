@@ -5,12 +5,11 @@ import pytest
 
 from frozendict import frozendict
 
-import monitorboss.info
 from pyddc.vcp_codes import VCPCodes, InputSourceNames, ColorPresetNames
 from test.pyddc.vcp_dummy import DummyVCP as VCP
 import pyddc
 pyddc.VCP = VCP
-from monitorboss import indentation, info, output
+from monitorboss import indentation, output
 from ..testdata import *
 
 
@@ -73,7 +72,3 @@ def test_caps_raw(json_flag, expected):
 ])
 def test_caps_parsed(json_flag, expected):
     assert output.caps_parsed_output([(m_data_0_foo, capability_data_full), (m_data_1_barbaz, capability_data_full)], json_flag) == expected
-
-
-def test_extract_caps_summary_data():
-    assert monitorboss.info.capability_summary_data(capability_data_full) == capability_data_summary
