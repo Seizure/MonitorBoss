@@ -33,18 +33,18 @@ wait_get = 0
 wait_set = 0
 wait_internal = 0""".strip()
 
-# MonitorData instances
+# MonitorData models
 m_data_0_foo = info.MonitorData(0, ("foo",)) # monitor with single alias
 m_data_1_barbaz = info.MonitorData(1, ("bar", "baz")) # monitor with multiple aliases
 m_data_2_noalias = info.MonitorData(2, ()) # monitor with no aliases
 
-# FeatureData instances
+# FeatureData models
 f_data_noname_242_noalias = info.FeatureData("", 242, ()) # feature with no name or alias
 f_data_noname_243_alias = info.FeatureData("", 243, ("custom", "custom_feature")) # feature with no name, but aliases # TODO when we add capability to add custom features, this should be reflected in the TOML
 f_data_imageorientation_170_noalias = info.FeatureData("image_orientation", 170, ()) # feature with name, but no aliases
 f_data_inputsource_96_alias = info.FeatureData("input_source", 96, ("src", "source", "input")) # feature with name and aliases
 
-# ValueData instances
+# ValueData models
 v_data_1_noname_noalias = info.ValueData(1, "", ()) # value with no name or alias
 v_data_2_noname_alias = info.ValueData(2, "", ("cus", "tom")) # value with no name, but multiple aliases
 v_data_3_name_noalias = info.ValueData(3, "ct4000k", ()) # value with name, but no aliases (image_color_preset)
