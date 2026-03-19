@@ -1,3 +1,5 @@
+import textwrap
+
 from frozendict import frozendict
 
 import pytest
@@ -103,6 +105,57 @@ class TestInfoCapabilitydata:
     errata_single_named = frozendict({"baz": ("qux", "corge")})
     errata_multi = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
 
+    cmds_0_substring = f"cmds_0: {f_data_noname_242_noalias}, {f_data_noname_243_alias}, {f_data_inputsource_96_alias}"
+    cmds_1_substring = f"cmds_1: {f_data_noname_242_noalias}, {f_data_noname_243_alias}, {f_data_imageorientation_170_noalias}"
+    vcp_0_substring = "vcp_0:\n" + \
+                        f"{indentation}* {f_data_noname_242_noalias}: {v_data_1_noname_noalias}, {v_data_2_noname_alias}\n" + \
+                        f"{indentation}* {f_data_noname_243_alias}: {v_data_1_noname_noalias}, {v_data_2_noname_alias}\n" + \
+                        f"{indentation}* {f_data_inputsource_96_alias}: {v_data_3_name_noalias}"
+    vcp_1_substring = f"vcp_1:\n" + \
+                        f"{indentation}* {f_data_noname_242_noalias}: {v_data_1_noname_noalias}, {v_data_2_noname_alias}\n" + \
+                        f"{indentation}* {f_data_noname_243_alias}: {v_data_1_noname_noalias}, {v_data_2_noname_alias}\n" + \
+                        f"{indentation}* {f_data_imageorientation_170_noalias}: {v_data_17_name_alias}"
+
+    @pytest.mark.parametrize("attrs, expected", [
+        (frozendict(), ""),
+        (caps_attrs, "model: DUMMY\nfoo: bar\nbaz: qux\ntype: LCD"),
+    ])
+    def test_CapabilityData_attr_str(self, attrs, expected):
+        caps = info.CapabilityData(attrs, frozendict(), frozendict(), frozendict())
+        assert caps._attr_str() == expected
+
+    @pytest.mark.parametrize("cmds, expected", [
+        (frozendict(), ""),
+        (caps_cmds_single, cmds_0_substring),
+        (caps_cmds_multi, f"CMDS:\n" +
+                    f"{indentation}{cmds_0_substring}\n" +
+                    f"{indentation}{cmds_1_substring}"),
+    ])
+    def test_CapabilityData_cmds_str(self, cmds, expected):
+        caps = info.CapabilityData(frozendict(), cmds, frozendict(), frozendict())
+        assert caps._cmds_str() == expected
+
+    @pytest.mark.parametrize("vcp, expected", [
+        (frozendict(), ""),
+        (caps_vcps_single, vcp_0_substring),
+        (caps_vcps_multi, (f"VCP:\n" +
+                        f"{textwrap.indent(vcp_0_substring, indentation)}\n" +
+                        f"{textwrap.indent(vcp_1_substring, indentation)}")),
+    ])
+    def test_CapabilityData_vcp_str(self, vcp, expected):
+        caps = info.CapabilityData(frozendict(), frozendict(), vcp, frozendict())
+        assert caps._vcp_str() == expected
+
+    @pytest.mark.parametrize("errata, expected", [
+        (frozendict(), ""),
+        (caps_errata_named, f"Errata:\n{indentation}baz: qux, corge"),
+        (caps_errata_unnamed, "Errata: foo, bar"),
+        (caps_errata_both, f"Errata:\n{indentation}foo, bar\n{indentation}baz: qux, corge"),
+    ])
+    def test_CapabilityData_errata_str(self, errata, expected):
+        caps = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata)
+        assert caps._errata_str() == expected
+
     def test_CapabilityData_serialize_no_errata(self):
         data = info.CapabilityData(self.attributes, self.cmds_multi, self.vcps_multi, frozendict())
         expected = {"foo": "bar", "baz": "qux",
@@ -138,44 +191,6 @@ class TestInfoCapabilitydata:
                     "errata": {"": ("foo", "bar"), "baz": ("qux", "corge")}}
         assert data.serialize() == expected
 
-    @pytest.mark.parametrize("attrs, expected", [
-        (frozendict(), ""),
-        (attributes, "foo: bar\nbaz: qux"),
-    ])
-    def test_CapabilityData_attr_str(self, attrs, expected):
-        data = info.CapabilityData(attrs, frozendict(), frozendict(), frozendict())
-        assert data._attr_str() == expected
-
-    @pytest.mark.parametrize("cmds_val, expected", [
-        (frozendict(), ""),
-        (cmds_single, f"cmds_0: {f_data_noname_242_noalias}, {f_data_noname_243_alias}"),
-        (cmds_multi, f"CMDS:\n{indentation}cmds_0: {f_data_noname_242_noalias}, {f_data_noname_243_alias}\n{indentation}cmds_1: {f_data_noname_242_noalias}, {f_data_noname_243_alias}"),
-    ])
-    def test_CapabilityData_cmds_str(self, cmds_val, expected):
-        data = info.CapabilityData(frozendict(), cmds_val, frozendict(), frozendict())
-        assert data._cmds_str() == expected
-
-    @pytest.mark.parametrize("vcps_val, expected", [
-        (frozendict(), ""),
-        (vcps_single, f"vcp_0:\n{indentation}* {f_data_noname_242_noalias}: {value1}, {value2}\n{indentation}* {f_data_noname_243_alias}: {value1}, {value2}"),
-        (vcps_multi, (f"VCP:\n{indentation}vcp_0:\n{indentation}{indentation}* {f_data_noname_242_noalias}: {value1}, {value2}\n" +
-                     f"{indentation}{indentation}* {f_data_noname_243_alias}: {value1}, {value2}\n{indentation}vcp_1:\n" +
-                     f"{indentation}{indentation}* {f_data_noname_242_noalias}: {value1}, {value2}\n{indentation}{indentation}* {f_data_noname_243_alias}: {value1}, {value2}")),
-    ])
-    def test_CapabilityData_vcp_str(self, vcps_val, expected):
-        data = info.CapabilityData(frozendict(), frozendict(), vcps_val, frozendict())
-        assert data._vcp_str() == expected
-
-    @pytest.mark.parametrize("errata_val, expected", [
-        (frozendict(), ""),
-        (errata_single_named, f"Errata:\n{indentation}baz: qux, corge"),
-        (errata_single_blank, "Errata: foo, bar"),
-        (errata_multi, f"Errata:\n{indentation}foo, bar\n{indentation}baz: qux, corge"),
-    ])
-    def test_CapabilityData_errata_str(self, errata_val, expected):
-        data = info.CapabilityData(frozendict(), frozendict(), frozendict(), errata_val)
-        assert data._errata_str() == expected
-
     @pytest.mark.parametrize("attrs,cmds_val,vcps_val,errata_val", [
         (attributes, cmds_multi, vcps_multi, errata_multi),
         (frozendict(), cmds_multi, vcps_multi, errata_multi),
@@ -183,7 +198,7 @@ class TestInfoCapabilitydata:
         (attributes, cmds_multi, frozendict(), errata_multi),
         (attributes, cmds_multi, vcps_multi, frozendict()),
     ])
-    def test_CapabilityData_str_combinations(self, attrs, cmds_val, vcps_val, errata_val):
+    def test_CapabilityData_str(self, attrs, cmds_val, vcps_val, errata_val):
         data = info.CapabilityData(attrs, cmds_val, vcps_val, errata_val)
         parts = []
         if attrs:

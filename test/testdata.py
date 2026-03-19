@@ -1,8 +1,7 @@
-# Test data constants for MonitorBoss tests
-
 from frozendict import frozendict
 
 from monitorboss import info
+from monitorboss.info import capability_data
 from pyddc.vcp_codes import VCPCodes, InputSourceNames, ColorPresetNames
 from pyddc import get_vcp_com
 from test.pyddc.vcp_dummy import VCPTemplate, SupportedCodeTemplate
@@ -50,28 +49,29 @@ v_data_2_noname_alias = info.ValueData(2, "", ("cus", "tom")) # value with no na
 v_data_3_name_noalias = info.ValueData(3, "ct4000k", ()) # value with name, but no aliases (image_color_preset)
 v_data_17_name_alias = info.ValueData(17, "hdmi1", ("hdmi",)) # value with name and single alias (input_source)
 
+# CapabilityData models
+caps_attrs = frozendict({"model": "DUMMY", "foo": "bar", "baz": "qux", "type": "LCD"})
+caps_cmds_single = frozendict({"cmds_0": (f_data_noname_242_noalias, f_data_noname_243_alias, f_data_inputsource_96_alias)})
+caps_cmds_multi = frozendict({"cmds_0": (f_data_noname_242_noalias, f_data_noname_243_alias, f_data_inputsource_96_alias), "cmds_1": (f_data_noname_242_noalias, f_data_noname_243_alias, f_data_imageorientation_170_noalias)})
+caps_vcps_single =  frozendict({"vcp_0": frozendict({f_data_noname_242_noalias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_noname_243_alias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_inputsource_96_alias: (v_data_3_name_noalias,)})})
+caps_vcps_multi = frozendict({"vcp_0": frozendict({f_data_noname_242_noalias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_noname_243_alias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_inputsource_96_alias: (v_data_3_name_noalias,)}),
+                            "vcp_1": frozendict({f_data_noname_242_noalias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_noname_243_alias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_imageorientation_170_noalias: (v_data_17_name_alias,)})})
+caps_errata_unnamed = frozendict({"": ("foo", "bar")})
+caps_errata_named = frozendict({"baz": ("qux", "corge")})
+caps_errata_both = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
 
-value_data_12 = info.ValueData(12, "", ())
-value_data_34 = info.ValueData(34, "", ())
-value_data_hdmi2 = info.ValueData(InputSourceNames.hdmi2.value, "", ())
-value_data_ct5000k = info.ValueData(ColorPresetNames.ct5000k.value, "", ())
 
-# ValueData instances with params and aliases
-value_data_24_noname_noalias = info.ValueData(24, "", ())
-value_data_24_foo_noalias = info.ValueData(24, "foo", ())
-value_data_24_noname_alias = info.ValueData(24, "", ('foo', 'bar'))
-value_data_24_foo_alias = info.ValueData(24, "foo", ("bar", "baz"))
 
-# Complex structures for CapabilityData
-attributes_full = frozendict({"model": "CAF3", "foo": "bar", "baz": "qux", "type": "LCD"})
+
 attributes_summary = frozendict({"model": "CAF3", "type": "LCD"})
 cmds_full = frozendict({"cmds_0": (f_data_noname_242_noalias, f_data_noname_243_alias, f_data_inputsource_96_alias), "cmds_1": (f_data_noname_242_noalias, f_data_noname_243_alias, f_data_imageorientation_170_noalias)})
-vcps_full = frozendict({"vcp_0": frozendict({f_data_noname_242_noalias: (value_data_12, value_data_34), f_data_noname_243_alias: (value_data_12, value_data_34), f_data_inputsource_96_alias: (value_data_hdmi2,)}),
-                       "vcp_1": frozendict({f_data_noname_242_noalias: (value_data_12, value_data_34), f_data_noname_243_alias: (value_data_12, value_data_34), f_data_imageorientation_170_noalias: (value_data_ct5000k,)})})
-vcps_summary = frozendict({"vcp_0": frozendict({f_data_inputsource_96_alias: (value_data_hdmi2,)}), "vcp_1": frozendict({f_data_imageorientation_170_noalias: (value_data_ct5000k,)})})
+vcps_full = frozendict({"vcp_0": frozendict({f_data_noname_242_noalias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_noname_243_alias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_inputsource_96_alias: (v_data_3_name_noalias,)}),
+                       "vcp_1": frozendict({f_data_noname_242_noalias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_noname_243_alias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_imageorientation_170_noalias: (v_data_17_name_alias,)})})
+vcps_summary = frozendict({"vcp_0": frozendict({f_data_inputsource_96_alias: (v_data_3_name_noalias,)}), "vcp_1": frozendict({f_data_imageorientation_170_noalias: (v_data_17_name_alias,)})})
 errata_full = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
 
-capability_data_full = info.CapabilityData(attributes_full, cmds_full, vcps_full, errata_full)
+capability_data_empty = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
+capability_data_full = info.CapabilityData(caps_attrs, cmds_full, vcps_full, errata_full)
 capability_data_summary = info.CapabilityData(attributes_summary, frozendict(), vcps_summary, frozendict())
 
 # VCP commands
