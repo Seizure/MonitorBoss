@@ -62,18 +62,6 @@ caps_errata_both = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
 
 
 
-
-attributes_summary = frozendict({"model": "CAF3", "type": "LCD"})
-cmds_full = frozendict({"cmds_0": (f_data_noname_242_noalias, f_data_noname_243_alias, f_data_inputsource_96_alias), "cmds_1": (f_data_noname_242_noalias, f_data_noname_243_alias, f_data_imageorientation_170_noalias)})
-vcps_full = frozendict({"vcp_0": frozendict({f_data_noname_242_noalias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_noname_243_alias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_inputsource_96_alias: (v_data_3_name_noalias,)}),
-                       "vcp_1": frozendict({f_data_noname_242_noalias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_noname_243_alias: (v_data_1_noname_noalias, v_data_2_noname_alias), f_data_imageorientation_170_noalias: (v_data_17_name_alias,)})})
-vcps_summary = frozendict({"vcp_0": frozendict({f_data_inputsource_96_alias: (v_data_3_name_noalias,)}), "vcp_1": frozendict({f_data_imageorientation_170_noalias: (v_data_17_name_alias,)})})
-errata_full = frozendict({"": ("foo", "bar"), "baz": ("qux", "corge")})
-
-capability_data_empty = info.CapabilityData(frozendict(), frozendict(), frozendict(), frozendict())
-capability_data_full = info.CapabilityData(caps_attrs, cmds_full, vcps_full, errata_full)
-capability_data_summary = info.CapabilityData(attributes_summary, frozendict(), vcps_summary, frozendict())
-
 # VCP commands
 input_command = get_vcp_com(VCPCodes.input_source)
 lum_command = get_vcp_com(VCPCodes.image_luminance)

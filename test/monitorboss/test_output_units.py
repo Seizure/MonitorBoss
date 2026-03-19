@@ -62,13 +62,15 @@ def test_tog_feature(json_flag, expected):
 def test_caps_raw(json_flag, expected):
     assert output.caps_raw_output([(m_data_0_foo, "foo"), (m_data_1_barbaz, "bar")], json_flag) == expected
 
+caps_data_0 = info.CapabilityData(caps_attrs, caps_cmds_multi, caps_vcps_single, caps_errata_both)
+caps_data_1 = info.CapabilityData(caps_attrs, caps_cmds_single, caps_vcps_multi, frozendict())
 
 @pytest.mark.parametrize("json_flag, expected", [
     (True, json.dumps({"caps": [
-                {"monitor": m_data_0_foo.serialize(), "data": capability_data_full.serialize()},
-                {"monitor": m_data_1_barbaz.serialize(), "data": capability_data_full.serialize()}],
+                {"monitor": m_data_0_foo.serialize(), "data": caps_data_0.serialize()},
+                {"monitor": m_data_1_barbaz.serialize(), "data": caps_data_1.serialize()}],
             "type": "full"})),
-    (False, f"{m_data_0_foo}:\n{textwrap.indent(str(capability_data_full), indentation)}\n{m_data_1_barbaz}:\n{textwrap.indent(str(capability_data_full), indentation)}")
+    (False, f"{m_data_0_foo}:\n{textwrap.indent(str(caps_data_0), indentation)}\n{m_data_1_barbaz}:\n{textwrap.indent(str(caps_data_1), indentation)}")
 ])
 def test_caps_parsed(json_flag, expected):
-    assert output.caps_parsed_output([(m_data_0_foo, capability_data_full), (m_data_1_barbaz, capability_data_full)], json_flag) == expected
+    assert output.caps_parsed_output([(m_data_0_foo, caps_data_0), (m_data_1_barbaz, caps_data_1)], json_flag) == expected
