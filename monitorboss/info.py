@@ -1,5 +1,7 @@
 import textwrap
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import TypeAlias
 
 from frozendict import frozendict
 
@@ -9,6 +11,8 @@ from pyddc import get_vcp_com
 from pyddc.vcp_abc import Capabilities
 from pyddc.vcp_codes import VCPCodes
 
+# Type aliases for serialized data structures
+SerializedValue: TypeAlias = dict | int | str | tuple[str, ...] | list
 
 @dataclass(frozen=True)
 class FeatureData:
@@ -98,17 +102,17 @@ class CapabilityData:
     vcps: frozendict[str, frozendict[FeatureData, tuple[ValueData, ...]]]
     errata: frozendict[str, tuple[str, ...]] | None
 
-    def serialize(self) -> dict:
-        serialized = dict(self.attributes)
-        cmds = {}
+    def serialize(self) -> dict[str, SerializedValue]:
+        serialized: dict[str, SerializedValue] = dict(self.attributes)
+        cmds: dict[str, SerializedValue] = {}
         for cmd, features in self.cmds.items():
             cmds[cmd] = [feature.serialize() for feature in features]
         serialized["cmds"] = cmds
-        vcps = {}
+        vcps: dict[str, SerializedValue] = {}
         for vcp, vcp_features in self.vcps.items():
             vcp_data = []
             for feature, params in vcp_features.items():
-                data = {"feature": feature.serialize()}
+                data: dict[str, SerializedValue] = {"feature": feature.serialize()}
                 if params:
                     data["params"] = [param.serialize() for param in params]
                 vcp_data.append(data)
@@ -197,3 +201,97 @@ def capability_summary_data(caps_data: CapabilityData) -> CapabilityData:
         for vcp, features in caps_data.vcps.items() if features
     }
     return CapabilityData(frozendict(attributes), frozendict(), frozendict(vcp_features), frozendict())
+
+
+@dataclass(frozen=True)
+class MonitorCommandResponseData(ABC):
+    mon: MonitorData
+    error: Exception | None
+
+    @abstractmethod
+    def _serialize(self) -> dict:
+        pass
+
+    def serialize(self) -> dict[str, SerializedValue]:
+        """Serialize the response to a dict, always including monitor and optionally error."""
+        return {
+            "monitor": self.mon.serialize(),
+            **({"error": str(self.error)} if self.error else self._serialize())
+        }
+
+    @abstractmethod
+    def __str__(self) -> str:
+        pass
+
+
+@dataclass(frozen=True)
+class MonitorGetResponseData(MonitorCommandResponseData):
+    """Response data for get_feature operations."""
+    value: ValueData | None
+    maximum: int | None
+
+    def _serialize(self) -> dict:
+        return {
+            **({"value": self.value.serialize()} if self.value is not None else {}),
+            **({"max_value": self.maximum} if self.maximum is not None else {}),
+        }
+
+    def __str__(self) -> str:
+        if self.error:
+            return f"{self.mon}: ERROR - {self.error}"
+        max_str = f" (Maximum: {self.maximum})" if self.maximum else ""
+        return f"{self.mon} is {self.value}{max_str}"
+
+
+@dataclass(frozen=True)
+class MonitorSetResponseData(MonitorCommandResponseData):
+    """Response data for set_feature operations."""
+    value: ValueData | None
+
+    def _serialize(self) -> dict:
+        return {**({"value": self.value.serialize()} if self.value is not None else {})}
+
+    def __str__(self) -> str:
+        if self.error:
+            return f"{self.mon}: ERROR - {self.error}"
+        return f"set {self.mon} to {self.value}"
+
+
+@dataclass(frozen=True)
+class MonitorToggleResponseData(MonitorCommandResponseData):
+    """Response data for toggle_feature operations."""
+    original_value: ValueData | None
+    new_value: ValueData | None
+
+    def _serialize(self) -> dict:
+        return {
+            **({"original_value": self.original_value.serialize()} if self.original_value is not None else {}),
+            **({"new_value": self.new_value.serialize()} if self.new_value is not None else {}),
+        }
+
+    def __str__(self) -> str:
+        if self.error:
+            return f"{self.mon}: ERROR - {self.error}"
+        return f"toggled {self.mon} from {self.original_value} to {self.new_value}"
+
+
+@dataclass(frozen=True)
+class MonitorCapsResponseData(MonitorCommandResponseData):
+    """Response data for capabilities operations."""
+    data: str | CapabilityData | None
+
+    def _serialize(self) -> dict[str, SerializedValue]:
+        result: dict[str, SerializedValue] = {}
+        if self.data is not None:
+            if isinstance(self.data, str):
+                result["data"] = self.data
+            elif isinstance(self.data, CapabilityData):
+                result["data"] = self.data.serialize()
+        return result
+
+    def __str__(self) -> str:
+        if self.error:
+            return f"{self.mon}: ERROR - {self.error}"
+        if isinstance(self.data, str):
+            return f"Capability string for {self.mon}:\n{indentation}{self.data}"
+        return f"{self.mon}:\n{textwrap.indent(str(self.data), indentation)}"

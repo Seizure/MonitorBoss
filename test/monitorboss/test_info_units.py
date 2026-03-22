@@ -76,7 +76,7 @@ class TestInfoMonitorData:
         (m_data_1_barbaz, {"id": 1, "aliases": ('bar', 'baz')}),
         (m_data_2_noalias, {"id": 2})
     ])
-    def test_MonitorData_serialize(self, mon: MonitorData, expected):
+    def test_MonitorData_serialize(self, mon, expected):
         assert mon.serialize() == expected
 
     @pytest.mark.parametrize("mon, expected", [
@@ -202,3 +202,93 @@ class TestInfoCapabilitydata:
         # TODO: this is going to be very annoying, and the function will be changing when PYDDC updates its caps output
         #   so we will do later
         pass
+
+
+class TestMonitorGetResponseData:
+    """Tests for MonitorGetResponseData - get_feature operations"""
+
+    @pytest.mark.parametrize("mon, error, value, maximum, expected", [
+        (m_data_0_foo, None, v_data_17_name_alias, None, {"monitor": m_data_0_foo.serialize(), "value": v_data_17_name_alias.serialize()}),
+        (m_data_1_barbaz, None, v_data_3_name_noalias, 100, {"monitor": m_data_1_barbaz.serialize(), "value": v_data_3_name_noalias.serialize(), "max_value": 100}),
+        (m_data_2_noalias, Exception("could not get brightness for monitor #2."), None, None, {"monitor": m_data_2_noalias.serialize(), "error": "could not get brightness for monitor #2."}),
+    ])
+    def test_serialize(self, mon, error, value, maximum, expected):
+        response = info.MonitorGetResponseData(mon=mon, error=error, value=value, maximum=maximum)
+        result = response.serialize()
+        assert result == expected
+
+    @pytest.mark.parametrize("mon, error, value, maximum, expected", [
+        (m_data_0_foo, None, v_data_17_name_alias, None, f"{m_data_0_foo} is {v_data_17_name_alias}"),
+        (m_data_1_barbaz, None, v_data_3_name_noalias, 100, f"{m_data_1_barbaz} is {v_data_3_name_noalias} (Maximum: 100)"),
+        (m_data_2_noalias, Exception("could not get brightness for monitor #2."), None, None, f"{m_data_2_noalias}: ERROR - could not get brightness for monitor #2."),
+    ])
+    def test_str(self, mon, error, value, maximum, expected):
+        response = info.MonitorGetResponseData(mon=mon, error=error, value=value, maximum=maximum)
+        assert str(response) == expected
+
+
+class TestMonitorSetResponseData:
+    """Tests for MonitorSetResponseData - set_feature operations"""
+
+    @pytest.mark.parametrize("mon, error, value, expected", [
+        (m_data_0_foo, None, v_data_3_name_noalias, {"monitor": m_data_0_foo.serialize(), "value": v_data_3_name_noalias.serialize()}),
+        (m_data_1_barbaz, Exception("could not set brightness for monitor #1 to 50."), None, {"monitor": m_data_1_barbaz.serialize(), "error": "could not set brightness for monitor #1 to 50."}),
+    ])
+    def test_serialize(self, mon, error, value, expected):
+        response = info.MonitorSetResponseData(mon=mon, error=error, value=value)
+        result = response.serialize()
+        assert result == expected
+
+    @pytest.mark.parametrize("mon, error, value, expected", [
+        (m_data_0_foo, None, v_data_3_name_noalias, f"set {m_data_0_foo} to {v_data_3_name_noalias}"),
+        (m_data_1_barbaz, Exception("could not set brightness for monitor #1 to 50."), None, f"{m_data_1_barbaz}: ERROR - could not set brightness for monitor #1 to 50."),
+    ])
+    def test_str(self, mon, error, value, expected):
+        response = info.MonitorSetResponseData(mon=mon, error=error, value=value)
+        assert str(response) == expected
+
+
+class TestMonitorToggleResponseData:
+    """Tests for MonitorToggleResponseData - toggle_feature operations"""
+
+    @pytest.mark.parametrize("mon, error, original_value, new_value, expected", [
+        (m_data_0_foo, None, v_data_3_name_noalias, v_data_17_name_alias, {"monitor": m_data_0_foo.serialize(), "original_value": v_data_3_name_noalias.serialize(), "new_value": v_data_17_name_alias.serialize()}),
+        (m_data_1_barbaz, None, v_data_1_noname_noalias, v_data_2_noname_alias, {"monitor": m_data_1_barbaz.serialize(), "original_value": v_data_1_noname_noalias.serialize(), "new_value": v_data_2_noname_alias.serialize()}),
+        (m_data_2_noalias, Exception("could not toggle brightness for monitor #0."), None, None, {"monitor": m_data_2_noalias.serialize(), "error": "could not toggle brightness for monitor #0."}),
+    ])
+    def test_serialize(self, mon, error, original_value, new_value, expected):
+        response = info.MonitorToggleResponseData(mon=mon, error=error, original_value=original_value, new_value=new_value)
+        result = response.serialize()
+        assert result == expected
+
+    @pytest.mark.parametrize("mon, error, original_value, new_value, expected", [
+        (m_data_0_foo, None, v_data_3_name_noalias, v_data_17_name_alias, f"toggled {m_data_0_foo} from {v_data_3_name_noalias} to {v_data_17_name_alias}"),
+        (m_data_1_barbaz, None, v_data_1_noname_noalias, v_data_2_noname_alias, f"toggled {m_data_1_barbaz} from {v_data_1_noname_noalias} to {v_data_2_noname_alias}"),
+        (m_data_2_noalias, Exception("could not toggle brightness for monitor #0."), None, None, f"{m_data_2_noalias}: ERROR - could not toggle brightness for monitor #0."),
+    ])
+    def test_str(self, mon, error, original_value, new_value, expected):
+        response = info.MonitorToggleResponseData(mon=mon, error=error, original_value=original_value, new_value=new_value)
+        assert str(response) == expected
+
+
+class TestMonitorCapsResponseData:
+    """Tests for MonitorCapsResponseData - capabilities operations"""
+
+    @pytest.mark.parametrize("mon, error, data, expected", [
+        (m_data_0_foo, None, "(prot(monitor)type(LCD)model(TEST))", {"monitor": m_data_0_foo.serialize(), "data": "(prot(monitor)type(LCD)model(TEST))"}),
+        (m_data_1_barbaz, None, info.CapabilityData(caps_attrs, caps_cmds_multi, caps_vcps_single, frozendict()), {"monitor": m_data_1_barbaz.serialize(), "data": info.CapabilityData(caps_attrs, caps_cmds_multi, caps_vcps_single, frozendict()).serialize()}),
+        (m_data_2_noalias, Exception("could not get capabilities for monitor #1."), None, {"monitor": m_data_2_noalias.serialize(), "error": "could not get capabilities for monitor #1."}),
+    ])
+    def test_serialize(self, mon, error, data, expected):
+        response = info.MonitorCapsResponseData(mon=mon, error=error, data=data)
+        result = response.serialize()
+        assert result == expected
+
+    @pytest.mark.parametrize("mon, error, data, expected", [
+        (m_data_0_foo, None, "foo bar baz", f"Capability string for {m_data_0_foo}:\n{indentation}foo bar baz"),
+        (m_data_1_barbaz, None, info.CapabilityData(caps_attrs, frozendict(), frozendict(), frozendict()), f"{m_data_1_barbaz}:\n{textwrap.indent(str(info.CapabilityData(caps_attrs, frozendict(), frozendict(), frozendict())), indentation)}"),
+        (m_data_2_noalias, Exception("could not get capabilities for monitor #1."), None, f"{m_data_2_noalias}: ERROR - could not get capabilities for monitor #1."),
+    ])
+    def test_str(self, mon, error, data, expected):
+        response = info.MonitorCapsResponseData(mon=mon, error=error, data=data)
+        assert str(response) == expected

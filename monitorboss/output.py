@@ -3,7 +3,14 @@ import textwrap
 from logging import getLogger, DEBUG
 
 from monitorboss import indentation
-from monitorboss.info import CapabilityData, FeatureData, ValueData, MonitorData
+from monitorboss.info import (
+    FeatureData,
+    MonitorGetResponseData,
+    MonitorSetResponseData,
+    MonitorToggleResponseData,
+    MonitorCapsResponseData,
+    MonitorData,
+)
 
 _log = getLogger(__name__)
 _INDENT_LEVEL = 4 if _log.level >= DEBUG else None
@@ -19,47 +26,81 @@ def list_mons_output(mons: list[MonitorData], json_output: bool) -> str:
     return "\n".join(map(str, mons))
 
 
-def get_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, ValueData, int | None]], json_output: bool) -> str:
+def get_feature_output(
+    feature: FeatureData,
+    responses: list[MonitorGetResponseData],
+    json_output: bool
+) -> str:
     if json_output:
-        monvalue_list = []
-        for mon, value, maximum in monvalues:
-            item = {"monitor": mon.serialize(), "value": value.serialize()}
-            if maximum:
-                item["max_value"] = maximum
-            monvalue_list.append(item)
-        return json.dumps({"get": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
+        response_list = [resp.serialize() for resp in responses]
+        return json.dumps(
+            {"get": {"feature": feature.serialize(), "responses": response_list}},
+            indent=_INDENT_LEVEL
+        )
 
-    return "\n".join(map(str, [f"{feature} for {mon} is {value}" + (f" (Maximum: {maximum})" if maximum else "") for mon, value, maximum in monvalues]))
+    header = f"Getting {feature}:"
+    response_lines = [f"{indentation}{resp}" for resp in responses]
+    return header + "\n" + "\n".join(response_lines)
 
 
-def set_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, ValueData]], json_output: bool) -> str:
+def set_feature_output(
+    feature: FeatureData,
+    responses: list[MonitorSetResponseData],
+    json_output: bool
+) -> str:
     if json_output:
-        monvalue_list = [{"monitor": mon.serialize(), "value": value.serialize()} for mon, value in monvalues]
-        return json.dumps({"set": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
+        response_list = [resp.serialize() for resp in responses]
+        return json.dumps(
+            {"set": {"feature": feature.serialize(), "responses": response_list}},
+            indent=_INDENT_LEVEL
+        )
 
-    return "\n".join(map(str, [f"set {feature} for {mon} to {value}" for mon, value in monvalues]))
+    header = f"Setting {feature}:"
+    response_lines = [f"{indentation}{resp}" for resp in responses]
+    return header + "\n" + "\n".join(response_lines)
 
 
-def tog_feature_output(feature: FeatureData, monvalues: list[tuple[MonitorData, ValueData, ValueData]], json_output) -> str:
+def tog_feature_output(
+    feature: FeatureData,
+    responses: list[MonitorToggleResponseData],
+    json_output: bool
+) -> str:
     if json_output:
-        monvalue_list = [{"monitor": mon.serialize(), "original_value": original.serialize(), "new_value": new.serialize()} for mon, original, new in monvalues]
-        return json.dumps({"toggle": {"feature": feature.serialize(), "values": monvalue_list}}, indent=_INDENT_LEVEL)
+        response_list = [resp.serialize() for resp in responses]
+        return json.dumps(
+            {"toggle": {"feature": feature.serialize(), "responses": response_list}},
+            indent=_INDENT_LEVEL
+        )
 
-    return "\n".join(map(str, [f"toggled {feature} for {mon} from {original} to {new}" for mon, original, new in monvalues]))
+    header = f"Toggling {feature}:"
+    response_lines = [f"{indentation}{resp}" for resp in responses]
+    return header + "\n" + "\n".join(response_lines)
 
 
-def caps_raw_output(moncaps: list[tuple[MonitorData, str]], json_output: bool) -> str:
+def caps_raw_output(
+        responses: list[MonitorCapsResponseData],
+        json_output: bool) -> str:
     if json_output:
-        moncaps_list = [{"monitor": mon.serialize(), "data": caps} for mon, caps in moncaps]
-        return json.dumps({"caps": moncaps_list, "type": "raw"}, indent=_INDENT_LEVEL)
+        response_list = [resp.serialize() for resp in responses]
+        return json.dumps(
+            {"caps": response_list, "type": "raw"},
+            indent=_INDENT_LEVEL
+        )
 
-    return "\n".join(map(str, [f"Capability string for {mon}:\n{indentation}{caps}" for mon, caps in moncaps]))
+    header = "Capabilities:"
+    response_lines = [textwrap.indent(str(resp), indentation) for resp in responses]
+    return header + "\n" + "\n".join(response_lines)
 
 
-def caps_parsed_output(moncaps: list[tuple[MonitorData, CapabilityData]], json_output: bool) -> str:
+def caps_parsed_output(responses: list[MonitorCapsResponseData], json_output: bool) -> str:
     if json_output:
-        moncaps_list = [{"monitor": mon.serialize(), "data": caps.serialize()} for mon, caps in moncaps]
-        return json.dumps({"caps": moncaps_list, "type": "full"}, indent=_INDENT_LEVEL)
+        response_list = [resp.serialize() for resp in responses]
+        return json.dumps(
+            {"caps": response_list, "type": "parsed"},
+            indent=_INDENT_LEVEL
+        )
 
-    return "\n".join(map(str, [f"{mon}:\n{textwrap.indent(str(caps), indentation)}" for mon, caps in moncaps]))
+    header = "Capabilities:"
+    response_lines = [textwrap.indent(str(resp), indentation) for resp in responses]
+    return header + "\n" + "\n".join(response_lines)
 

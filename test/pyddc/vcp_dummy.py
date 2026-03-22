@@ -74,8 +74,20 @@ DEFAULT_VCP_TEMPLATE = VCPTemplate(
     False
 )
 
+FAULTY_VCP_TEMPLATE = VCPTemplate(
+    [
+        SupportedCodeTemplate(VCPCodes.restore_factory_default.value, [], None, None),
+        SupportedCodeTemplate(VCPCodes.image_luminance.value, None, 75, 80),
+        SupportedCodeTemplate(VCPCodes.image_contrast.value, None, 75, 100),
+        SupportedCodeTemplate(VCPCodes.input_source, [27, 15, 17, 257], 257, None),
+        SupportedCodeTemplate(VCPCodes.image_orientation.value, [1, 2, 4], 2, None),
+    ],
+    "(prot(monitor)type(LCD)model(BROKEN)cmds(04)vcp(10 12 60(1B 0F 11 ) AA(01 02 04 ) )mccs_ver(2.1))",
+    True  # faulty=True
+)
 
-vcp_template_list: list[VCPTemplate] = [DEFAULT_VCP_TEMPLATE, DEFAULT_VCP_TEMPLATE, DEFAULT_VCP_TEMPLATE]
+
+vcp_template_list: list[VCPTemplate] = [DEFAULT_VCP_TEMPLATE, FAULTY_VCP_TEMPLATE, DEFAULT_VCP_TEMPLATE]
 
 
 class DummyVCP(ABCVCP):
@@ -123,7 +135,7 @@ class DummyVCP(ABCVCP):
                 # Also note you would not actually receive an explicit explanation in the wild.
                 raise VCPError("The monitor does not support the specified VCP code.")
 
-    def _get_vcp_feature(self, com: VCPCommand, timeout: float) -> (int, int):
+    def _get_vcp_feature(self, com: VCPCommand, timeout: float) -> VCPFeatureReturn:
         del timeout  # unused
         if self.faulty:
             raise VCPError("I am a broken monitor, beep boop")

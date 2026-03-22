@@ -6,7 +6,17 @@ from time import sleep
 from monitorboss import MonitorBossError, indentation
 from monitorboss.config import Config, get_config
 from monitorboss.impl import list_monitors, get_feature, set_feature, toggle_feature, get_vcp_capabilities
-from monitorboss.info import feature_data, monitor_data, value_data, capability_data, capability_summary_data
+from monitorboss.info import (
+    feature_data,
+    monitor_data,
+    value_data,
+    capability_data,
+    capability_summary_data,
+    MonitorCapsResponseData,
+    MonitorGetResponseData,
+    MonitorSetResponseData,
+    MonitorToggleResponseData
+)
 from monitorboss.output import caps_raw_output, caps_parsed_output, list_mons_output, \
     get_feature_output, set_feature_output, tog_feature_output
 from pyddc import parse_capabilities, get_vcp_com
@@ -83,58 +93,76 @@ def _list_mons(args, cfg: Config):
 def _get_caps(args, cfg: Config):
     _log.debug(f"get capabilities: {args}")
     mons = [_check_mon(m, cfg) for m in args.monitor]
-    rawcaps_list = []
+    responses = []
+
     for i, m in enumerate(mons):
-        rawcaps_list.append(get_vcp_capabilities(m))
+        mdata = monitor_data(m, cfg)
+        try:
+            rawcap = get_vcp_capabilities(m)
+            if args.raw:
+                responses.append(MonitorCapsResponseData(
+                    mon=mdata,
+                    error=None,
+                    data=rawcap
+                ))
+            else:
+                fullcaps = capability_data(parse_capabilities(rawcap), cfg)
+                if args.summary:
+                    fullcaps = capability_summary_data(fullcaps)
+                responses.append(MonitorCapsResponseData(
+                    mon=mdata,
+                    error=None,
+                    data=fullcaps
+                ))
+        except Exception as err:
+            _log.warning(f"Failed to get capabilities for monitor {m}: {err}")
+            responses.append(MonitorCapsResponseData(
+                mon=mdata,
+                error=err,
+                data=None
+            ))
 
     if args.raw:
-        moncaps_list = []
-        for mon, caps in zip(mons, rawcaps_list):
-            mdata = monitor_data(mon, cfg)
-            moncaps_list.append((mdata, caps))
-        print(caps_raw_output(moncaps_list, args.json))
-        return
-
-    fullcaps_list = [capability_data(parse_capabilities(rawcap), cfg) for rawcap in rawcaps_list]
-
-    if args.summary:
-        summarycaps_list = [capability_summary_data(fullcap) for fullcap in fullcaps_list]
-        moncaps_list = []
-        for mon, caps in zip(mons, summarycaps_list):
-            mdata = monitor_data(mon, cfg)
-            moncaps_list.append((mdata, caps))
-        print(caps_parsed_output(moncaps_list, args.json))
-        return
-
-    moncaps_list = []
-    for mon, caps in zip(mons, fullcaps_list):
-        mdata = monitor_data(mon, cfg)
-        moncaps_list.append((mdata, caps))
-    print(caps_parsed_output(moncaps_list, args.json))
+        print(caps_raw_output(responses, args.json))
+    else:
+        print(caps_parsed_output(responses, args.json))
 
 
 def _get_feature(args, cfg: Config):
     _log.debug(f"get feature: {args}")
     vcpcom = _check_feature(args.feature, cfg)
     mons = [_check_mon(m, cfg) for m in args.monitor]
-    cur_vals = []
-    max_vals = []
+    responses = []
+    fdata = feature_data(vcpcom.code, cfg)
+
     for i, m in enumerate(mons):
-        ret = get_feature(m, vcpcom, cfg.wait_internal_time)
-        cur_vals.append(ret.value)
-        # The "max" value for discrete features actually represents the number of valid values.
-        # We don't report this to the user because there's nothing they can do with the information.
-        max_vals.append(None if vcpcom.discrete else ret.max)
+        mdata = monitor_data(m, cfg)
+        try:
+            ret = get_feature(m, vcpcom, cfg.wait_internal_time)
+            # The "max" value for discrete features actually represents the number of valid values.
+            # We don't report this to the user because there's nothing they can do with the information.
+            maximum = None if vcpcom.discrete else ret.max
+            vdata = value_data(fdata.code, ret.value, cfg)
+
+            responses.append(MonitorGetResponseData(
+                mon=mdata,
+                error=None,
+                value=vdata,
+                maximum=maximum
+            ))
+        except Exception as err:
+            _log.warning(f"Failed to get {vcpcom.name} for monitor {m}: {err}")
+            responses.append(MonitorGetResponseData(
+                mon=mdata,
+                error=err,
+                value=None,
+                maximum=None
+            ))
+
         if i + 1 < len(mons):
             sleep(cfg.wait_get_time)
-    monvalmax_list = []
-    fdata = feature_data(vcpcom.code, cfg)
-    for mon, val, maximum in zip(mons, cur_vals, max_vals):
-        mdata = monitor_data(mon, cfg)
-        vdata = value_data(fdata.code, val, cfg)
-        monvalmax_list.append((mdata, vdata, maximum))
 
-    print(get_feature_output(fdata, monvalmax_list, args.json))
+    print(get_feature_output(fdata, responses, args.json))
 
 
 def _set_feature(args, cfg: Config):
@@ -142,20 +170,32 @@ def _set_feature(args, cfg: Config):
     vcpcom = _check_feature(args.feature, cfg)
     mons = [_check_mon(m, cfg) for m in args.monitor]
     val = _check_val(vcpcom, args.value, cfg)
-    new_vals = []
+    responses = []
+    fdata = feature_data(vcpcom.code, cfg)
+
     for i, m in enumerate(mons):
-        new_vals.append(set_feature(m, vcpcom, val, cfg.wait_internal_time))
+        mdata = monitor_data(m, cfg)
+        try:
+            set_feature(m, vcpcom, val, cfg.wait_internal_time)
+            vdata = value_data(fdata.code, val, cfg)
+
+            responses.append(MonitorSetResponseData(
+                mon=mdata,
+                error=None,
+                value=vdata
+            ))
+        except Exception as err:
+            _log.warning(f"Failed to set {vcpcom.name} for monitor {m}: {err}")
+            responses.append(MonitorSetResponseData(
+                mon=mdata,
+                error=err,
+                value=None
+            ))
+
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
-    new_vals = [set_feature(m, vcpcom, val, cfg.wait_internal_time) for m in mons]
-    monval_list = []
-    fdata = feature_data(vcpcom.code, cfg)
-    for mon, new_val in zip(mons, new_vals):
-        mdata = monitor_data(mon, cfg)
-        vdata = value_data(fdata.code, new_val, cfg)
-        monval_list.append((mdata, vdata))
 
-    print(set_feature_output(fdata, monval_list, args.json))
+    print(set_feature_output(fdata, responses, args.json))
 
 
 def _tog_feature(args, cfg: Config):
@@ -164,20 +204,35 @@ def _tog_feature(args, cfg: Config):
     mons = [_check_mon(m, cfg) for m in args.monitor]
     val1 = _check_val(vcpcom, args.value1, cfg)
     val2 = _check_val(vcpcom, args.value2, cfg)
-    tog_vals = []
+    responses = []
+    fdata = feature_data(vcpcom.code, cfg)
+
     for i, m in enumerate(mons):
-        tog_vals.append(toggle_feature(m, vcpcom, val1, val2, cfg.wait_internal_time))
+        mdata = monitor_data(m, cfg)
+        try:
+            tog_val = toggle_feature(m, vcpcom, val1, val2, cfg.wait_internal_time)
+            vdata_old = value_data(fdata.code, tog_val.old, cfg)
+            vdata_new = value_data(fdata.code, tog_val.new, cfg)
+
+            responses.append(MonitorToggleResponseData(
+                mon=mdata,
+                error=None,
+                original_value=vdata_old,
+                new_value=vdata_new
+            ))
+        except Exception as err:
+            _log.warning(f"Failed to toggle {vcpcom.name} for monitor {m}: {err}")
+            responses.append(MonitorToggleResponseData(
+                mon=mdata,
+                error=err,
+                original_value=None,
+                new_value=None
+            ))
+
         if i + 1 < len(mons):
             sleep(cfg.wait_set_time)
-    monvals_list = []
-    fdata = feature_data(vcpcom.code, cfg)
-    for mon, tog_val in zip(mons, tog_vals):
-        mdata = monitor_data(mon, cfg)
-        vdata_old = value_data(fdata.code, tog_val.old, cfg)
-        vdata_new = value_data(fdata.code, tog_val.new, cfg)
-        monvals_list.append((mdata, vdata_old, vdata_new))
 
-    print(tog_feature_output(fdata, monvals_list, args.json))
+    print(tog_feature_output(fdata, responses, args.json))
 
 
 text = "Commands for manipulating and polling your monitors"
