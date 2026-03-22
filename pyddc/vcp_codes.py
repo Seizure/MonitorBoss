@@ -129,7 +129,7 @@ _VCP_COMMANDS = [
         desc="image orientation",
         code=VCPCodes.image_orientation.value,
         readable=True,
-        writeable=False,
+        writeable=True,
         discrete=True,
         param_names={}),  # TODO: This is supposed to have params
     VCPCommand(
@@ -137,7 +137,7 @@ _VCP_COMMANDS = [
         desc="display power mode",
         code=VCPCodes.display_power_mode.value,
         readable=True,
-        writeable=False,
+        writeable=True,
         discrete=True,
         param_names=dict(PowerModeNames.__members__)),
 ]
