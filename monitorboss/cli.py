@@ -29,7 +29,7 @@ _INDENT_LEVEL = 4 if _log.level >= DEBUG else None
 # TODO: This does not allow for custom/OEM codes as is (for when we add such)
 def _check_feature(feature: str, cfg: Config) -> VCPCommand:
     _log.debug(f"check feature: {feature!r}")
-    if feature.isdigit():
+    if feature.isdecimal():
         for code in VCPCodes:
             if int(feature) == code.value:
                 return get_vcp_com(code.value)
@@ -64,7 +64,7 @@ def _check_mon(mon: str, cfg: Config) -> int:
 def _check_val(com: VCPCommand, val: str, cfg: Config) -> int:
     _log.debug(f"check feature value: ftr {com.name}, value {val}")
     # Check if input is a positive integer, and if so, just return it.
-    if val.isdigit():
+    if val.isdecimal():
         return int(val)
     # if not, we need to check for valid params and aliases...
     else:

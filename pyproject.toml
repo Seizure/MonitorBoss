@@ -21,6 +21,7 @@ dependencies = [
     "tomlkit>=0.12.4,<0.13",
     "frozendict>=2.4.4,<3",
     "pytest-cov>=5.0.0,<6",
+    "pydantic>=2.0,<3",
 ]
 
 [dependency-groups]

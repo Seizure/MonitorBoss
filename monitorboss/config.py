@@ -1,10 +1,9 @@
 from enum import Enum  # cannot use StrEnum, it's not in Python 3.10
 from logging import getLogger
 from pathlib import Path
-from dataclasses import dataclass, field
 
 from tomlkit import parse, dump, document, table, TOMLDocument
-from tomlkit.items import Array, String, Trivia
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
 
 from monitorboss import MonitorBossError
 from pyddc import get_vcp_com
@@ -28,67 +27,194 @@ class TomlSettingsKeys(Enum):
     wait_internal = "wait_internal"
 
 
-@dataclass
-class Config:
-    monitor_names: dict[str, int] = field(default_factory=dict)
-    feature_aliases: dict[str, int] = field(default_factory=dict)
-    value_aliases: dict[str, dict[str, int]] = field(default_factory=dict)
-    wait_get_time: float = field(default_factory=float)
-    wait_set_time: float = field(default_factory=float)
-    wait_internal_time: float = field(default_factory=float)
+class _RawTomlSettings(BaseModel):
+    """
+    Pydantic model for the [settings] section of the TOML file.
+    Fixed-schema sub-model: all keys are known and required.
+    """
+    wait_get: float
+    wait_set: float
+    wait_internal: float
 
-    # TODO: why are we allowing for non-numeric keys? We're also not making sure aliases are strings
-    def read(self, doc: TOMLDocument):
-        _log.debug(f"read Config from TOML doc: {doc}")
-        _log.debug(f"reading monitor aliases from TOML doc: {doc[TomlCategories.monitors.value]}")
-        for val, aliases in doc[TomlCategories.monitors.value].items():
-            if isinstance(aliases, String):
-                aliases = Array([aliases], Trivia())
-            for alias in aliases:
-                self.monitor_names[alias] = int(val) if val.isdigit() else val
-        _log.debug(f"reading feature aliases from TOML doc: {doc[TomlCategories.features.value]}")
-        for val, aliases in doc[TomlCategories.features.value].items():
-            if isinstance(aliases, String):
-                aliases = Array([aliases], Trivia())
-            for alias in aliases:
-                self.feature_aliases[alias] = int(val) if val.isdigit else val
-        _log.debug(f"reading feature keys for value aliases from TOML doc: {doc[TomlCategories.values.value]}")
-        if TomlCategories.values.value in doc.keys():
-            for feature_key, alias_table in doc[TomlCategories.values.value].items():
-                _log.debug(f"determining whether table for {feature_key} contains aliases: {doc[TomlCategories.values.value][feature_key]}")
-                if alias_table:
-                    _log.debug(f"copying aliases from {feature_key} value table:")
-                    self.value_aliases[feature_key] = {}
-                    for val, aliases in alias_table.items():
-                        if isinstance(aliases, String):
-                            aliases = Array([aliases], Trivia())
-                        for alias in aliases:
-                            self.value_aliases[feature_key][alias] = int(val) if val.isdigit else val
-
-        self.wait_get_time = doc[TomlCategories.settings.value][TomlSettingsKeys.wait_get.value]
-        self.wait_set_time = doc[TomlCategories.settings.value][TomlSettingsKeys.wait_set.value]
-        self.wait_internal_time = doc[TomlCategories.settings.value][TomlSettingsKeys.wait_internal.value]
+    @field_validator("wait_get", "wait_set", "wait_internal")
+    @classmethod
+    def validate_wait_times(cls, v: float) -> float:
+        """Wait times must be non-negative."""
+        if v < 0:
+            raise ValueError(f"Wait times must be non-negative, got {v}")
+        return v
 
 
-    def validate(self):
-        # TODO: we should check whether assigned alliases conflict with other aliases, or an existing parameter/feature name
-        _log.debug(f"validate config")
-        for alias, code in self.feature_aliases.items():
-            if alias.isdigit():
-                raise MonitorBossError(f"Feature aliases can not be numeric: {alias}")
+class _RawTomlConfig(BaseModel):
+    """
+    Pydantic model mirroring the exact TOML structure before inversion.
+    This model handles shape validation: ensuring monitor_names, feature_aliases,
+    value_aliases exist with the right type structure (dict with string/list values),
+    and that settings is properly typed and valid.
+
+    Monitor IDs in TOML are keys (strings): {id_str: alias_or_list}
+    Feature codes in TOML are keys (strings): {code_str: alias_or_list}
+    Value aliases in TOML are nested: {feature_name: {value_str: alias_or_list}}
+
+    All keys are user-defined (variable schema), so they remain as dicts, not sub-models.
+
+    Validation rules enforced by field validators:
+    - monitor_names keys: must be non-negative integer strings
+    - feature_aliases keys: must be non-negative integers corresponding to valid VCP commands
+    - value_aliases inner keys (per feature sub-table): must be non-negative integer strings
+    - value_aliases outer keys (feature names): must correspond to valid VCP command names
+    - All alias strings (TOML values): must not be numeric (would be indistinguishable from bare IDs at runtime)
+    - Aliases must not be duplicated within the same table (monitor_names, feature_aliases),
+      or within the same feature sub-table (value_aliases); cross-sub-table duplicates are allowed
+    """
+    monitor_names: dict[str, str | list[str]]
+    feature_aliases: dict[str, str | list[str]]
+    value_aliases: dict[str, dict[str, str | list[str]]] = {}
+    settings: _RawTomlSettings
+
+    @field_validator("monitor_names")
+    @classmethod
+    def validate_monitor_names(cls, v: dict[str, str | list[str]]) -> dict[str, str | list[str]]:
+        """Monitor IDs (keys) must be non-negative integers; aliases (values) must not be numeric or duplicated."""
+        errors: list[str] = []
+        seen_aliases: set[str] = set()
+        for mon_id_str, aliases in v.items():
+            if not mon_id_str.isdecimal():
+                errors.append(f"Monitor IDs must be non-negative integers, got: {mon_id_str!r}")
+                continue  # key is invalid; alias checks for this entry are meaningless
+            alias_list = aliases if isinstance(aliases, list) else [aliases]
+            for alias in alias_list:
+                if alias.isdecimal():
+                    errors.append(f"Monitor aliases can not be numeric: {alias}")
+                elif alias in seen_aliases:
+                    errors.append(f"Monitor alias is used multiple times: {alias!r}")
+                else:
+                    seen_aliases.add(alias)
+        if errors:
+            raise ValueError("\n".join(errors))
+        return v
+
+    @field_validator("feature_aliases")
+    @classmethod
+    def validate_feature_aliases(cls, v: dict[str, str | list[str]]) -> dict[str, str | list[str]]:
+        """Feature codes (keys) must be non-negative integers corresponding to valid VCP commands;
+        aliases (values) must not be numeric or duplicated."""
+        errors: list[str] = []
+        seen_aliases: set[str] = set()
+        for code_str, aliases in v.items():
+            if not code_str.isdecimal():
+                errors.append(f"Feature codes must be non-negative integers, got: {code_str!r}")
+                continue  # key is invalid; alias checks for this entry are meaningless
+            code = int(code_str)
             if get_vcp_com(code) is None:
-                raise MonitorBossError(
-                    f"Feature code {code} does not correspond to a valid command, can not be aliased")
-        for feature_key, value_aliases in self.value_aliases.items():
-            for alias, value in value_aliases.items():
-                if alias.isdigit():
-                    raise MonitorBossError(f"Value aliases can not be numeric: {alias}")
-        if self.wait_get_time < 0:
-            raise MonitorBossError(f"invalid wait get time: {self.wait_get_time}")
-        if self.wait_set_time < 0:
-            raise MonitorBossError(f"invalid wait set time: {self.wait_set_time}")
-        if self.wait_internal_time < 0:
-            raise MonitorBossError(f"invalid wait internal time: {self.wait_internal_time}")
+                errors.append(f"Feature code {code} does not correspond to a valid command, can not be aliased")
+                continue  # code is invalid; alias checks for this entry are meaningless
+            alias_list = aliases if isinstance(aliases, list) else [aliases]
+            for alias in alias_list:
+                if alias.isdecimal():
+                    errors.append(f"Feature aliases can not be numeric: {alias}")
+                elif alias in seen_aliases:
+                    errors.append(f"Feature alias is used multiple times: {alias!r}")
+                else:
+                    seen_aliases.add(alias)
+        if errors:
+            raise ValueError("\n".join(errors))
+        return v
+
+    @field_validator("value_aliases")
+    @classmethod
+    def validate_value_aliases(cls, v: dict[str, dict[str, str | list[str]]]) -> dict[str, dict[str, str | list[str]]]:
+        """Feature names (outer keys) must be valid VCP commands. Inner value keys must be non-negative integers;
+        aliases must not be numeric or duplicated within a sub-table."""
+        errors: list[str] = []
+        for feature_name, value_map in v.items():
+            # Validate that feature_name corresponds to a valid VCP command
+            if get_vcp_com(feature_name) is None:
+                errors.append(f"Value aliases feature name {feature_name!r} does not correspond to a valid command")
+                continue  # Skip further validation for this invalid feature
+            
+            seen_aliases: set[str] = set()
+            for val_str, aliases in value_map.items():
+                if not val_str.isdecimal():
+                    errors.append(
+                        f"Value IDs must be non-negative integers in feature {feature_name!r}, got: {val_str!r}")
+                    continue  # key is invalid; alias checks for this entry are meaningless
+                alias_list = aliases if isinstance(aliases, list) else [aliases]
+                for alias in alias_list:
+                    if alias.isdecimal():
+                        errors.append(f"Value aliases can not be numeric: {alias}")
+                    elif alias in seen_aliases:
+                        errors.append(
+                            f"Value alias is used multiple times in feature {feature_name!r}: {alias!r}")
+                    else:
+                        seen_aliases.add(alias)
+        if errors:
+            raise ValueError("\n".join(errors))
+        return v
+
+
+class Config(BaseModel):
+    """
+    Runtime-ready configuration model after TOML inversion.
+    Aliases are now keys: {alias_str: id_int}, feature codes are inverted similarly.
+    This model is frozen (immutable) since the tool runs stateless: config is loaded once,
+    used for an operation, then the tool exits. frozen=True prevents any mutation.
+    Note: We don't leverage hashing (frozen enables it, but Config is never used as a dict key).
+    All validation is performed upstream in _RawTomlSettings and _RawTomlConfig.
+    """
+    model_config = ConfigDict(frozen=True)
+
+    monitor_names: dict[str, int]
+    feature_aliases: dict[str, int]
+    value_aliases: dict[str, dict[str, int]]
+    wait_get_time: float
+    wait_set_time: float
+    wait_internal_time: float
+
+    @classmethod
+    def from_raw(cls, raw: _RawTomlConfig) -> "Config":
+        """
+        Convert from raw TOML structure to runtime-ready Config.
+        Performs the alias inversion: {id: [aliases]} -> {alias: id}
+        Also maps raw settings field names to Config field names.
+        All validation is handled upstream by field validators on _RawTomlSettings and _RawTomlConfig.
+        """
+        _log.debug("Converting raw TOML config to runtime Config via inversion")
+
+        # Invert monitor aliases: TOML {mon_id_str: alias_or_list} -> Config {alias_str: mon_id_int}
+        monitor_names: dict[str, int] = {}
+        for mon_id_str, aliases in raw.monitor_names.items():
+            mon_id = int(mon_id_str)
+            alias_list = aliases if isinstance(aliases, list) else [aliases]
+            for alias in alias_list:
+                monitor_names[alias] = mon_id
+
+        # Invert feature aliases: TOML {code_str: alias_or_list} -> Config {alias_str: code_int}
+        feature_aliases: dict[str, int] = {}
+        for code_str, aliases in raw.feature_aliases.items():
+            code = int(code_str)
+            alias_list = aliases if isinstance(aliases, list) else [aliases]
+            for alias in alias_list:
+                feature_aliases[alias] = code
+
+        # Invert value aliases: TOML {feature: {val_str: alias_or_list}} -> Config {feature: {alias: val_int}}
+        value_aliases: dict[str, dict[str, int]] = {}
+        for feature_name, value_map in raw.value_aliases.items():
+            value_aliases[feature_name] = {}
+            for val_str, aliases in value_map.items():
+                val_int = int(val_str)
+                alias_list = aliases if isinstance(aliases, list) else [aliases]
+                for alias in alias_list:
+                    value_aliases[feature_name][alias] = val_int
+
+        return cls(
+            monitor_names=monitor_names,
+            feature_aliases=feature_aliases,
+            value_aliases=value_aliases,
+            wait_get_time=raw.settings.wait_get,
+            wait_set_time=raw.settings.wait_set,
+            wait_internal_time=raw.settings.wait_internal,
+        )
 
 
 def default_toml() -> TOMLDocument:
@@ -162,15 +288,23 @@ def _write_toml(doc: TOMLDocument, path: str | None):
 
 def get_config(path: str | None) -> Config:
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"get Config dataclass from: {Path(path).absolute()}")
-    doc = _read_toml(path)
-    cfg = Config()
+    _log.debug(f"get Config from: {Path(path).absolute()}")
     try:
-        cfg.read(doc)
+        doc = _read_toml(path)
+        # Unwrap tomlkit types to plain Python dict/list/etc for Pydantic
+        unwrapped = doc.unwrap()
+        # Validate against raw TOML structure (including alias validation)
+        raw_cfg = _RawTomlConfig.model_validate(unwrapped)
+        # Convert to runtime-ready Config (performs alias inversion and field mapping)
+        cfg = Config.from_raw(raw_cfg)
+        _log.debug(f"Successfully loaded Config from {Path(path).absolute()}")
+        return cfg
+    except ValidationError as err:
+        raise MonitorBossError(f"Invalid config at {Path(path).absolute()}: {err}") from err
+    except MonitorBossError:
+        raise
     except Exception as err:
-        raise MonitorBossError(f"could not parse config file: {Path(path).absolute()}: {err}") from err
-    cfg.validate()
-    return cfg
+        raise MonitorBossError(f"Could not load config from {Path(path).absolute()}: {err}") from err
 
 
 def set_monitor_alias(alias: str, mon_id: int, path: str | None):
