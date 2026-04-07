@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from .vcp_codes import VCPCommand
-from .vcp_abc import VCP, VCPError, VCPFeatureReturn
+from pyddc.vcp_codes import VCPCommand
+from pyddc.vcp_abc import VCP, VCPError, VCPFeatureReturn
 from types import TracebackType
 from typing import List, Optional, Type
 import ctypes
@@ -23,10 +23,32 @@ from ctypes.wintypes import (
     BYTE,
     WCHAR,
 )
+import winreg
 
 
 class PhysicalMonitor(ctypes.Structure):
     _fields_ = [("handle", HANDLE), ("description", WCHAR * 128)]
+
+CCHDEVICENAME = 32
+
+class MONITORINFOEXW(ctypes.Structure):
+    _fields_ = [
+        ("cbSize", DWORD),
+        ("rcMonitor", RECT),
+        ("rcWork", RECT),
+        ("dwFlags", DWORD),
+        ("szDevice", WCHAR * CCHDEVICENAME),
+    ]
+
+class DISPLAY_DEVICEW(ctypes.Structure):
+    _fields_ = [
+        ("cb", DWORD),
+        ("DeviceName", WCHAR * 32),
+        ("DeviceString", WCHAR * 128),
+        ("StateFlags", DWORD),
+        ("DeviceID", WCHAR * 128),
+        ("DeviceKey", WCHAR * 128),
+    ]
 
 
 # references:
@@ -118,6 +140,65 @@ class WindowsVCP(VCP):
             raise VCPError("failed to get VCP capabilities") from err
         return caps_str.value.decode("ascii")
 
+
+    def get_edid_from_logical_handle(self) -> bytes:
+        """
+        Retrieves the raw EDID bytes for a given HMONITOR handle.
+        """
+        # 1. Get the Logical Device Name (e.g., \\.\DISPLAY1)
+        mon_info = MONITORINFOEXW()
+        mon_info.cbSize = ctypes.sizeof(MONITORINFOEXW)
+        if not ctypes.windll.user32.GetMonitorInfoW(self.hmonitor, ctypes.byref(mon_info)):
+            raise VCPError(
+                f"HMONITOR handle is invalid. "
+                f"HMONITOR: {self.hmonitor} | "
+                f"Win32 error: {ctypes.FormatError()}"
+            )
+
+        # 2. Get the Hardware Device ID
+        # Note: We query the device attached to the monitor name
+        display_device = DISPLAY_DEVICEW()
+        display_device.cb = ctypes.sizeof(DISPLAY_DEVICEW)
+
+        # We call EnumDisplayDevices for the specific monitor name
+        if not ctypes.windll.user32.EnumDisplayDevicesW(mon_info.szDevice, 0, ctypes.byref(display_device), 1):
+            raise VCPError(
+                f"No physical display device attached to logical display. "
+                f"HMONITOR: {self.hmonitor}) | "
+                f"logical display: {mon_info.szDevice} | "
+                f"Win32 error: {ctypes.FormatError()}"
+            )
+
+        # 3. Parse DeviceID into Registry Path
+        # DeviceID looks like: MONITOR\GSM5B55\{4d36e96e-e325-11ce-bfc1-08002be10318}\0001
+        # We need: DISPLAY\GSM5B55\{4d36e96e-e325-11ce-bfc1-08002be10318}\0001
+        device_id = display_device.DeviceID
+        if not device_id:
+            raise VCPError(
+                f"DeviceID is empty. "
+                f"HMONITOR: {self.hmonitor}) | "
+                f"logical display: {mon_info.szDevice} | "
+                f"device: {display_device.DeviceString}"
+            )
+
+        # Standardize the path: replace MONITOR\ with DISPLAY\
+        # and swap the first two '#' with '\' if the format uses them.
+        path_parts = device_id.split('#')
+        if len(path_parts) >= 3:
+            # Format: MONITOR\PNP000\123456...
+            reg_path = f"SYSTEM\\CurrentControlSet\\Enum\\DISPLAY\\{path_parts[1]}\\{path_parts[2]}\\Device Parameters"
+        else:
+            # Fallback for older drivers or virtual displays
+            reg_path = device_id.replace("MONITOR\\", "DISPLAY\\") + "\\Device Parameters"
+
+        # 4. Extract from Registry
+        try:
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, reg_path) as key:
+                edid_blob, _ = winreg.QueryValueEx(key, "EDID")
+                return bytes(edid_blob)
+        except (FileNotFoundError, OSError) as err:
+            raise VCPError(f"Could not open registry location for VCP: {err}") from err
+
     @staticmethod
     def get_vcps() -> List[WindowsVCP]:
         hmonitors = []
@@ -134,3 +215,13 @@ class WindowsVCP(VCP):
         except OSError as err:
             raise VCPError("failed to enumerate VCPs") from err
         return [WindowsVCP(logical) for logical in hmonitors]
+
+
+if __name__ == "__main__":
+    vcps = WindowsVCP.get_vcps()
+    edids = {}
+    for vcp in vcps:
+        edids[str(vcp.hmonitor)] = vcp.get_edid_from_logical_handle()
+
+    for hmonitor, edid in edids.items():
+        print(f"EDID for {hmonitor}:\n{edid}")
