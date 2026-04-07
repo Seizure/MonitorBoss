@@ -140,8 +140,7 @@ class WindowsVCP(VCP):
             raise VCPError("failed to get VCP capabilities") from err
         return caps_str.value.decode("ascii")
 
-
-    def get_edid_from_logical_handle(self) -> bytes:
+    def _get_edid_blob(self) -> bytes:
         """
         Retrieves the raw EDID bytes for a given HMONITOR handle.
         """
@@ -221,7 +220,7 @@ if __name__ == "__main__":
     vcps = WindowsVCP.get_vcps()
     edids = {}
     for vcp in vcps:
-        edids[str(vcp.hmonitor)] = vcp.get_edid_from_logical_handle()
+        edids[str(vcp.hmonitor)] = vcp._get_edid_blob()
 
     for hmonitor, edid in edids.items():
         print(f"EDID for {hmonitor}:\n{edid}")
