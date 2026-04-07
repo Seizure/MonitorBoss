@@ -25,30 +25,34 @@ from ctypes.wintypes import (
 )
 import winreg
 
+
+class PhysicalMonitor(ctypes.Structure):
+    _fields_ = [("handle", HANDLE), ("description", WCHAR * 128)]
+
+
+class MONITORINFOEXW(ctypes.Structure):
+    _fields_ = [
+        ("cbSize", DWORD),
+        ("rcMonitor", RECT),
+        ("rcWork", RECT),
+        ("dwFlags", DWORD),
+        ("szDevice", WCHAR * 32),  # CCHDEVICENAME = 32
+    ]
+
+
+class DISPLAY_DEVICEW(ctypes.Structure):
+    _fields_ = [
+        ("cb", DWORD),
+        ("DeviceName", WCHAR * 32),
+        ("DeviceString", WCHAR * 128),
+        ("StateFlags", DWORD),
+        ("DeviceID", WCHAR * 128),
+        ("DeviceKey", WCHAR * 128),
+    ]
+
 # references:
 # https://stackoverflow.com/questions/16588133/
 class WindowsVCP(VCP):
-    class PhysicalMonitor(ctypes.Structure):
-        _fields_ = [("handle", HANDLE), ("description", WCHAR * 128)]
-
-    class MONITORINFOEXW(ctypes.Structure):
-        _fields_ = [
-            ("cbSize", DWORD),
-            ("rcMonitor", RECT),
-            ("rcWork", RECT),
-            ("dwFlags", DWORD),
-            ("szDevice", WCHAR * 32), # CCHDEVICENAME = 32
-        ]
-
-    class DISPLAY_DEVICEW(ctypes.Structure):
-        _fields_ = [
-            ("cb", DWORD),
-            ("DeviceName", WCHAR * 32),
-            ("DeviceString", WCHAR * 128),
-            ("StateFlags", DWORD),
-            ("DeviceID", WCHAR * 128),
-            ("DeviceKey", WCHAR * 128),
-        ]
 
     def __init__(self, hmonitor: HMONITOR):
         super().__init__()
@@ -70,7 +74,7 @@ class WindowsVCP(VCP):
             #   it does not allow opening and closing of individual physical
             #   monitors without their hmonitors.
             raise VCPError("more than one physical monitor per hmonitor")
-        physical_monitors = (self.__class__.PhysicalMonitor * num_physical.value)()
+        physical_monitors = (PhysicalMonitor * num_physical.value)()
         self.logger.debug("GetPhysicalMonitorsFromHMONITOR")
         try:
             if not dxva2.GetPhysicalMonitorsFromHMONITOR(self.hmonitor, num_physical.value, physical_monitors):
@@ -141,9 +145,6 @@ class WindowsVCP(VCP):
         Retrieves the raw EDID bytes for a given HMONITOR handle.
         """
         # 1. Get the Logical Device Name (e.g., \\.\DISPLAY1)
-        MONITORINFOEXW = self.__class__.MONITORINFOEXW
-        DISPLAY_DEVICEW = self.__class__.DISPLAY_DEVICEW
-
         mon_info = MONITORINFOEXW()
         mon_info.cbSize = ctypes.sizeof(MONITORINFOEXW)
         if not ctypes.windll.user32.GetMonitorInfoW(self.hmonitor, ctypes.byref(mon_info)):

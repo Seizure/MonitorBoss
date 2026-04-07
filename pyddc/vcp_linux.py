@@ -10,42 +10,61 @@ import os
 import struct
 import sys
 import time
+import ctypes
 
 assert sys.platform.startswith("linux"), "This file must be imported only for Linux"
 
 import fcntl
 import pyudev
 
+GET_VCP_HEADER_LENGTH = 2  # header packet length
+PROTOCOL_FLAG = 0x80  # protocol flag is bit 7 of the length byte
+
+# VCP commands
+GET_VCP_CMD = 0x01  # get VCP feature command
+GET_VCP_REPLY = 0x02  # get VCP feature reply code
+SET_VCP_CMD = 0x03  # set VCP feature command
+GET_VCP_CAPS_CMD = 0xF3  # Capabilities Request command
+GET_VCP_CAPS_REPLY = 0xE3  # Capabilities Request reply
+
+# timeouts
+CMD_RATE = 0.05  # at least 50ms between messages
+
+# addresses
+SEGMENT_ADDR = 0x30 # i2c segment address for EDIDs larger than 256 bytes
+DDCCI_ADDR = 0x37  # DDC-CI command address on the I2C bus
+EDID_I2C_ADDR = 0x50 # I2C slave address for EDID
+HOST_ADDRESS = 0x51  # virtual I2C slave address of the host
+I2C_SLAVE = 0x0703  # I2C bus slave address
+
+# flags
+I2C_M_RD = 0x0001  # read flag for I2C messages
+I2C_RDWR = 0x0707  # I2C_RDWR ioctl transaction structure
+
+class i2c_msg(ctypes.Structure):
+    _fields_ = [
+        ("addr", ctypes.c_uint16),
+        ("flags", ctypes.c_uint16),
+        ("len", ctypes.c_uint16),
+        ("buf", ctypes.POINTER(ctypes.c_char)),
+    ]
+
+class i2c_rdwr_ioctl_data(ctypes.Structure):
+    _fields_ = [
+        ("msgs", ctypes.POINTER(i2c_msg)),
+        ("nmsgs", ctypes.c_uint32),
+    ]
+
+GET_VCP_RESULT_CODES = {
+    0: "No Error",
+    1: "Unsupported VCP code",
+}
+
 
 # references:
 # https://github.com/Informatic/python-ddcci
 # https://github.com/siemer/ddcci/
 class LinuxVCP(VCP):
-    GET_VCP_HEADER_LENGTH = 2  # header packet length
-    PROTOCOL_FLAG = 0x80  # protocol flag is bit 7 of the length byte
-
-    # VCP commands
-    GET_VCP_CMD = 0x01  # get VCP feature command
-    GET_VCP_REPLY = 0x02  # get VCP feature reply code
-    SET_VCP_CMD = 0x03  # set VCP feature command
-    GET_VCP_CAPS_CMD = 0xF3  # Capabilities Request command
-    GET_VCP_CAPS_REPLY = 0xE3  # Capabilities Request reply
-
-    # timeouts
-    CMD_RATE = 0.05  # at least 50ms between messages
-
-    # addresses
-    DDCCI_ADDR = 0x37  # DDC-CI command address on the I2C bus
-    EDID_I2C_ADDR = 0x50 # I2C slave address for EDID
-    HOST_ADDRESS = 0x51  # virtual I2C slave address of the host
-    I2C_SLAVE = 0x0703  # I2C bus slave address
-
-
-    GET_VCP_RESULT_CODES = {
-        0: "No Error",
-        1: "Unsupported VCP code",
-    }
-
     # TODO: maybe generalize this into general VCP functionality, as it will become relevant when we
     #  create macOS driver, and make Windows driver low level
     CHECKSUM_ERRORS: str = "ignore"
