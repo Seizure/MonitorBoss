@@ -120,15 +120,15 @@ class LinuxVCP(VCP):
         self.rate_limit()
         # transmission data
         data = bytearray()
-        data.append(self.SET_VCP_CMD)
+        data.append(SET_VCP_CMD)
         data.append(com.code)
         low_byte, high_byte = struct.pack("H", value)
         data.append(high_byte)
         data.append(low_byte)
         # add headers and footers
-        data.insert(0, (len(data) | self.PROTOCOL_FLAG))
-        data.insert(0, self.HOST_ADDRESS)
-        data.append(self.get_checksum(bytearray([self.DDCCI_ADDR << 1]) + data))
+        data.insert(0, (len(data) | PROTOCOL_FLAG))
+        data.insert(0, HOST_ADDRESS)
+        data.append(self.get_checksum(bytearray([DDCCI_ADDR << 1]) + data))
         # write data
         self.logger.debug("data=" + " ".join([f"{x:02X}" for x in data]))
         self.write_bytes(data)
@@ -139,22 +139,22 @@ class LinuxVCP(VCP):
         self.rate_limit()
         # transmission data
         data = bytearray()
-        data.append(self.GET_VCP_CMD)
+        data.append(GET_VCP_CMD)
         data.append(com.code)
         # add headers and footers
-        data.insert(0, (len(data) | self.PROTOCOL_FLAG))
-        data.insert(0, self.HOST_ADDRESS)
-        data.append(self.get_checksum(bytearray([self.DDCCI_ADDR << 1]) + data))
+        data.insert(0, (len(data) | PROTOCOL_FLAG))
+        data.insert(0, HOST_ADDRESS)
+        data.append(self.get_checksum(bytearray([DDCCI_ADDR << 1]) + data))
         # write data
         self.logger.debug("data=" + " ".join([f"{x:02X}" for x in data]))
         self.write_bytes(data)
         # wait
         time.sleep(timeout)
         # read the data
-        header = self.read_bytes(self.GET_VCP_HEADER_LENGTH)
+        header = self.read_bytes(GET_VCP_HEADER_LENGTH)
         self.logger.debug("header=" + " ".join([f"{x:02X}" for x in header]))
         source, length = struct.unpack("=BB", header)
-        length &= ~self.PROTOCOL_FLAG  # clear protocol flag
+        length &= ~PROTOCOL_FLAG  # clear protocol flag
         payload = self.read_bytes(length + 1)
         self.logger.debug("payload=" + " ".join([f"{x:02X}" for x in payload]))
         # check checksum
@@ -176,13 +176,13 @@ class LinuxVCP(VCP):
             feature_max,
             feature_current,
         ) = struct.unpack(">BBBBHH", payload)
-        if reply_code != self.GET_VCP_REPLY:
+        if reply_code != GET_VCP_REPLY:
             raise VCPIOError(f"received unexpected response code: {reply_code}")
         if vcp_opcode != com.code:
             raise VCPIOError(f"received unexpected opcode: {vcp_opcode}")
         if result_code > 0:
             try:
-                message = self.GET_VCP_RESULT_CODES[result_code]
+                message = GET_VCP_RESULT_CODES[result_code]
             except KeyError:
                 message = f"received result with unknown code: {result_code}"
             raise VCPIOError(message)
@@ -202,23 +202,23 @@ class LinuxVCP(VCP):
             loop_count += 1
             # transmission data
             data = bytearray()
-            data.append(self.GET_VCP_CAPS_CMD)
+            data.append(GET_VCP_CAPS_CMD)
             low_byte, high_byte = struct.pack("H", offset)
             data.append(high_byte)
             data.append(low_byte)
             # add headers and footers
-            data.insert(0, (len(data) | self.PROTOCOL_FLAG))
-            data.insert(0, self.HOST_ADDRESS)
+            data.insert(0, (len(data) | PROTOCOL_FLAG))
+            data.insert(0, HOST_ADDRESS)
             data.append(self.get_checksum(data))
             # write data
             self.write_bytes(data)
             # wait
             time.sleep(timeout)
             # read the data
-            header = self.read_bytes(self.GET_VCP_HEADER_LENGTH)
+            header = self.read_bytes(GET_VCP_HEADER_LENGTH)
             self.logger.debug("header=" + " ".join([f"{x:02X}" for x in header]))
             source, length = struct.unpack("BB", header)
-            length &= ~self.PROTOCOL_FLAG  # clear protocol flag
+            length &= ~PROTOCOL_FLAG  # clear protocol flag
             payload = self.read_bytes(length + 1)
             self.logger.debug("payload=" + " ".join([f"{x:02X}" for x in payload]))
             # check if length is valid
@@ -237,7 +237,7 @@ class LinuxVCP(VCP):
             # unpack the payload
             reply_code, payload = struct.unpack(f">B{length - 1}s", payload)
             length -= 1
-            if reply_code != self.GET_VCP_CAPS_REPLY:
+            if reply_code != GET_VCP_CAPS_REPLY:
                 raise VCPIOError(f"received unexpected response code: {reply_code}")
             # unpack the payload
             offset, payload = struct.unpack(f">H{length - 2}s", payload)
@@ -262,7 +262,7 @@ class LinuxVCP(VCP):
 
     def rate_limit(self):
         if self.last_set is not None:
-            rate_delay = self.CMD_RATE - time.time() - self.last_set
+            rate_delay = CMD_RATE - time.time() - self.last_set
             if rate_delay > 0:
                 time.sleep(rate_delay)
 
@@ -280,8 +280,6 @@ class LinuxVCP(VCP):
 
     def _get_edid_blob(self) -> bytes:
         device_path = f"/dev/i2c-{self.bus_number}"
-        I2C_SLAVE = self.__class__.I2C_SLAVE
-        EDID_I2C_ADDR = self.__class__.EDID_I2C_ADDR
 
         try:
             # 1. Open the i2c device
