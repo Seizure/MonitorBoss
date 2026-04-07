@@ -89,7 +89,7 @@ class LinuxVCP(VCP):
 
         try:
             self.fd = os.open(self.fp, os.O_RDWR)
-            fcntl.ioctl(self.fd, self.I2C_SLAVE, self.DDCCI_ADDR)
+            fcntl.ioctl(self.fd, I2C_SLAVE, DDCCI_ADDR)
             self.read_bytes(1)
         except PermissionError as err:
             cleanup(self.fd)
@@ -380,5 +380,5 @@ if __name__ == "__main__":
     for vcp in vcp_list:
         edids[str(vcp.bus_number)] = vcp._get_edid_blob()
 
-    for bus_number, edid in edids.items():
-        print(f"EDID for {bus_number}:\n{edid}")
+    for bus, edid in edids.items():
+        print(f"EDID for {bus}:\n{edid}")
