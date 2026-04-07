@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from .vcp_codes import VCPCommand
-from .vcp_abc import VCP, VCPIOError, VCPPermissionError, VCPFeatureReturn
+from pyddc.vcp_codes import VCPCommand
+from pyddc.vcp_abc import VCP, VCPIOError, VCPPermissionError, VCPFeatureReturn
 from types import TracebackType
 from typing import List, Optional, Type
 import os
