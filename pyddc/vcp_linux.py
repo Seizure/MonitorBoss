@@ -278,29 +278,85 @@ class LinuxVCP(VCP):
         except OSError as err:
             raise VCPIOError("unable write to I2C bus") from err
 
+    @staticmethod
+    def _i2c_transaction(fd, addr, start_reg, length):
+        """Standard Atomic Write-then-Read."""
+        write_buf = ctypes.create_string_buffer(bytes([start_reg]))
+        read_buf = ctypes.create_string_buffer(length)
+        msgs = (i2c_msg * 2)(
+            i2c_msg(addr=addr, flags=0, len=1, buf=write_buf),
+            i2c_msg(addr=addr, flags=I2C_M_RD, len=length, buf=read_buf)
+        )
+        rdwr = i2c_rdwr_ioctl_data(msgs=msgs, nmsgs=2)
+        fcntl.ioctl(fd, I2C_RDWR, rdwr)
+        return read_buf.raw
+
+    @staticmethod
+    def _i2c_segmented_read(fd, segment_ptr, length):
+        """
+        Atomic Segmented Read:
+        1. Write Segment Number to 0x30
+        2. Write Offset 0 to 0x50
+        3. Read N bytes from 0x50
+        """
+        # If segment is 0, we don't strictly need the segment pointer write,
+        # but doing it anyway is more robust for some controllers.
+        seg_buf = ctypes.create_string_buffer(bytes([segment_ptr]))
+        off_buf = ctypes.create_string_buffer(bytes([0x00]))
+        read_buf = ctypes.create_string_buffer(length)
+
+        msgs = (i2c_msg * 3)(
+            i2c_msg(addr=SEGMENT_ADDR, flags=0, len=1, buf=seg_buf),
+            i2c_msg(addr=EDID_I2C_ADDR, flags=0, len=1, buf=off_buf),
+            i2c_msg(addr=EDID_I2C_ADDR, flags=I2C_M_RD, len=length, buf=read_buf)
+        )
+
+        rdwr = i2c_rdwr_ioctl_data(msgs=msgs, nmsgs=3)
+        fcntl.ioctl(fd, I2C_RDWR, rdwr)
+        return read_buf.raw
+
+    # TODO: there are two safety checks we probably want to implement:
+    # 1. a cap on extensions. Some monitors will falsely report 255 extensions. 8 is a sane max for the real world
+    # 2. run sanity checks on the EDID block header. The first block has a header of "00 FF FF FF FF FF FF". If this header
+        # is detected in a following block, the monitor is looping and we can stop
+    # 3. Each 128-byte block ends with a checksum byte. The sum of all bytes in a block must equal 0 (mod 256). If the
+        # first block fails this test, its extension count is unreliable. If a follow up block fails this test, it is
+        # either corrupt, or garbage data, and we can probably stop.
     def _get_edid_blob(self) -> bytes:
         device_path = f"/dev/i2c-{self.bus_number}"
 
+        fd = os.open(device_path, os.O_RDWR)
         try:
-            # 1. Open the i2c device
-            fd = os.open(device_path, os.O_RDWR)
-            try:
-                # 2. Tell the kernel we want to talk to the EDID address (0x50)
-                fcntl.ioctl(fd, I2C_SLAVE, EDID_I2C_ADDR)
+            # 1. Atomic Discovery: Read first 128 bytes (Block 0)
+            base_block = self._i2c_transaction(fd, EDID_I2C_ADDR, 0, 128)
+            extension_count = base_block[126]
 
-                # 3. Read the first 128 bytes (Standard EDID block)
-                # Some monitors have extension blocks (256 bytes), but 128 is the base.
-                edid = os.read(fd, 128)
+            if extension_count == 0:
+                return base_block
 
-                if len(edid) < 128:
-                    raise VCPIOError(f"Incomplete EDID read from {device_path}")
+            # 2. Determine how many 256-byte segments we need
+            # Total blocks = Base (1) + Extensions (N)
+            total_blocks = 1 + extension_count
+            total_segments = (total_blocks + 1) // 2
 
-                return edid
-            finally:
-                os.close(fd)
+            full_edid = bytearray()
 
-        except (OSError, IOError) as err:
-            raise VCPIOError(f"Failed to read EDID from {device_path}: {err}") from err
+            for segment in range(total_segments):
+                # For each segment, read up to 2 blocks (256 bytes)
+                blocks_in_this_segment = 2
+                if segment == total_segments - 1 and total_blocks % 2 != 0:
+                    blocks_in_this_segment = 1
+
+                read_len = blocks_in_this_segment * 128
+
+                # Atomic Segmented Read
+                segment_data = self._i2c_segmented_read(fd, segment, read_len)
+                full_edid.extend(segment_data)
+
+            return bytes(full_edid)
+
+        finally:
+            os.close(fd)
 
     @staticmethod
     def get_vcps() -> List[LinuxVCP]:
