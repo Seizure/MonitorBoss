@@ -36,8 +36,10 @@ class LinuxVCP(VCP):
 
     # addresses
     DDCCI_ADDR = 0x37  # DDC-CI command address on the I2C bus
+    EDID_I2C_ADDR = 0x50 # I2C slave address for EDID
     HOST_ADDRESS = 0x51  # virtual I2C slave address of the host
     I2C_SLAVE = 0x0703  # I2C bus slave address
+
 
     GET_VCP_RESULT_CODES = {
         0: "No Error",
@@ -257,6 +259,32 @@ class LinuxVCP(VCP):
         except OSError as err:
             raise VCPIOError("unable write to I2C bus") from err
 
+    def _get_edid_blob(self) -> bytes:
+        device_path = f"/dev/i2c-{self.bus_number}"
+        I2C_SLAVE = self.__class__.I2C_SLAVE
+        EDID_I2C_ADDR = self.__class__.EDID_I2C_ADDR
+
+        try:
+            # 1. Open the i2c device
+            fd = os.open(device_path, os.O_RDWR)
+            try:
+                # 2. Tell the kernel we want to talk to the EDID address (0x50)
+                fcntl.ioctl(fd, I2C_SLAVE, EDID_I2C_ADDR)
+
+                # 3. Read the first 128 bytes (Standard EDID block)
+                # Some monitors have extension blocks (256 bytes), but 128 is the base.
+                edid = os.read(fd, 128)
+
+                if len(edid) < 128:
+                    raise VCPIOError(f"Incomplete EDID read from {device_path}")
+
+                return edid
+            finally:
+                os.close(fd)
+
+        except (OSError, IOError) as err:
+            raise VCPIOError(f"Failed to read EDID from {device_path}: {err}") from err
+
     @staticmethod
     def get_vcps() -> List[LinuxVCP]:
         vcps = []
@@ -271,3 +299,13 @@ class LinuxVCP(VCP):
             else:
                 vcps.append(vcp)
         return vcps
+
+
+if __name__ == "__main__":
+    vcp_list = LinuxVCP.get_vcps()
+    edids = {}
+    for vcp in vcp_list:
+        edids[str(vcp.bus_number)] = vcp._get_edid_blob()
+
+    for bus_number, edid in edids.items():
+        print(f"EDID for {bus_number}:\n{edid}")
