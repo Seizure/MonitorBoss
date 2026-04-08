@@ -80,8 +80,8 @@ class LinuxVCP(VCP):
     def __enter__(self):
         super().__enter__()
 
-        def cleanup(fd: Optional[int]):
-            if fd is not None:
+        def cleanup():
+            if self.fd is not None:
                 try:
                     os.close(self.fd)
                 except OSError:
@@ -92,14 +92,15 @@ class LinuxVCP(VCP):
             fcntl.ioctl(self.fd, I2C_SLAVE, DDCCI_ADDR)
             self.read_bytes(1)
         except PermissionError as err:
-            cleanup(self.fd)
+            cleanup()
             raise VCPPermissionError(f"permission error for {self.fp}") from err
         except OSError as err:
-            cleanup(self.fd)
+            cleanup()
             raise VCPIOError(f"unable to open VCP at {self.fp}") from err
         except Exception as err:
-            cleanup(self.fd)
+            cleanup()
             raise err
+
         return self
 
     def __exit__(
@@ -122,7 +123,7 @@ class LinuxVCP(VCP):
         data = bytearray()
         data.append(SET_VCP_CMD)
         data.append(com.code)
-        low_byte, high_byte = struct.pack("H", value)
+        low_byte, high_byte = struct.pack("<H", value)
         data.append(high_byte)
         data.append(low_byte)
         # add headers and footers
@@ -203,7 +204,7 @@ class LinuxVCP(VCP):
             # transmission data
             data = bytearray()
             data.append(GET_VCP_CAPS_CMD)
-            low_byte, high_byte = struct.pack("H", offset)
+            low_byte, high_byte = struct.pack("<H", offset)
             data.append(high_byte)
             data.append(low_byte)
             # add headers and footers
@@ -262,7 +263,7 @@ class LinuxVCP(VCP):
 
     def rate_limit(self):
         if self.last_set is not None:
-            rate_delay = CMD_RATE - time.time() - self.last_set
+            rate_delay = CMD_RATE - (time.time() - self.last_set)
             if rate_delay > 0:
                 time.sleep(rate_delay)
 
