@@ -119,55 +119,22 @@ class LinuxVCP(VCP):
     def _set_vcp_feature(self, com: VCPCommand, value: int, timeout: float):
         del timeout  # unused
         self.rate_limit()
-        # transmission data
-        data = bytearray()
-        data.append(SET_VCP_CMD)
-        data.append(com.code)
+        payload = bytearray()
+        payload.append(SET_VCP_CMD)
+        payload.append(com.code)
         low_byte, high_byte = struct.pack("<H", value)
-        data.append(high_byte)
-        data.append(low_byte)
-        # add headers and footers
-        data.insert(0, (len(data) | PROTOCOL_FLAG))
-        data.insert(0, HOST_ADDRESS)
-        data.append(self.get_checksum(bytearray([DDCCI_ADDR << 1]) + data))
-        # write data
-        self.logger.debug("data=" + " ".join([f"{x:02X}" for x in data]))
-        self.write_bytes(data)
-        # store time of last set VCP
+        payload.append(high_byte)
+        payload.append(low_byte)
+        self._ddc_write(payload)
         self.last_set = time.time()
 
     def _get_vcp_feature(self, com: VCPCommand, timeout: float) -> VCPFeatureReturn:
         self.rate_limit()
-        # transmission data
-        data = bytearray()
-        data.append(GET_VCP_CMD)
-        data.append(com.code)
-        # add headers and footers
-        data.insert(0, (len(data) | PROTOCOL_FLAG))
-        data.insert(0, HOST_ADDRESS)
-        data.append(self.get_checksum(bytearray([DDCCI_ADDR << 1]) + data))
-        # write data
-        self.logger.debug("data=" + " ".join([f"{x:02X}" for x in data]))
-        self.write_bytes(data)
-        # wait
-        time.sleep(timeout)
-        # read the data
-        header = self.read_bytes(GET_VCP_HEADER_LENGTH)
-        self.logger.debug("header=" + " ".join([f"{x:02X}" for x in header]))
-        source, length = struct.unpack("=BB", header)
-        length &= ~PROTOCOL_FLAG  # clear protocol flag
-        payload = self.read_bytes(length + 1)
-        self.logger.debug("payload=" + " ".join([f"{x:02X}" for x in payload]))
-        # check checksum
-        payload, checksum = struct.unpack(f"={length}sB", payload)
-        calculated_checksum = self.get_checksum(header + payload)
-        checksum_xor = checksum ^ calculated_checksum
-        if checksum_xor:
-            message = f"checksum does not match: {checksum_xor}"
-            if self.CHECKSUM_ERRORS.lower() == "strict":
-                raise VCPIOError(message)
-            elif self.CHECKSUM_ERRORS.lower() == "warning":
-                self.logger.warning(message)
+        payload = bytearray()
+        payload.append(GET_VCP_CMD)
+        payload.append(com.code)
+        self._ddc_write(payload)
+        _, payload = self._ddc_read(timeout)
         # unpack the payload
         (
             reply_code,
@@ -187,60 +154,33 @@ class LinuxVCP(VCP):
             except KeyError:
                 message = f"received result with unknown code: {result_code}"
             raise VCPIOError(message)
-
         return VCPFeatureReturn(feature_current, feature_max)
 
     def _get_vcp_capabilities_str(self, timeout: float) -> str:
         # Create an empty capabilities string to be filled with the data
         caps_str = ""
         self.rate_limit()
-        # Get the first 32B of capabilities string
         offset = 0
-        # Keep a count going to keep things sane
         loop_count = 0
         loop_count_limit = 40
         while loop_count < loop_count_limit:
             loop_count += 1
-            # transmission data
-            data = bytearray()
-            data.append(GET_VCP_CAPS_CMD)
+            payload = bytearray()
+            payload.append(GET_VCP_CAPS_CMD)
             low_byte, high_byte = struct.pack("<H", offset)
-            data.append(high_byte)
-            data.append(low_byte)
-            # add headers and footers
-            data.insert(0, (len(data) | PROTOCOL_FLAG))
-            data.insert(0, HOST_ADDRESS)
-            data.append(self.get_checksum(data))
-            # write data
-            self.write_bytes(data)
-            # wait
-            time.sleep(timeout)
-            # read the data
-            header = self.read_bytes(GET_VCP_HEADER_LENGTH)
-            self.logger.debug("header=" + " ".join([f"{x:02X}" for x in header]))
-            source, length = struct.unpack("BB", header)
-            length &= ~PROTOCOL_FLAG  # clear protocol flag
-            payload = self.read_bytes(length + 1)
-            self.logger.debug("payload=" + " ".join([f"{x:02X}" for x in payload]))
+            payload.append(high_byte)
+            payload.append(low_byte)
+            self._ddc_write(payload)
+            length, payload = self._ddc_read(timeout)
             # check if length is valid
             if length < 3 or length > 35:
                 raise VCPIOError(f"received unexpected response length: {length}")
-            # check checksum
-            payload, checksum = struct.unpack(f"{length}sB", payload)
-            calculated_checksum = self.get_checksum(header + payload)
-            checksum_xor = checksum ^ calculated_checksum
-            if checksum_xor:
-                message = f"checksum does not match: {checksum_xor}"
-                if self.CHECKSUM_ERRORS.lower() == "strict":
-                    raise VCPIOError(message)
-                elif self.CHECKSUM_ERRORS.lower() == "warning":
-                    self.logger.warning(message)
-            # unpack the payload
+            # unpack reply code
             reply_code, payload = struct.unpack(f">B{length - 1}s", payload)
             length -= 1
             if reply_code != GET_VCP_CAPS_REPLY:
                 raise VCPIOError(f"received unexpected response code: {reply_code}")
-            # unpack the payload
+            # unpack offset and string data
             offset, payload = struct.unpack(f">H{length - 2}s", payload)
             length -= 2
             if length > 0:
@@ -278,6 +218,40 @@ class LinuxVCP(VCP):
             os.write(self.fd, data)
         except OSError as err:
             raise VCPIOError("unable write to I2C bus") from err
+
+    def _ddc_write(self, payload: bytearray):
+        """Wrap payload in a DDC-CI packet (framing header + checksum) and write it to the bus."""
+        data = bytearray(payload)
+        data.insert(0, len(data) | PROTOCOL_FLAG)
+        data.insert(0, HOST_ADDRESS)
+        data.append(self.get_checksum(bytearray([DDCCI_ADDR << 1]) + data))
+        self.logger.debug("data=" + " ".join([f"{x:02X}" for x in data]))
+        self.write_bytes(data)
+
+    def _ddc_read(self, timeout: float) -> tuple[int, bytes]:
+        """Wait timeout seconds, read a DDC-CI response, validate its checksum.
+
+        Returns a (length, payload) tuple where length is the data length from
+        the response header (protocol flag cleared) and payload is the raw
+        response payload bytes (checksum byte stripped).
+        """
+        time.sleep(timeout)
+        header = self.read_bytes(GET_VCP_HEADER_LENGTH)
+        self.logger.debug("header=" + " ".join([f"{x:02X}" for x in header]))
+        _, length = struct.unpack("=BB", header)
+        length &= ~PROTOCOL_FLAG  # clear protocol flag
+        raw_payload = self.read_bytes(length + 1)
+        self.logger.debug("payload=" + " ".join([f"{x:02X}" for x in raw_payload]))
+        payload, checksum = struct.unpack(f"={length}sB", raw_payload)
+        calculated_checksum = self.get_checksum(header + payload)
+        checksum_xor = checksum ^ calculated_checksum
+        if checksum_xor:
+            message = f"checksum does not match: {checksum_xor}"
+            if self.CHECKSUM_ERRORS.lower() == "strict":
+                raise VCPIOError(message)
+            elif self.CHECKSUM_ERRORS.lower() == "warning":
+                self.logger.warning(message)
+        return length, payload
 
     @staticmethod
     def _i2c_transaction(fd, addr, start_reg, length):
