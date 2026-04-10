@@ -69,7 +69,7 @@ class LinuxVCP(VCP):
     #  create macOS driver, and make Windows driver low level
     CHECKSUM_ERRORS: str = "ignore"
 
-    def __init__(self, bus_number: int):
+    def __init__(self, bus_number: str):
         super().__init__()
         self.bus_number = bus_number
         self.fd: Optional[int] = None
@@ -338,14 +338,14 @@ class LinuxVCP(VCP):
         vcps = []
         # iterate I2C devices
         for device in pyudev.Context().list_devices(subsystem="i2c"):
-            vcp = LinuxVCP(device.sys_number)
+            linux_vcp = LinuxVCP(device.sys_number)
             try:
-                with vcp:
+                with linux_vcp:
                     pass
             except (OSError, VCPIOError):
                 pass
             else:
-                vcps.append(vcp)
+                vcps.append(linux_vcp)
         return vcps
 
 
