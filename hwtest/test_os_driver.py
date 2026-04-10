@@ -112,6 +112,8 @@ def test_set_vcp_feature(vcp: VCP, hw_results: dict[str, str]) -> None:
         with vcp as v:
             after = v.get_vcp_feature(lum_com)
 
+        time.sleep(0.2) # this is probably overly cautious but that's fine, and makes the tangible results more obvious
+
         assert after.value == test_value, (
             f"Expected luminance {test_value} after set, got {after.value}"
         )

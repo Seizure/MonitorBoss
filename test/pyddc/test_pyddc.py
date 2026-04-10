@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 
 from pyddc import get_vcp_com, parse_capabilities, vcp_codes
@@ -65,6 +67,16 @@ class TestGetMax:
         with self.vcp as vcp:
             assert vcp.get_vcp_feature_max(lum_command) == 80
         assert self.vcp.code_maximum[lum_command.code] == 80
+
+    def test_getmax_cache_hit(self):
+        vcp = VCP(vcp_template)
+        with vcp as v:
+            vcp.get_vcp_feature(lum_command)  # populate cache
+        sentinel = AssertionError("_get_vcp_feature was called — result should have been served from cache")
+        with patch.object(vcp, "_get_vcp_feature", side_effect=sentinel):
+            with vcp as v:
+                max_val = v.get_vcp_feature_max(lum_command)
+        assert max_val == 80
 
 
 class TestSetFeature:
