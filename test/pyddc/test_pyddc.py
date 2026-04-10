@@ -2,8 +2,8 @@ import pytest
 
 from pyddc import get_vcp_com, parse_capabilities, vcp_codes
 from pyddc.vcp_codes import VCPCodes
-from .vcp_dummy import VCPTemplate, SupportedCodeTemplate, DummyVCP as VCP
-from ..testdata import input_command, lum_command, reset_command, active_control, lum_template, source_template, vcp_template
+from test.pyddc.vcp_dummy import VCPTemplate, SupportedCodeTemplate, DummyVCP as VCP
+from test.testdata import input_command, lum_command, reset_command, active_control, lum_template, source_template, vcp_template
 
 
 class TestGetFeature:
