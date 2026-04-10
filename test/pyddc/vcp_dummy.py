@@ -12,6 +12,22 @@ from pyddc.vcp_codes import VCPCodes, get_vcp_com
 # TODO: do we want to write test units for the template classes and added functionality within DummyVCP?
 #   eg, the "faulty" behavior
 
+DUMMY_EDID = data = b'\x00\xff\xff\xff\xff\xff\xff\x00\x34\x53\x23\x4f\x65\x65\xfc\x03' \
+                   b'\x01\x22\x01\x04\xa2\x30\x1b\x78\xf7\xee\x91\xa3\x54\x4c\x99\x26' \
+                   b'\x0f\x50\x54\x25\x4a\x00\x81\xc0\x81\x80\x95\x00\xb3\x00\x01\x01' \
+                   b'\x01\x01\x01\x01\x01\x01\x02\x3a\x80\x18\x71\x38\x2d\x40\x58\x2c' \
+                   b'\x45\x00\xe0\x0e\x11\x00\x00\x1e\x00\x00\x00\xfd\x00\x30\x3e\x1e' \
+                   b'\x53\x11\x02\x00\x00\x0f\x0a\x00\x00\x00\x00\x00\x00\xfc\x00\x44' \
+                   b'\x45\x4c\x4c\x20\x50\x32\x34\x31\x39\x48\x0a\x20\x00\x00\x00\x10' \
+                   b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01' \
+                   b'\xd3\x02\x03\x13\x70\x47\x01\x02\x03\x04\x05\x10\x1f\x00\x00\x00' \
+                   b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' \
+                   b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' \
+                   b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' \
+                   b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' \
+                   b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' \
+                   b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' \
+                   b'\x00\x00\x00\x00\x00\x00\x00\xf3'
 
 @dataclass
 class SupportedCodeTemplate:
@@ -49,9 +65,10 @@ class VCPTemplate:
     current_values: dict[int, int] = {}
     unknown_max_values: dict[int, int] = {}
     caps_str: str
+    edid_blob: bytes
     faulty: bool  # for tests where you want the VCP operations to fail with a VCPError
 
-    def __init__(self, supported_codes: list[SupportedCodeTemplate], caps_str: str, faulty: bool):
+    def __init__(self, supported_codes: list[SupportedCodeTemplate], caps_str: str, edid_blob, faulty: bool):
         for code in supported_codes:
             self.supported_codes[code.code] = code.supported_params
             if code.initial_value:
@@ -59,31 +76,34 @@ class VCPTemplate:
             if code.max_value:
                 self.unknown_max_values[code.code] = code.max_value
         self.caps_str = caps_str
+        self.edid_blob = edid_blob
         self.faulty = faulty
 
 
 DEFAULT_VCP_TEMPLATE = VCPTemplate(
-    [
+    supported_codes = [
         SupportedCodeTemplate(VCPCodes.restore_factory_default.value, [], None, None),
         SupportedCodeTemplate(VCPCodes.image_luminance.value, None, 75, 80),
         SupportedCodeTemplate(VCPCodes.image_contrast.value, None, 75, 100),
         SupportedCodeTemplate(VCPCodes.input_source, [27, 15, 17, 257], 257, None),
         SupportedCodeTemplate(VCPCodes.image_orientation.value, [1, 2, 4], 2, None),
     ],
-    "(prot(monitor)type(LCD)model(DUMM13)cmds(04)vcp(10 12 60(1B 0F 11 ) AA(01 02 04 ) )mccs_ver(2.1))",
-    False
+    caps_str = "(prot(monitor)type(LCD)model(DUMM13)cmds(04)vcp(10 12 60(1B 0F 11 ) AA(01 02 04 ) )mccs_ver(2.1))",
+    edid_blob = DUMMY_EDID,
+    faulty = False
 )
 
 FAULTY_VCP_TEMPLATE = VCPTemplate(
-    [
+    supported_codes = [
         SupportedCodeTemplate(VCPCodes.restore_factory_default.value, [], None, None),
         SupportedCodeTemplate(VCPCodes.image_luminance.value, None, 75, 80),
         SupportedCodeTemplate(VCPCodes.image_contrast.value, None, 75, 100),
         SupportedCodeTemplate(VCPCodes.input_source, [27, 15, 17, 257], 257, None),
         SupportedCodeTemplate(VCPCodes.image_orientation.value, [1, 2, 4], 2, None),
     ],
-    "(prot(monitor)type(LCD)model(BROKEN)cmds(04)vcp(10 12 60(1B 0F 11 ) AA(01 02 04 ) )mccs_ver(2.1))",
-    True  # faulty=True
+    caps_str = "(prot(monitor)type(LCD)model(BROKEN)cmds(04)vcp(10 12 60(1B 0F 11 ) AA(01 02 04 ) )mccs_ver(2.1))",
+    edid_blob = DUMMY_EDID,
+    faulty = True
 )
 
 
@@ -91,12 +111,14 @@ vcp_template_list: list[VCPTemplate] = [DEFAULT_VCP_TEMPLATE, FAULTY_VCP_TEMPLAT
 
 
 class DummyVCP(ABCVCP):
+
     def __init__(self, template: VCPTemplate):
         super().__init__()
         self.supported_codes = deepcopy(template.supported_codes)
         self.current_values = template.current_values.copy()
         self.unknown_max_values = template.unknown_max_values.copy()
         self.caps_str = template.caps_str
+        self.edid_blob = template.edid_blob
         self.faulty = template.faulty
 
     def __enter__(self):
@@ -158,6 +180,12 @@ class DummyVCP(ABCVCP):
         if self.faulty:
             raise VCPError("I am a broken monitor, beep boop")
         return self.caps_str
+
+    def _get_edid_blob(self) -> bytes:
+        if self.faulty:
+            raise VCPError("I am a broken monitor, beep boop")
+        return self.edid_blob
+
 
     @staticmethod
     def get_vcps() -> List[DummyVCP]:

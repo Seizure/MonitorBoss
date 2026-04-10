@@ -120,6 +120,17 @@ class TestCapabilitiesFunctions:
         caps = parse_capabilities(caps_str)
         assert str(caps) == "{'prot': 'monitor', 'type': 'LCD', 'model': 'DUMM13', 'cmds': [Capability(cap=4, values=None)], 'vcp': [Capability(cap=16, values=None), Capability(cap=96, values=[1, 15, 17])], 'mccs_ver': '2.1'}"
 
+class TestEDIDFunctions:
+
+    vcp = VCP(vcp_template)
+
+    def test_edid_cm_assertion(self):
+        with pytest.raises(AssertionError):
+            self.vcp.get_edid_blob()
+
+    # def test_get_edid_blob(self):
+    #     # doesn't seem worth testing in a dummy driver, since I'm hard-coding the edid blob
+    #     pass
 
 class TestVCPCommands:
 
