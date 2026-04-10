@@ -38,6 +38,9 @@ default-groups = "all"
 module-name = ["monitorboss"]
 module-root = ""
 
+[tool.pytest.ini_options]
+testpaths = ["test"]
+
 [build-system]
 requires = ["uv_build>=0.10.9,<0.11.0"]
 build-backend = "uv_build"
