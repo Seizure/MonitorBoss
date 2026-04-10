@@ -100,10 +100,6 @@ class VCP(abc.ABC):
         assert self._in_ctx, "This function must be run within the context manager"
         if not com.readable:
             raise TypeError(f"code must be readable: {com.name}")
-        # code.value.value seems awkward, but we do NOT want to store max keys as VCPCodes, so that we can
-        # support non_specification feature codes. Though...
-        # TODO: that might mean VCPCommand needs to store int, not
-        #   VCPCode as the value
         feature_code = com.code
         if feature_code in self.code_maximum:
             return self.code_maximum[feature_code]
@@ -111,6 +107,14 @@ class VCP(abc.ABC):
             maximum = self.get_vcp_feature(com, timeout).max
             self.code_maximum[feature_code] = maximum
             return maximum
+
+    def get_edid_blob(self) -> bytes:
+        assert self._in_ctx, "This function must be run within the context manager"
+        return self._get_edid_blob()
+
+    @abc.abstractmethod # pragma: no cover
+    def _get_edid_blob(self) -> bytes:
+        pass
 
     @staticmethod
     @abc.abstractmethod # pragma: no cover
