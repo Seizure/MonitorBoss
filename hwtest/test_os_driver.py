@@ -49,7 +49,6 @@ def test_get_vcp_feature(vcp: VCP, hw_results: dict[str, str]) -> None:
     hw_results["get_vcp_feature"] = f"value={result.value}, max={result.max}"
 
 
-
 # def test_get_vcp_feature_max(vcp: VCP, hw_results: dict[str, str]) -> None:
 #     # anything this test would want to confirm is tested in OS-agnostic unit tests already
 #     pass
