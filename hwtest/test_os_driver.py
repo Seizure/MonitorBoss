@@ -49,27 +49,10 @@ def test_get_vcp_feature(vcp: VCP, hw_results: dict[str, str]) -> None:
     hw_results["get_vcp_feature"] = f"value={result.value}, max={result.max}"
 
 
-def test_get_vcp_feature_max(vcp: VCP, hw_results: dict[str, str]) -> None:
-    lum_com = get_vcp_com(VCPCodes.image_luminance.value)
-    assert lum_com is not None  # always defined in vcp_codes.py
 
-    # Precondition: test_get_vcp_feature must have run first to populate the cache.
-    assert VCPCodes.image_luminance in vcp.code_maximum, (
-        "Precondition failed: luminance max not in cache. "
-        "Did test_get_vcp_feature run first?"
-    )
-
-    sentinel = AssertionError(
-        "_get_vcp_feature was called unexpectedly — result should have been served from cache"
-    )
-    with patch.object(vcp, "_get_vcp_feature", side_effect=sentinel):
-        with vcp as v:
-            max_val = v.get_vcp_feature_max(lum_com)
-
-    assert isinstance(max_val, int)
-    assert max_val > 0
-    assert max_val == vcp.code_maximum[VCPCodes.image_luminance]
-    hw_results["get_vcp_feature_max"] = f"{max_val} (served from cache)"
+# def test_get_vcp_feature_max(vcp: VCP, hw_results: dict[str, str]) -> None:
+#     # anything this test would want to confirm is tested in OS-agnostic unit tests already
+#     pass
 
 
 def test_get_edid_blob(vcp: VCP, hw_results: dict[str, str]) -> None:
