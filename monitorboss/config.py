@@ -307,51 +307,6 @@ def get_config(path: str | None) -> Config:
         raise MonitorBossError(f"Could not load config from {Path(path).absolute()}: {err}") from err
 
 
-def set_monitor_alias(alias: str, mon_id: int, path: str | None):
-    path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"set monitor alias: {alias} = {mon_id} (in {Path(path).absolute()})")
-    doc = _read_toml(path)
-    doc[TomlCategories.monitors.value][alias] = mon_id
-    _write_toml(doc, path)
-
-
-def remove_monitor_alias(alias: str, path: str | None):
-    path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"remove monitor alias: {alias} (in {Path(path).absolute()})")
-    doc = _read_toml(path)
-    doc.remove(doc[TomlCategories.monitors.value][alias])
-    _write_toml(doc, path)
-
-def set_wait_get_time(wait_get_time: float, path: str | None):
-    path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"set wait get time: {wait_get_time} (in {Path(path).absolute()})")
-    if wait_get_time < 0:
-        raise MonitorBossError(f"invalid wait get time: {wait_get_time}")
-    doc = _read_toml(path)
-    doc[TomlCategories.settings.value][TomlSettingsKeys.wait_get.value] = wait_get_time
-    _write_toml(doc, path)
-
-
-def set_wait_set_time(wait_set_time: float, path: str | None):
-    path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"set wait set time: {wait_set_time} (in {Path(path).absolute()})")
-    if wait_set_time < 0:
-        raise MonitorBossError(f"invalid wait set time: {wait_set_time}")
-    doc = _read_toml(path)
-    doc[TomlCategories.settings.value][TomlSettingsKeys.wait_set.value] = wait_set_time
-    _write_toml(doc, path)
-
-
-def set_wait_internal_time(wait_internal_time: float, path: str | None):
-    path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"set wait internal time: {wait_internal_time} (in {Path(path).absolute()})")
-    if wait_internal_time < 0:
-        raise MonitorBossError(f"invalid wait internal time: {wait_internal_time}")
-    doc = _read_toml(path)
-    doc[TomlCategories.settings.value][TomlSettingsKeys.wait_internal.value] = wait_internal_time
-    _write_toml(doc, path)
-
-
 def reset_config(path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"reset config to default: {Path(path).absolute()}")
