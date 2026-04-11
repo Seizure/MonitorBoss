@@ -214,13 +214,3 @@ class WindowsVCP(VCP):
         except OSError as err:
             raise VCPError("failed to enumerate VCPs") from err
         return [WindowsVCP(logical) for logical in hmonitors]
-
-
-if __name__ == "__main__":
-    vcps = WindowsVCP.get_vcps()
-    edids = {}
-    for vcp in vcps:
-        edids[str(vcp.hmonitor)] = vcp._get_edid_blob()
-
-    for hmonitor, edid in edids.items():
-        print(f"EDID for {hmonitor}:\n{edid}")
