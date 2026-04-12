@@ -29,6 +29,15 @@ def get_monitor(mon: int) -> VCP:
         raise MonitorBossError(f"monitor #{mon} does not exist.") from err
 
 
+def get_edid_blob(mon: int) -> bytes:
+    _log.debug(f"get edid blob: {mon}")
+    with get_monitor(mon) as monitor:
+        try:
+            return monitor.get_edid_blob()
+        except VCPError as err:
+            raise MonitorBossError(f"Failed to get EDID for monitor {mon}.") from err
+
+
 def get_vcp_capabilities(mon: int) -> str:
     _log.debug(f"get VCP capabilities for monitor #{mon}")
     with get_monitor(mon) as monitor:
