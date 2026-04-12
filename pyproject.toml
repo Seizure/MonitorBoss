@@ -23,6 +23,7 @@ monitorboss = [
     "tomlkit>=0.14.0,<0.15",
     "frozendict>=2.4.4,<3",
     "pydantic>=2.0,<3",
+    "pyedid>=1.0.3,<2",
 ]
 pyddc = ["pyudev>=0.23,<0.25 ; sys_platform != 'win32'"]
 dev = [
