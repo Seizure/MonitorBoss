@@ -42,11 +42,11 @@ def test_config_reset(pytester):
 class TestConfigValidation:
     """Tests for Pydantic validation of Config after TOML parsing."""
 
-    def test_config_valid_round_trip(self, test_cfg: Config):
+    def test_config_valid_round_trip(self, test_conf: Config):
         """Test that TEST_TOML_CONTENTS parses to a valid Config with expected field values."""
         # Verify all six fields are populated correctly
-        assert test_cfg.monitor_names == {"foo": 0, "bar": 1, "baz": 1}
-        assert test_cfg.feature_aliases == {
+        assert test_conf.monitor_names == {"foo": 0, "bar": 1, "baz": 1}
+        assert test_conf.feature_aliases == {
             "lum": 16, "luminance": 16, "brightness": 16,
             "cnt": 18, "contrast": 18,
             "clr": 20, "color": 20, "clrpreset": 20,
@@ -54,13 +54,13 @@ class TestConfigValidation:
             "pwr": 214, "power": 214, "powermode": 214,
         }
         # After inversion: TOML {value_id: [aliases]} -> Config {alias: value_id}
-        assert test_cfg.value_aliases == {
+        assert test_conf.value_aliases == {
             "input_source": {"usbc": 27, "usb-c": 27, "hdmi": 17},
             "image_luminance": {"night": 25, "day": 75, "bright": 75},
         }
-        assert test_cfg.wait_get_time == 0
-        assert test_cfg.wait_set_time == 0
-        assert test_cfg.wait_internal_time == 0
+        assert test_conf.wait_get_time == 0
+        assert test_conf.wait_set_time == 0
+        assert test_conf.wait_internal_time == 0
 
     @pytest.mark.parametrize("overrides,expected_match", [
         # Non-numeric keys
@@ -78,6 +78,9 @@ class TestConfigValidation:
         # Invalid feature codes / names
         ({"feature_aliases": {"999": ["brightness"]}},                          "does not correspond to a valid command"),
         ({"value_aliases": {"invalid_feature": {"25": "night"}}},               "does not correspond to a valid command"),
+        # Extra fields (extra='forbid')
+        ({"extra_top_level": "bad"},                                             "Extra inputs are not permitted"),
+        ({"settings": {"wait_get": 0.05, "wait_set": 0.1, "wait_internal": 0.04, "extra_key": "bad"}}, "Extra inputs are not permitted"),
     ])
     def test_raw_config_invalid_rejected(self, overrides: dict, expected_match: str):
         """Invalid _RawTomlConfig data must be rejected by field validators with a descriptive error."""
@@ -110,6 +113,16 @@ class TestConfigValidation:
         with pytest.raises(ValidationError, match="Wait times must be non-negative"):
             _RawTomlSettings(**settings)
 
+    @pytest.mark.parametrize("settings", [
+        {"wait_get": None, "wait_set": 0.1,   "wait_internal": 0.04},
+        {"wait_get": 0.05, "wait_set": None,  "wait_internal": 0.04},
+        {"wait_get": 0.05, "wait_set": 0.1,   "wait_internal": None},
+    ])
+    def test_settings_null_wait_time_rejected(self, settings: dict):
+        """None is not a valid wait time in _RawTomlSettings — all three fields are required floats."""
+        with pytest.raises(ValidationError):
+            _RawTomlSettings(**settings)
+
 
 def test_inversion():
     """Aliases should be inverted correctly: {id: [aliases]} -> {alias: id}."""
@@ -128,7 +141,7 @@ def test_inversion():
     assert cfg.value_aliases == {"image_luminance": {"night": 25, "day": 75, "bright": 75}}
 
 
-def test_config_is_frozen(test_cfg: Config):
+def test_config_is_frozen(test_conf: Config):
     """Config objects should be immutable at the top level."""
     with pytest.raises(ValidationError):
-        test_cfg.wait_get_time = 0.5
+        test_conf.wait_get_time = 0.5

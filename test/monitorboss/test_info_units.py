@@ -31,15 +31,15 @@ class TestInfoFeatureData:
     def test_FeatureData_str(self, feature, expected):
         assert str(feature) == expected
 
-    def test_feature_data_found_com(self, test_cfg):
+    def test_feature_data_found_com(self, test_conf):
         code = VCPCodes.input_source
         com = get_vcp_com(code)
         data = info.FeatureData(com.name, com.code, ('src', 'source', 'input'))
-        assert info.feature_data(code.value, test_cfg) == data
+        assert info.feature_data(code.value, test_conf) == data
 
-    def test_feature_data_no_com(self, test_cfg):
+    def test_feature_data_no_com(self, test_conf):
         data = info.FeatureData("", 9001, ())
-        assert info.feature_data(9001, test_cfg) == data
+        assert info.feature_data(9001, test_conf) == data
 
 
 class TestInfoValueData:
@@ -62,11 +62,11 @@ class TestInfoValueData:
     def test_ValueData_str(self, data, expected):
         assert str(data) == expected
 
-    def test_value_data_found_com(self, test_cfg):
-        assert info.value_data(96, 17, test_cfg) == v_data_17_name_alias
+    def test_value_data_found_com(self, test_conf):
+        assert info.value_data(96, 17, test_conf) == v_data_17_name_alias
 
-    def test_value_data_no_com(self, test_cfg):
-        assert info.value_data(9001, 1, test_cfg) == v_data_1_noname_noalias
+    def test_value_data_no_com(self, test_conf):
+        assert info.value_data(9001, 1, test_conf) == v_data_1_noname_noalias
 
 
 class TestInfoMonitorData:
@@ -87,8 +87,8 @@ class TestInfoMonitorData:
     def test_MonitorData_str(self, mon, expected):
         assert str(mon) == expected
 
-    def test_monitor_data(self, test_cfg):
-        assert info.monitor_data(1, test_cfg) == m_data_1_barbaz
+    def test_monitor_data(self, test_conf):
+        assert info.monitor_data(1, test_conf) == m_data_1_barbaz
 
 
 class TestInfoCapabilitydata:

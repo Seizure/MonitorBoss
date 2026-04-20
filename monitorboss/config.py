@@ -2,10 +2,11 @@ from enum import Enum  # cannot use StrEnum, it's not in Python 3.10
 from logging import getLogger
 from pathlib import Path
 
-from tomlkit import parse, dump, document, table, TOMLDocument
-from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
+from tomlkit import dump, dumps, document, table, TOMLDocument
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from monitorboss import MonitorBossError
+from monitorboss.util import validate_non_negative_wait, read_toml_file, toml_load_errors
 from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes
 
@@ -32,6 +33,8 @@ class _RawTomlSettings(BaseModel):
     Pydantic model for the [settings] section of the TOML file.
     Fixed-schema sub-model: all keys are known and required.
     """
+    model_config = ConfigDict(extra='forbid')
+
     wait_get: float
     wait_set: float
     wait_internal: float
@@ -67,6 +70,8 @@ class _RawTomlConfig(BaseModel):
     - Aliases must not be duplicated within the same table (monitor_names, feature_aliases),
       or within the same feature sub-table (value_aliases); cross-sub-table duplicates are allowed
     """
+    model_config = ConfigDict(extra='forbid')
+
     monitor_names: dict[str, str | list[str]]
     feature_aliases: dict[str, str | list[str]]
     value_aliases: dict[str, dict[str, str | list[str]]] = {}
@@ -252,28 +257,6 @@ def default_toml() -> TOMLDocument:
     return doc
 
 
-def _read_toml(path: str | None) -> TOMLDocument:
-    path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"read TOML config from: {Path(path).absolute()}")
-    if not Path(path).parent.exists():
-        Path(path).parent.mkdir(parents=True)
-    if not Path(path).exists():
-        reset_config(path)
-    try:
-        with open(path, "r", encoding="utf8") as file:
-            content = file.read()
-    except Exception as err:
-        raise MonitorBossError(f"could not read config file: {Path(path).absolute()}") from err
-    try:
-        return parse(content)
-    except Exception as err:
-        # TODO: add CLI options to manage the config
-        raise MonitorBossError(
-            f"could not parse config file: {path}: {err}\n"
-            "To reset the config file to its default content, delete the file."
-        ) from err
-
-
 def _write_toml(doc: TOMLDocument, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"write TOML config to: {Path(path).absolute()}")
@@ -289,22 +272,17 @@ def _write_toml(doc: TOMLDocument, path: str | None):
 def get_config(path: str | None) -> Config:
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
     _log.debug(f"get Config from: {Path(path).absolute()}")
-    try:
-        doc = _read_toml(path)
-        # Unwrap tomlkit types to plain Python dict/list/etc for Pydantic
+    with toml_load_errors(path, "config"):
+        doc = read_toml_file(
+            path, "config",
+            extra_parse_hint="\nTo reset the config file to its default content, delete the file.",
+            on_missing=dumps(default_toml()),
+        )
         unwrapped = doc.unwrap()
-        # Validate against raw TOML structure (including alias validation)
         raw_cfg = _RawTomlConfig.model_validate(unwrapped)
-        # Convert to runtime-ready Config (performs alias inversion and field mapping)
         cfg = Config.from_raw(raw_cfg)
         _log.debug(f"Successfully loaded Config from {Path(path).absolute()}")
         return cfg
-    except ValidationError as err:
-        raise MonitorBossError(f"Invalid config at {Path(path).absolute()}: {err}") from err
-    except MonitorBossError:
-        raise
-    except Exception as err:
-        raise MonitorBossError(f"Could not load config from {Path(path).absolute()}: {err}") from err
 
 
 def reset_config(path: str | None):

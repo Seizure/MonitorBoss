@@ -51,9 +51,9 @@ def test_caps_raw(json_flag, test_conf_file, capsys):
     False,
     True,
 ])
-def test_caps_full(json_flag, test_conf_file, test_cfg, capsys):
-    caps_0 = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg)
-    caps_2 = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(2)), test_cfg)
+def test_caps_full(json_flag, test_conf_file, test_conf, capsys):
+    caps_0 = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_conf)
+    caps_2 = info.capability_data(parse_capabilities(impl.get_vcp_capabilities(2)), test_conf)
     responses = [
         info.MonitorCapsResponseData(mon=m_data_0_foo, error=None, data=caps_0),
         info.MonitorCapsResponseData(mon=m_data_1_barbaz, error=Exception("Could not list information for monitor 1"), data=None),
@@ -69,9 +69,9 @@ def test_caps_full(json_flag, test_conf_file, test_cfg, capsys):
 
 @pytest.mark.parametrize("json_flag", [
     False, True])
-def test_caps_summary(json_flag, test_conf_file, test_cfg, capsys):
-    caps_0 = info.capability_summary_data(info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_cfg))
-    caps_2 = info.capability_summary_data(info.capability_data(parse_capabilities(impl.get_vcp_capabilities(2)), test_cfg))
+def test_caps_summary(json_flag, test_conf_file, test_conf, capsys):
+    caps_0 = info.capability_summary_data(info.capability_data(parse_capabilities(impl.get_vcp_capabilities(0)), test_conf))
+    caps_2 = info.capability_summary_data(info.capability_data(parse_capabilities(impl.get_vcp_capabilities(2)), test_conf))
     responses = [
         info.MonitorCapsResponseData(mon=m_data_0_foo, error=None, data=caps_0),
         info.MonitorCapsResponseData(mon=m_data_1_barbaz, error=Exception("Could not list information for monitor 1"), data=None),
@@ -89,7 +89,7 @@ def test_caps_summary(json_flag, test_conf_file, test_cfg, capsys):
     False,
     True,
 ])
-def test_get_feature(json_flag, test_conf_file, test_cfg, capsys):
+def test_get_feature(json_flag, test_conf_file, test_conf, capsys):
     cfg = config.get_config(test_conf_file.as_posix())
     vdata_0 = info.value_data(lum.value, 75, cfg)
     vdata_2 = info.value_data(lum.value, 75, cfg)
@@ -98,7 +98,7 @@ def test_get_feature(json_flag, test_conf_file, test_cfg, capsys):
         info.MonitorGetResponseData(mon=m_data_1_barbaz, error=Exception("could not get image_luminance for monitor #1."), value=None, maximum=None),
         info.MonitorGetResponseData(mon=m_data_2_noalias, error=None, value=vdata_2, maximum=80)
     ]
-    expected = output.get_feature_output(info.feature_data(lum, test_cfg), responses, json_flag) + "\n"
+    expected = output.get_feature_output(info.feature_data(lum, test_conf), responses, json_flag) + "\n"
     cmd = f"--config {test_conf_file.as_posix()} {'--json' if json_flag else ''} get 0 1 2 lum".strip()
     cli.run(cmd)
     capture = capsys.readouterr()
@@ -110,7 +110,7 @@ def test_get_feature(json_flag, test_conf_file, test_cfg, capsys):
     (False, 24),
     (True, 35),
 ])
-def test_set_feature(json_flag, value, test_conf_file, test_cfg, capsys):
+def test_set_feature(json_flag, value, test_conf_file, test_conf, capsys):
     cfg = config.get_config(test_conf_file.as_posix())
     vdata = info.value_data(lum.value, value, cfg)
     responses = [
@@ -118,7 +118,7 @@ def test_set_feature(json_flag, value, test_conf_file, test_cfg, capsys):
         info.MonitorSetResponseData(mon=m_data_1_barbaz, error=Exception(f"could not set image_luminance for monitor #1 to {value}."), value=None),
         info.MonitorSetResponseData(mon=m_data_2_noalias, error=None, value=vdata)
     ]
-    expected = output.set_feature_output(info.feature_data(lum, test_cfg), responses, json_flag) + "\n"
+    expected = output.set_feature_output(info.feature_data(lum, test_conf), responses, json_flag) + "\n"
     cmd = f"--config {test_conf_file.as_posix()} {'--json' if json_flag else ''} set 0 1 2 lum {value}".strip()
     cli.run(cmd)
     capture = capsys.readouterr()
@@ -130,7 +130,7 @@ def test_set_feature(json_flag, value, test_conf_file, test_cfg, capsys):
     False,
     True,
 ])
-def test_tog_feature(json_flag, test_conf_file, test_cfg, capsys):
+def test_tog_feature(json_flag, test_conf_file, test_conf, capsys):
     cfg = config.get_config(test_conf_file.as_posix())
     vdata1 = info.value_data(lum.value, 75, cfg)
     vdata2 = info.value_data(lum.value, 42, cfg)
@@ -139,7 +139,7 @@ def test_tog_feature(json_flag, test_conf_file, test_cfg, capsys):
         info.MonitorToggleResponseData(mon=m_data_1_barbaz, error=Exception("could not get image_luminance for monitor #1."), original_value=None, new_value=None),
         info.MonitorToggleResponseData(mon=m_data_2_noalias, error=None, original_value=vdata1, new_value=vdata2)
     ]
-    expected = output.tog_feature_output(info.feature_data(lum, test_cfg), responses, json_flag) + "\n"
+    expected = output.tog_feature_output(info.feature_data(lum, test_conf), responses, json_flag) + "\n"
     cmd = f"--config {test_conf_file.as_posix()} {'--json' if json_flag else ''} tog 0 1 2 lum 42 21".strip()
     cli.run(cmd)
     capture = capsys.readouterr()
