@@ -5,8 +5,9 @@ from logging import getLogger
 from pathlib import Path
 from typing import Optional
 
+import pyedid
 from pydantic import BaseModel, ConfigDict, field_validator
-from tomlkit import TOMLDocument
+from tomlkit import TOMLDocument, document, table
 
 from monitorboss import MonitorBossError
 from monitorboss.util import validate_non_negative_wait, read_toml_file, write_toml_file, toml_load_errors
@@ -185,6 +186,57 @@ class MonitorProfile(BaseModel):
             wait_set_time=raw.settings.wait_set,
             wait_internal_time=raw.settings.wait_internal,
         )
+
+
+def new_profile_toml(edid_blob: bytes, caps_str: str) -> TOMLDocument:
+    """Build a foundational profile TOMLDocument from a raw EDID blob and a capabilities string.
+
+    The returned document contains all five required top-level tables.  The
+    ``[identity]`` and ``[capabilities]`` tables are populated from the supplied
+    data; ``[max_values]``, ``[value_redirects]``, and ``[settings]`` are present
+    but intentionally empty, ready for the user to fill in.
+
+    Args:
+        edid_blob: Raw EDID bytes.  Only the first 128 bytes are used for the profile
+        caps_str: The raw DDC/CI capabilities string as reported by the monitor.
+
+    Returns:
+        A ``TOMLDocument`` matching the structure of ``conf/profiles/example_profile.toml``.
+
+    Raises:
+        MonitorBossError: If the EDID blob cannot be parsed.
+    """
+    _log.debug("building new profile TOML from EDID blob and capabilities string")
+    try:
+        edid = pyedid.parse_edid(edid_blob)
+    except Exception as err:
+        raise MonitorBossError(f"could not parse EDID blob: {err}") from err
+
+    edid_128_base64 = base64.b64encode(edid_blob[:128]).decode("utf-8")
+
+    identity = table()
+    identity.add("pnpid", edid.manufacturer_pnp_id)
+    identity.add("model", edid.name)
+    identity.add("serial", edid.serial)
+    identity.add("year", edid.year)
+    identity.add("week", edid.week)
+    identity.add("edid_128_base64", edid_128_base64)
+
+    caps = table()
+    caps.comment(
+        "The capabilities string of the monitor, cached for parsing purposes."
+        " THIS SHOULD NOT BE MANUALLY EDITED."
+    )
+    caps.add("raw", caps_str)
+
+    doc = document()
+    doc.add(ProfileTomlCategories.identity.value, identity)
+    doc.add(ProfileTomlCategories.capabilities.value, caps)
+    doc.add(ProfileTomlCategories.max_values.value, table())
+    doc.add(ProfileTomlCategories.value_redirects.value, table())
+    doc.add(ProfileTomlCategories.settings.value, table())
+
+    return doc
 
 
 def get_profile(path: str) -> MonitorProfile:

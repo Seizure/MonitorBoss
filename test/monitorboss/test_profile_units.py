@@ -1,15 +1,22 @@
+import base64
+
+import pyedid
 import pytest
 from pydantic import ValidationError
+from tomlkit import dumps
 
 from monitorboss import MonitorBossError
 from monitorboss.profile import (
     MonitorProfile,
     MonitorIdentity,
+    ProfileTomlCategories,
     _RawTomlProfile,
     _RawTomlIdentity,
     _RawTomlCapabilities,
     _RawTomlProfileSettings,
     get_profile,
+    new_profile_toml,
+    write_profile,
 )
 from test.testdata import _EDID_128_BASE64, vcp_template
 
@@ -207,5 +214,58 @@ def test_get_profile_invalid_profile(tmp_path):
     bad_file.write_text("[identity]\npnpid = 123\n")
     with pytest.raises(MonitorBossError):
         get_profile(bad_file.as_posix())
+
+
+# Valid EDID blob from example_profile.toml — used for new_profile_toml tests
+_EXAMPLE_EDID = base64.b64decode(
+    "AP///////wAQrLyhTElBMAUgAQOANR547pAlrFJPniUPUFSlSwBxT4GAqcDRwAEBAQEBAQEB"
+    "AjqAGHE4LUBYLEUADyghAAAeAAAA/wBETjM5SDgzCiAgICAgAAAA/ABERUxMIFUyNDIySEUK"
+    "AAAA/QA4TB5TEQAKICAgICAgARY="
+)
+_EXAMPLE_EDID_INFO = pyedid.parse_edid(_EXAMPLE_EDID)
+_EXAMPLE_CAPS = "(prot(monitor)type(LCD)model(TEST))"
+
+
+class TestNewProfileToml:
+    """Tests for new_profile_toml."""
+
+    def test_returns_toml_document(self):
+        """new_profile_toml must return a TOMLDocument without raising."""
+        doc = new_profile_toml(_EXAMPLE_EDID, _EXAMPLE_CAPS)
+        assert doc is not None
+
+    def test_identity_fields_populated_from_edid(self):
+        """[identity] fields must match pyedid-parsed values from the EDID blob."""
+        doc = new_profile_toml(_EXAMPLE_EDID, _EXAMPLE_CAPS)
+        identity = doc[ProfileTomlCategories.identity.value]
+        assert identity["pnpid"] == _EXAMPLE_EDID_INFO.manufacturer_pnp_id
+        assert identity["model"] == _EXAMPLE_EDID_INFO.name
+        assert identity["serial"] == _EXAMPLE_EDID_INFO.serial
+        assert identity["year"] == _EXAMPLE_EDID_INFO.year
+        assert identity["week"] == _EXAMPLE_EDID_INFO.week
+
+    def test_edid_128_base64_is_first_128_bytes(self):
+        """edid_128_base64 must be the base64 encoding of the first 128 bytes of the blob."""
+        doc = new_profile_toml(_EXAMPLE_EDID, _EXAMPLE_CAPS)
+        expected = base64.b64encode(_EXAMPLE_EDID[:128]).decode("utf-8")
+        assert doc[ProfileTomlCategories.identity.value]["edid_128_base64"] == expected
+
+    def test_capabilities_raw_matches_input(self):
+        """[capabilities].raw must exactly match the caps_str argument."""
+        doc = new_profile_toml(_EXAMPLE_EDID, _EXAMPLE_CAPS)
+        assert doc[ProfileTomlCategories.capabilities.value]["raw"] == _EXAMPLE_CAPS
+
+    def test_output_is_valid_parseable_profile(self, tmp_path):
+        """The produced TOMLDocument must round-trip through get_profile without error,
+        confirming all five required tables are present and their contents are valid."""
+        doc = new_profile_toml(_EXAMPLE_EDID, _EXAMPLE_CAPS)
+        write_profile(doc, tmp_path.as_posix(), "test_monitor.toml")
+        profile = get_profile((tmp_path / "test_monitor.toml").as_posix())
+        assert profile.capabilities == _EXAMPLE_CAPS
+
+    def test_invalid_edid_raises_monitor_boss_error(self):
+        """A bytes object that pyedid cannot parse must raise MonitorBossError."""
+        with pytest.raises(MonitorBossError, match="could not parse EDID blob"):
+            new_profile_toml(b"not a valid edid", _EXAMPLE_CAPS)
 
 
