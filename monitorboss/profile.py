@@ -6,14 +6,15 @@ from pathlib import Path
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
+from tomlkit import TOMLDocument
 
 from monitorboss import MonitorBossError
-from monitorboss.util import validate_non_negative_wait, read_toml_file, toml_load_errors
+from monitorboss.util import validate_non_negative_wait, read_toml_file, write_toml_file, toml_load_errors
 from pyddc import get_vcp_com
 
 _log = getLogger(__name__)
 
-DEFAULT_PROFILE_DIR: str = "./conf/profiles"
+DEFAULT_PROFILE_DIR: str = str(Path(__file__).parent.parent / "conf" / "profiles")
 
 
 class ProfileTomlCategories(Enum):
@@ -196,4 +197,20 @@ def get_profile(path: str) -> MonitorProfile:
         profile = MonitorProfile.from_raw(raw_profile)
         _log.debug(f"Successfully loaded MonitorProfile from {Path(path).absolute()}")
         return profile
+
+
+def write_profile(doc: TOMLDocument, dir_path: str | None, filename: str) -> None:
+    """Write a profile TOMLDocument to a file within the profile's directory.
+
+    Args:
+        doc: The ``TOMLDocument`` to write.
+        dir_path: Directory in which to write the file. Defaults to
+            ``DEFAULT_PROFILE_DIR`` when ``None``.
+        filename: Name of the profile file (e.g. ``"my_monitor.toml"``).
+    """
+    dir_path = dir_path if dir_path is not None else DEFAULT_PROFILE_DIR
+    path = str(Path(dir_path) / filename)
+    _log.debug(f"write profile to: {Path(path).absolute()}")
+    write_toml_file(path, "profile", doc)
+
 

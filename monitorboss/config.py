@@ -2,17 +2,17 @@ from enum import Enum  # cannot use StrEnum, it's not in Python 3.10
 from logging import getLogger
 from pathlib import Path
 
-from tomlkit import dump, dumps, document, table, TOMLDocument
+from tomlkit import dumps, document, table, TOMLDocument
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from monitorboss import MonitorBossError
-from monitorboss.util import validate_non_negative_wait, read_toml_file, toml_load_errors
+from monitorboss.util import validate_non_negative_wait, read_toml_file, write_toml_file, toml_load_errors
 from pyddc import get_vcp_com
 from pyddc.vcp_codes import VCPCodes
 
 _log = getLogger(__name__)
 
-DEFAULT_CONF_FILE_LOC = "./conf/MonitorBoss.toml"
+DEFAULT_CONF_FILE_LOC: str = str(Path(__file__).parent.parent / "conf" / "MonitorBoss.toml")
 
 
 class TomlCategories(Enum):
@@ -259,14 +259,7 @@ def default_toml() -> TOMLDocument:
 
 def _write_toml(doc: TOMLDocument, path: str | None):
     path = path if path is not None else DEFAULT_CONF_FILE_LOC
-    _log.debug(f"write TOML config to: {Path(path).absolute()}")
-    if not Path(path).parent.exists():
-        Path(path).parent.mkdir(parents=True)
-    try:
-        with open(path, "w", encoding="utf8") as file:
-            dump(doc, file)
-    except Exception as err:
-        raise MonitorBossError(f"could not write config file: {Path(path).absolute()}") from err
+    write_toml_file(path, "config", doc)
 
 
 def get_config(path: str | None) -> Config:

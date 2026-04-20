@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Generator
 
 from pydantic import ValidationError
-from tomlkit import parse, TOMLDocument
+from tomlkit import dump, parse, TOMLDocument
 
 from monitorboss import MonitorBossError
 
@@ -69,6 +69,28 @@ def read_toml_file(
         raise MonitorBossError(
             f"could not parse {label} file: {path}: {err}{extra_parse_hint}"
         ) from err
+
+
+def write_toml_file(path: str, label: str, doc: TOMLDocument) -> None:
+    """Write a TOMLDocument to a file, wrapping OS errors in MonitorBossError.
+
+    Args:
+        path: Absolute or relative path to the destination file.
+        label: Short noun used in error messages (e.g. ``"config"``, ``"profile"``).
+        doc: The ``TOMLDocument`` to serialize and write.
+
+    Raises:
+        MonitorBossError: If the parent directory cannot be created or the file
+            cannot be written.
+    """
+    _log.debug(f"write {label} TOML file to: {Path(path).absolute()}")
+    if not Path(path).parent.exists():
+        Path(path).parent.mkdir(parents=True)
+    try:
+        with open(path, "w", encoding="utf8") as file:
+            dump(doc, file)
+    except Exception as err:
+        raise MonitorBossError(f"could not write {label} file: {Path(path).absolute()}") from err
 
 
 @contextmanager
