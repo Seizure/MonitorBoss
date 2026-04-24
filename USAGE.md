@@ -1,7 +1,7 @@
 # Usage
 
 ```
-usage: scratch.py [-h] {list,get,set,tog} ...
+usage: main.py [-h] {list,get,set,tog} ...
 
 Boss your monitors around.
 
@@ -18,7 +18,7 @@ monitor commands:
 
 ## list
 ```
-usage: scratch.py list [-h]
+usage: main.py list [-h]
 
 list all the monitors and their possible attributes
 
@@ -28,7 +28,7 @@ options:
 
 ## get
 ```
-usage: scratch.py get [-h] attr mon
+usage: main.py get [-h] attr mon
 
 return the value of a given attribute
 
@@ -42,7 +42,7 @@ options:
 
 ## set
 ```
-usage: scratch.py set [-h] attr val mon [mon ...]
+usage: main.py set [-h] attr val mon [mon ...]
 
 sets a given attribute to a given value
 
@@ -57,7 +57,7 @@ options:
 
 ## tog
 ```
-usage: scratch.py tog [-h] attr val1 val2 mon [mon ...]
+usage: main.py tog [-h] attr val1 val2 mon [mon ...]
 
 toggles a given attribute between two given values
 
