@@ -18,13 +18,16 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 
-[dependency-groups]
-monitorboss = [
+dependencies = [
+    # monitorboss
     "tomlkit>=0.14.0,<0.15",
     "frozendict>=2.4.4,<3",
     "pydantic>=2.0,<3",
+    #pyddc
+    "pyudev>=0.23,<0.25 ; sys_platform != 'win32'",
 ]
-pyddc = ["pyudev>=0.23,<0.25 ; sys_platform != 'win32'"]
+
+[dependency-groups]
 dev = [
     "pyinstaller>=6.5.0,<7",
     "pytest>=9.0.3,<10",
@@ -45,4 +48,6 @@ testpaths = ["test"]
 requires = ["uv_build>=0.10.9,<0.11.0"]
 build-backend = "uv_build"
 
+[project.scripts]
+monitorboss = "main:main"
 
